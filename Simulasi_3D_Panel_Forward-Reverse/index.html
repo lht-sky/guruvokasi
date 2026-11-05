@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi 3D Panel Forward-Reverse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  /* Layout: panggung 3D + strip kontrol di kiri, panel belajar (status, praktikum, diagram) di kanan; di HP bertumpuk */
+  --bg:#0f141a;
+  --surface:#171f28;
+  --surface2:#202a35;
+  --line:#2d3946;
+  --ink:#e6ebf0;
+  --ink2:#c3ccd5;
+  --muted:#8e9cab;
+  --accent:#f3b52f;
+  --live:#ff6a3d;
+  --ok:#3fcf7d;
+  --neutral:#5aa9ff;
+  --danger:#ff4d4d;
+  --display:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --body:'Barlow','Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;height:100%}
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid var(--line)}
+.bar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:12px 16px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
+.eyebrow{font:600 12px/1.2 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{margin:2px 0 0;font:700 24px/1.1 var(--display);letter-spacing:.01em;text-wrap:balance}
+.dims{font:500 12px var(--mono);color:var(--muted);white-space:nowrap;border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+
+.view{position:relative;flex:1;min-height:0;background:#0b1015;overflow:hidden}
+#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none}
+.lbl{position:absolute;left:0;top:0;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;
+  font:600 11px/1 var(--mono);color:#10151b;background:var(--accent);border-radius:3px;padding:3px 5px;white-space:nowrap;
+  box-shadow:0 1px 3px rgba(0,0,0,.5);border:0}
+.lbl.door{background:#e9eef3}
+.lbl.sel{background:#fff;outline:2px solid var(--accent)}
+.viewtools{position:absolute;top:10px;right:10px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:70%}
+.tbtn{background:rgba(23,31,40,.88);border:1px solid var(--line);border-radius:6px;padding:5px 9px;font:600 12px var(--display);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;color:var(--ink2)}
+.tbtn[aria-pressed="true"]{color:#10151b;background:var(--accent);border-color:var(--accent)}
+.hint{position:absolute;left:10px;top:10px;font:500 12px var(--body);color:var(--muted);background:rgba(15,20,26,.75);padding:4px 8px;border-radius:5px;max-width:52%}
+.toast{position:absolute;left:10px;right:10px;bottom:10px;max-width:520px;background:rgba(23,31,40,.95);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:6px;padding:9px 12px;font-size:14px;transition:opacity .25s;pointer-events:none}
+.toast b{font:700 15px var(--display);letter-spacing:.02em}
+.toast .code{font:500 12px var(--mono);color:var(--accent);margin-right:6px}
+.toast.hide{opacity:0}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font:600 16px var(--display);letter-spacing:.05em}
+
+.strip{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;background:var(--surface);border-top:1px solid var(--line)}
+.ctl{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:92px;flex:1 1 92px;max-width:150px;padding:7px 10px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);cursor:pointer;text-align:left;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.ctl .k{font:500 11px var(--mono);color:var(--muted)}
+.ctl .v{font:700 15px/1.1 var(--display);letter-spacing:.03em}
+.ctl .st{font:600 11px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ctl.on .st{color:var(--ok)}
+.ctl.start{border-color:#2c7a4d}.ctl.start .v{color:#62e39a}
+.ctl.stop{border-color:#8a3434}.ctl.stop .v{color:#ff8080}
+.ctl.emg{border-color:#b08a1d;background:linear-gradient(#2a2410,#231e0f)}.ctl.emg .v{color:#ff6262}
+.ctl.held{transform:translateY(1px);filter:brightness(1.25)}
+.ctl.emg.on .st{color:#ff6262}
+
+.side{overflow-y:auto;background:var(--bg);padding:14px 16px 28px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px}
+.card h2{margin:0 0 8px;font:700 13px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.chip{display:flex;flex-direction:column;gap:1px;padding:7px 9px;border-radius:6px;background:var(--surface2);border-left:3px solid var(--line)}
+.chip .k{font:600 11px var(--display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.chip .v{font:700 15px/1.15 var(--display);letter-spacing:.02em}
+.chip.good{border-left-color:var(--ok)}.chip.warn{border-left-color:var(--accent)}.chip.bad{border-left-color:var(--danger)}
+.rst{display:flex;gap:6px;align-items:center}
+.dot{width:12px;height:12px;border-radius:50%;background:#333b44;display:inline-block}
+.heat{margin-top:10px}
+.heat .row{display:flex;justify-content:space-between;font:600 12px var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.meter{height:7px;border-radius:4px;background:var(--surface2);overflow:hidden;margin-top:4px}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--live));transition:width .15s linear}
+.faults{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.fbtn{flex:1 1 30%;padding:8px 8px;border-radius:6px;border:1px dashed #5b4a1f;background:transparent;color:var(--accent);font:600 13px var(--display);letter-spacing:.03em;cursor:pointer}
+.fbtn[aria-pressed="true"]{background:#3a2b10;border-style:solid}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tab{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:8px 4px;font:700 14px var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabpanel{padding-top:12px}
+.tabpanel[hidden]{display:none}
+
+.prog{display:flex;align-items:center;gap:10px;margin-bottom:10px;font:600 13px var(--display);letter-spacing:.04em;color:var(--muted)}
+.prog .meter{flex:1;margin:0}
+.prog .meter i{background:var(--ok)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.steps li{display:grid;grid-template-columns:24px 1fr;gap:8px;padding:7px 8px;border-radius:6px;color:var(--muted)}
+.steps .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:600 12px var(--mono);border:1px solid var(--line)}
+.steps li.done{color:var(--ink2)}
+.steps li.done .n{background:var(--ok);border-color:var(--ok);color:#0f141a}
+.steps li.cur{background:var(--surface2);color:var(--ink);outline:1px solid #4a3d18}
+.steps li.cur .n{border-color:var(--accent);color:var(--accent)}
+.steps .t{font-weight:600}
+.steps .d{font-size:14px;color:var(--ink2);margin-top:2px}
+.steps li:not(.cur) .d{display:none}
+.steps li.done .d{display:block;color:var(--muted);font-size:13px}
+.qs{margin:14px 0 0;padding-left:20px;color:var(--ink2)}
+.qs li{margin-bottom:6px}
+h3{margin:16px 0 6px;font:700 15px var(--display);letter-spacing:.04em;text-transform:uppercase}
+.small{font-size:13px;color:var(--muted)}
+.linkbtn{background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;color:var(--ink2);cursor:pointer;font:600 12px var(--display);letter-spacing:.05em;text-transform:uppercase}
+
+.diag{background:#0c1116;border:1px solid var(--line);border-radius:8px;padding:6px;overflow-x:auto}
+.diag svg{display:block;width:100%;min-width:330px;height:auto}
+svg .w{stroke:#4b5765;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+svg .w.n{stroke:var(--neutral);opacity:.75}
+svg .w.live{stroke:var(--live);stroke-dasharray:7 4;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-11}}
+svg .ct line,svg .sym{stroke:var(--ink2);stroke-width:1.8;fill:none;stroke-linecap:round}
+svg .ct .fc{fill:transparent}
+svg .ct.closed .fc{fill:var(--ok);opacity:.5}
+svg .coil{fill:transparent;stroke:var(--ink2);stroke-width:1.8}
+svg .coil.on{fill:var(--live);fill-opacity:.55}
+svg .lamp{fill:transparent;stroke:var(--ink2);stroke-width:1.8}
+svg .code{font:700 11px var(--display);fill:var(--ink);text-anchor:middle;letter-spacing:.02em}
+svg .sub{font:500 8.5px var(--mono);fill:var(--muted);text-anchor:middle}
+svg .lab{font:700 11px var(--display);fill:var(--muted)}
+svg .blade{stroke:var(--ink);stroke-width:2.2;stroke-linecap:round}
+svg .dotn{fill:var(--ink2)}
+svg .mot{fill:transparent;stroke:var(--ink2);stroke-width:2}
+svg .mot.on{stroke:var(--ok)}
+svg .spin{transform-box:fill-box;transform-origin:center}
+svg .spin.on{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:16px;height:3px;border-radius:2px;display:inline-block}
+
+.comps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.cbtn{border:1px solid var(--line);background:var(--surface2);border-radius:5px;padding:4px 8px;font:500 12px var(--mono);cursor:pointer;color:var(--ink2)}
+.cbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.info .ttl{font:700 19px/1.15 var(--display);letter-spacing:.01em}
+.info .code{font:500 12px var(--mono);color:var(--accent)}
+.info p{margin:6px 0}
+.info .term{font:500 12px/1.5 var(--mono);color:var(--ink2);background:var(--surface2);border-radius:5px;padding:7px 9px;margin-top:8px}
+table.wc{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
+table.wc td{padding:4px 6px;border-bottom:1px solid var(--line)}
+table.wc i{display:inline-block;width:22px;height:6px;border-radius:3px;vertical-align:middle}
+
+@media (max-width:900px){
+  html,body{height:auto}
+  .app{display:block}
+  .stage{border-right:0}
+  .view{height:58svh;min-height:340px;flex:none}
+  .side{overflow:visible}
+  h1{font-size:21px}
+  .hint{display:none}
+  .tbtn{font-size:11px;padding:4px 7px}
+  .viewtools{max-width:80%;gap:4px}
+}
+@media (max-width:420px){
+  .ctl{min-width:30%;flex-basis:30%;padding:6px 8px}
+  .ctl .v{font-size:14px}
+  .bar{padding:10px 12px 8px}
+  .dims{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){
+  svg .w.live,svg .spin.on{animation:none}
+}
+
+.tabs{overflow-x:auto;scrollbar-width:none}
+.tab{flex:1 0 auto;padding:8px 8px;font-size:13px}
+svg .wn{font:500 8px var(--mono);fill:var(--accent);text-anchor:middle}
+svg .warnTxt{font:700 9px var(--display);fill:var(--danger);text-anchor:middle;letter-spacing:.04em}
+.wtbl{width:100%;border-collapse:collapse;font-size:13px}
+.wtbl th{text-align:left;font:600 11px var(--display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:6px 6px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg)}
+.wtbl td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.wtbl tr.row{cursor:pointer}
+.wtbl tr.row:hover td{background:var(--surface)}
+.wtbl tr.row.sel td{background:#2a2410}
+.wtbl tr.grp td{font:700 12px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);background:var(--surface2);padding:7px 6px}
+.mk{display:inline-block;min-width:34px;text-align:center;font:500 12px var(--mono);color:#111;background:#f4f4ef;border-radius:3px;padding:1px 4px;border-left:4px solid #f2c81c}
+.mk.c{border-left-color:#1f5fd6}
+.mk.n{border-left-color:#3b82f6}.mk.pe{border-left-color:#3a9a3a}
+.wtbl .ft{font:500 12px var(--mono);color:var(--ink2)}
+.wtwrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.std{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:13px;margin:0 0 12px}
+.std dt{font:600 12px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.std dd{margin:0;color:var(--ink2)}
+.ctl.rev{border-color:#2a5a9a}.ctl.rev .v{color:#7fb2ff}
+@media (max-width:900px){.wtwrap{max-height:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="stage">
+    <header class="bar">
+      <div>
+        <div class="eyebrow">Teknik Otomasi Industri · SMKS 2 Triple J</div>
+        <h1>Panel Forward-Reverse Motor 3 Fasa</h1>
+      </div>
+      <div class="dims">400 × 600 × 200 mm</div>
+    </header>
+    <div class="view" id="view">
+      <canvas id="c" aria-label="Model 3D panel forward-reverse. Seret untuk memutar, ketuk komponen atau kabel."></canvas>
+      <div id="labels"></div>
+      <div class="loading" id="loading">Memuat model 3D…</div>
+      <div class="hint">Seret untuk memutar · scroll/cubit untuk zoom · ketuk komponen atau kabel</div>
+      <div class="viewtools">
+        <button class="tbtn" id="tLabel" aria-pressed="true">Label</button>
+        <button class="tbtn" id="tFlow" aria-pressed="true">Aliran arus</button>
+        <button class="tbtn" id="tSound" aria-pressed="true">Suara</button>
+        <button class="tbtn" id="tCam" aria-pressed="false">Kamera awal</button>
+      </div>
+      <div class="toast hide" id="toast" role="status" aria-live="polite"></div>
+    </div>
+    <div class="strip" role="group" aria-label="Kontrol panel">
+      <button class="ctl" id="bDoor"><span class="k">Pintu panel</span><span class="v">Buka</span><span class="st">Tertutup</span></button>
+      <button class="ctl" id="bQ1"><span class="k">Q1</span><span class="v">MCB utama</span><span class="st">OFF</span></button>
+      <button class="ctl" id="bF1"><span class="k">F1</span><span class="v">MCB kontrol</span><span class="st">OFF</span></button>
+      <button class="ctl start" id="bFwd"><span class="k">S2 · NO</span><span class="v">FORWARD</span><span class="st">tekan</span></button>
+      <button class="ctl rev" id="bRev"><span class="k">S3 · NO</span><span class="v">REVERSE</span><span class="st">tekan</span></button>
+      <button class="ctl stop" id="bStop"><span class="k">S1 · NC</span><span class="v">STOP</span><span class="st">tekan</span></button>
+      <button class="ctl emg" id="bEmg"><span class="k">S0 · NC</span><span class="v">EMG</span><span class="st">lepas</span></button>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <h2>Status panel</h2>
+      <div class="chips">
+        <div class="chip" id="cSup"><span class="k">Suplai R S T</span><span class="v rst"><i class="dot" id="dR"></i><i class="dot" id="dS"></i><i class="dot" id="dT"></i><span id="supTxt">Padam</span></span></div>
+        <div class="chip" id="cCtl"><span class="k">Rangkaian kontrol</span><span class="v" id="ctlTxt">Tidak bertegangan</span></div>
+        <div class="chip" id="cK"><span class="k">Kontaktor</span><span class="v" id="kTxt">K1 lepas · K2 lepas</span></div>
+        <div class="chip" id="cMot"><span class="k">Motor M1</span><span class="v" id="motTxt">Berhenti</span></div>
+      </div>
+      <div class="heat">
+        <div class="row"><span>Panas bimetal TOR F2</span><span id="torTxt">Normal</span></div>
+        <div class="meter"><i id="heatBar"></i></div>
+      </div>
+      <div class="faults" role="group" aria-label="Simulasi gangguan">
+        <button class="fbtn" id="fOver" aria-pressed="false">Beban lebih</button>
+        <button class="fbtn" id="fPhase" aria-pressed="false">Putus fasa T</button>
+        <button class="fbtn" id="fBypass" aria-pressed="false">Lepas interlock</button>
+        <button class="fbtn" id="fReset">Reset TOR</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tab-prak" aria-selected="true" aria-controls="p-prak">Praktikum</button>
+        <button class="tab" role="tab" id="tab-ctl" aria-selected="false" aria-controls="p-ctl">Kontrol</button>
+        <button class="tab" role="tab" id="tab-daya" aria-selected="false" aria-controls="p-daya">Daya</button>
+        <button class="tab" role="tab" id="tab-kbl" aria-selected="false" aria-controls="p-kbl">Alamat kabel</button>
+        <button class="tab" role="tab" id="tab-komp" aria-selected="false" aria-controls="p-komp">Komponen</button>
+      </div>
+
+      <div class="tabpanel" id="p-prak" role="tabpanel" aria-labelledby="tab-prak">
+        <div class="prog"><span id="progTxt">0 / 11</span><div class="meter"><i id="progBar"></i></div><button class="linkbtn" id="bRestart">Ulangi</button></div>
+        <ol class="steps" id="steps"></ol>
+        <h3>Pertanyaan pemantik</h3>
+        <ol class="qs">
+          <li>Mengapa arah putar motor berbalik bila dua fasa ditukar? Fasa mana yang ditukar oleh K2?</li>
+          <li>Apa fungsi kontak NC K1 21-22 di jalur koil K2, dan K2 21-22 di jalur koil K1?</li>
+          <li>Coba “Lepas interlock” lalu tekan REVERSE saat motor FORWARD. Apa yang terjadi dan mengapa berbahaya?</li>
+          <li>Mengapa sebaiknya menunggu motor berhenti sebelum membalik arah? Perhatikan panas TOR saat langsung dibalik.</li>
+          <li>Mengapa kabel suplai dimasukkan dari bawah panel lewat cable gland, bukan dari atas?</li>
+          <li>Bagaimana nomor pada tube marking membantu teknisi DUDI saat merakit dan mencari gangguan?</li>
+        </ol>
+      </div>
+
+      <div class="tabpanel" id="p-ctl" role="tabpanel" aria-labelledby="tab-ctl" hidden>
+        <p class="small" style="margin-top:0">Diagram ladder rangkaian kontrol 220 V. Angka kuning kecil adalah nomor alamat kabel, sama dengan yang tertulis di tube marking.</p>
+        <div class="diag"><svg id="svgCtl" viewBox="0 0 400 340" role="img" aria-label="Diagram ladder rangkaian kontrol forward-reverse"></svg></div>
+        <div class="legend"><span><i style="background:var(--live)"></i>bertegangan</span><span><i style="background:var(--ok)"></i>kontak tertutup</span><span><i style="background:var(--neutral)"></i>netral</span></div>
+        <p class="small">Di model 3D, kabel yang bertegangan berdenyut lebih terang dengan warnanya sendiri (kuning atau biru). Kabel yang dipilih dari tabel menyala biru muda.</p>
+        <h3>Cara membaca</h3>
+        <p class="small">Rung 1 (FWD): EMG, TOR 95-96 dan STOP (semuanya NC) → tombol FWD diparalel K1 13-14 (pengunci) → K2 21-22 (interlock) → koil K1. Rung 2 (REV) sama, dengan tombol REV, K2 13-14 dan interlock K1 21-22. Kontak bantu 31-32 dan 43-44 berasal dari blok kontak bantu depan, untuk lampu READY, FWD dan REV.</p>
+      </div>
+
+      <div class="tabpanel" id="p-daya" role="tabpanel" aria-labelledby="tab-daya" hidden>
+        <p class="small" style="margin-top:0">Suplai masuk dari bawah ke X1, naik ke Q1. K1 menyambung L1-L2-L3 ke U-V-W. K2 menukar L1 dan L3, sehingga medan putar dan arah putar motor berbalik.</p>
+        <div class="diag"><svg id="svgPow" viewBox="0 0 380 352" role="img" aria-label="Diagram rangkaian daya forward-reverse"></svg></div>
+        <div class="legend"><span><i style="background:var(--live)"></i>bertegangan</span><span><i style="background:#4b5765"></i>tidak bertegangan</span></div>
+      </div>
+
+      <div class="tabpanel" id="p-kbl" role="tabpanel" aria-labelledby="tab-kbl" hidden>
+        <dl class="std">
+          <dt>Daya</dt><dd>NYAF 2,5 mm² kuning, skun Y berisolasi biru (1,5–2,5 mm²)</dd>
+          <dt>Kontrol</dt><dd>NYAF 1 mm² biru, skun Y berisolasi merah (0,5–1,5 mm²)</dd>
+          <dt>Marking</dt><dd>Tube marking di kedua ujung kabel, nomor yang sama di kedua ujung</dd>
+          <dt>Terminal</dt><dd>X1 dan X2: TB-1512 (12 posisi). Sisi bawah untuk kabel lapangan, sisi atas untuk kabel dalam panel</dd>
+        </dl>
+        <p class="small">Ketuk satu baris untuk menyorot kabel itu di model 3D. Ketuk kabel atau marking di model untuk melihat alamatnya.</p>
+        <div class="wtwrap"><table class="wtbl" id="wtbl"><thead><tr><th>No.</th><th>Dari</th><th>Ke</th></tr></thead><tbody></tbody></table></div>
+        <p class="small">Ukuran kabel di sini contoh untuk motor kecil di lab; sesuaikan dengan arus motor dan ketentuan DUDI mitra.</p>
+      </div>
+
+      <div class="tabpanel" id="p-komp" role="tabpanel" aria-labelledby="tab-komp" hidden>
+        <div class="comps" id="comps"></div>
+        <div class="info card" id="info"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+/* Pustaka 3D: cdnjs dulu, cadangan jsDelivr/unpkg; OrbitControls dari file artifact sendiri */
+window.__libs=(function(){
+  function load(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(new Error(src));};document.head.appendChild(s);});}
+  return load('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js')
+    .catch(function(){return load('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js');})
+    .catch(function(){return load('https://unpkg.com/three@0.128.0/build/three.min.js');})
+    .then(function(){return load('orbit-controls.js').catch(function(){return load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js');});});
+})();
+</script>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+let select=function(id){selected=id;renderInfo();};
+let selectWire=function(no){selWire=no;markRows();};
+
+/* ================= STATE & LOGIKA ================= */
+const S={q1:false,f1:false,fwd:false,rev:false,stop:false,emg:false,olTrip:false,phaseLoss:false,overload:false,bypass:false,
+  heat:0,k1:false,k2:false,doorTarget:0,labels:true,flow:true,sound:true,speed:0};
+let D={};
+function solve(){
+  const L1=S.q1,L2=S.q1,L3=S.q1&&!S.phaseLoss;
+  const ctrl=L1&&S.f1, n2=ctrl&&!S.emg, n3=n2&&!S.olTrip, n4=n3&&!S.stop;
+  const n5=n4&&(S.fwd||S.k1);
+  const k1=n5&&(!S.k2||S.bypass);
+  const n7=n4&&(S.rev||S.k2);
+  const k2=n7&&(!k1||S.bypass);
+  const ch1=k1!==S.k1, ch2=k2!==S.k2;
+  S.k1=k1;S.k2=k2;
+  D={L1,L2,L3,up3:!S.phaseLoss,ctrl,n2,n3,n4,n5,n7,k1,k2,
+     n9:n3&&!k1, ready:n3&&!k1&&!k2, lampF:n3&&k1, lampR:n3&&k2, emgLamp:ctrl&&S.emg};
+  D.U=(k1&&L1)||(k2&&L3); D.V=(k1||k2)&&L2; D.W=(k1&&L3)||(k2&&L1);
+  D.dir=k1&&!k2?1:k2&&!k1?-1:0;
+  D.running=D.dir!==0&&D.U&&D.V&&D.W;
+  D.single=D.dir!==0&&!D.running&&(D.U||D.V||D.W);
+  if(ch1||ch2) snd((k1||k2)?'kon':'koff');
+  if(k1&&k2&&S.q1){ // hubung singkat antar fasa
+    S.q1=false; S.short=true; snd('kon');
+    toast('<span class="code">Q1</span><b>Hubung singkat L1–L3!</b> K1 dan K2 menarik bersamaan karena interlock dilepas. Q1 trip memutus arus hubung singkat.',7000);
+    return solve();
+  }
+  updateUI();
+}
+
+/* ================= KABEL: ALAMAT ================= */
+const LIVE={
+  'L1':()=>true,'L2':()=>true,'L3':()=>D.up3,
+  'L1.1':()=>D.L1,'L2.1':()=>D.L2,'L3.1':()=>D.L3,
+  'U0':()=>D.U,'V0':()=>D.V,'W0':()=>D.W,'U1':()=>D.U,'V1':()=>D.V,'W1':()=>D.W,
+  '1':()=>D.ctrl,'2':()=>D.n2,'3':()=>D.n3,'4':()=>D.n4,'5':()=>D.n5,'6':()=>D.k1,'7':()=>D.n7,'8':()=>D.k2,
+  '9':()=>D.n9,'10':()=>D.ready,'11':()=>D.lampF,'12':()=>D.lampR,'13':()=>D.emgLamp,'N':null,'PE':null};
+// [no, dari, ke, kategori]  P=daya kuning, C=kontrol biru, D=pintu
+const WL=[
+ ['L1','Kabel suplai (bawah)','X1:L1 (bawah)','P'],['L2','Kabel suplai (bawah)','X1:L2 (bawah)','P'],['L3','Kabel suplai (bawah)','X1:L3 (bawah)','P'],
+ ['N','Kabel suplai (bawah)','X1:N (bawah)','P'],['PE','Kabel suplai (bawah)','X1:PE (bawah)','P'],
+ ['L1','X1:L1','Q1:1','P'],['L2','X1:L2','Q1:3','P'],['L3','X1:L3','Q1:5','P'],
+ ['L1.1','Q1:2','K1:1','P'],['L2.1','Q1:4','K1:3','P'],['L3.1','Q1:6','K1:5','P'],
+ ['L1.1','K1:1','K2:1','P'],['L2.1','K1:3','K2:3','P'],['L3.1','K1:5','K2:5','P'],
+ ['U0','K1:2','F2:1','P'],['V0','K1:4','F2:3','P'],['W0','K1:6','F2:5','P'],
+ ['W0','K2:2','K1:6','P'],['V0','K2:4','K1:4','P'],['U0','K2:6','K1:2','P'],
+ ['U1','F2:2','X1:U1','P'],['V1','F2:4','X1:V1','P'],['W1','F2:6','X1:W1','P'],
+ ['U1','X1:U1 (bawah)','Motor M1:U1','P'],['V1','X1:V1 (bawah)','Motor M1:V1','P'],['W1','X1:W1 (bawah)','Motor M1:W1','P'],['PE','X1:PE2 (bawah)','Motor M1:PE','P'],
+ ['L1.1','F1:1','X1:L1.1','C'],['L2.1','Q1:4','X1:L2.1','C'],['L3.1','Q1:6','X1:L3.1','C'],
+ ['L1.1','Q1:2','F1:1','C'],['1','F1:2','X2:1','C'],
+ ['2','X2:2','F2:95','C'],['3','F2:96','X2:3','C'],['3','X2:3','K1:31','C'],['3','K1:31','K1:43','C'],['3','K1:43','K2:43','C'],
+ ['4','X2:4','K1:13','C'],['4','K1:13','K2:13','C'],
+ ['5','X2:5','K1:14','C'],['5','K1:14','K2:21','C'],['6','K2:22','K1:A1','C'],
+ ['7','X2:7','K2:14','C'],['7','K2:14','K1:21','C'],['8','K1:22','K2:A1','C'],
+ ['9','K1:32','K2:31','C'],['10','K2:32','X2:10','C'],['11','K1:44','X2:11','C'],['12','K2:44','X2:12','C'],
+ ['N','X1:N','X2:N','C'],['N','X2:N','K1:A2','C'],['N','K1:A2','K2:A2','C'],
+ ['L1.1','X1:L1.1 (bawah)','H1:X1','D'],['L2.1','X1:L2.1 (bawah)','H2:X1','D'],['L3.1','X1:L3.1 (bawah)','H3:X1','D'],
+ ['1','X2:1 (bawah)','S0:11','D'],['1','S0:11','S0:13','D'],['2','S0:12','X2:2 (bawah)','D'],
+ ['3','X2:3 (bawah)','S1:11','D'],['4','S1:12','X2:4 (bawah)','D'],['4','S1:12','S2:13','D'],['4','S2:13','S3:13','D'],
+ ['5','S2:14','X2:5 (bawah)','D'],['7','S3:14','X2:7 (bawah)','D'],
+ ['10','X2:10 (bawah)','H4:X1','D'],['11','X2:11 (bawah)','H5:X1','D'],['12','X2:12 (bawah)','H6:X1','D'],['13','S0:14','H7:X1','D'],
+ ['N','X2:N (bawah)','H1…H7:X2 (jumper)','D'],
+];
+const GRP={P:'Daya · kuning 2,5 mm²',C:'Kontrol dalam panel · biru 1 mm²',D:'Kontrol pintu · biru 1 mm²'};
+function mkCls(no,cat){return no==='PE'?'mk pe':no==='N'?'mk n':cat==='P'?'mk':'mk c';}
+let selWire=null;
+function buildTable(){
+  const tb=$('wtbl').querySelector('tbody'); let cur='';
+  WL.forEach(r=>{
+    if(r[3]!==cur){cur=r[3];const g=document.createElement('tr');g.className='grp';g.innerHTML=`<td colspan="3">${GRP[cur]}</td>`;tb.appendChild(g);}
+    const tr=document.createElement('tr');tr.className='row';tr.dataset.no=r[0];tr.tabIndex=0;
+    tr.innerHTML=`<td><span class="${mkCls(r[0],r[3])}">${r[0]}</span></td><td class="ft">${r[1].replace('PE2','PE')}</td><td class="ft">${r[2].replace('PE2','PE')}</td>`;
+    const go=()=>selectWire(r[0],true,r);
+    tr.addEventListener('click',go);tr.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+    tb.appendChild(tr);
+  });
+}
+function markRows(){document.querySelectorAll('#wtbl tr.row').forEach(t=>t.classList.toggle('sel',t.dataset.no===selWire));}
+function wireSummary(no){
+  const rows=WL.filter(r=>r[0]===no);
+  const cat=rows[0]?rows[0][3]:'C';
+  const kind = no==='PE'?'Hijau-kuning · NYAF 2,5 mm²': no==='N'?'Biru (netral)':cat==='P'?'Kuning · NYAF 2,5 mm² · skun Y biru':'Biru · NYAF 1 mm² · skun Y merah';
+  return `<span class="code">Kabel ${no}</span><b>${kind}</b><br>${rows.slice(0,4).map(r=>(r[1]+' → '+r[2]).replace(/PE2/g,'PE')).join(' · ')}${rows.length>4?' · …':''}`;
+}
+
+/* ================= INFO KOMPONEN ================= */
+const INFO={
+  Q1:{name:'MCB 3 kutub C16 (saklar utama)',fn:'Menghubungkan dan memutus suplai tiga fasa. Mengamankan kabel dari hubung singkat, termasuk bila K1 dan K2 menarik bersamaan.',term:'Masuk 1 · 3 · 5 (L1 L2 L3)\nKeluar 2 · 4 · 6 (L1.1 L2.1 L3.1)',act:'Ketuk tuasnya untuk ON / OFF.'},
+  F1:{name:'MCB 1 kutub C2 (pengaman kontrol)',fn:'Mengamankan rangkaian kontrol 220 V. Masukannya L1.1 dari Q1, keluarannya kabel nomor 1.',term:'1 (L1.1) → 2 (kabel 1)',act:'Ketuk tuasnya untuk ON / OFF.'},
+  K1:{name:'Kontaktor K1 · FORWARD',fn:'Menyambung L1-L2-L3 ke U-V-W, motor berputar kanan. Dilengkapi blok kontak bantu depan (2NO+2NC) untuk interlock dan lampu.',term:'Koil A1 (6) – A2 (N)\nUtama 1-3-5 (L1.1 L2.1 L3.1) → 2-4-6 (U0 V0 W0)\n13-14 NO pengunci (4 → 5)\n21-22 NC interlock ke koil K2 (7 → 8)\n31-32 NC READY (3 → 9)\n43-44 NO lampu FWD (3 → 11)',act:''},
+  K2:{name:'Kontaktor K2 · REVERSE',fn:'Menukar L1 dan L3: keluaran 2 ke W0, 6 ke U0. Urutan fasa motor berbalik sehingga motor berputar kiri.',term:'Koil A1 (8) – A2 (N)\nUtama 1-3-5 (L1.1 L2.1 L3.1) → 2 (W0) · 4 (V0) · 6 (U0)\n13-14 NO pengunci (4 → 7)\n21-22 NC interlock ke koil K1 (5 → 6)\n31-32 NC READY (9 → 10)\n43-44 NO lampu REV (3 → 12)',act:''},
+  F2:{name:'Thermal Overload Relay dengan dudukan terpisah',fn:'Melindungi motor dari beban lebih. Dipasang dengan dudukan sendiri sehingga keluaran K1 dan K2 bisa disatukan sebelum masuk TOR. Kontak 95-96 memutus kedua jalur koil.',term:'Utama 1-3-5 (U0 V0 W0) → 2-4-6 (U1 V1 W1)\n95 (kabel 2) – 96 (kabel 3) NC\nTombol biru = reset',act:'Ketuk tombol biru untuk reset setelah trip.'},
+  X1:{name:'Terminal daya X1 · TB-1512',fn:'Terminal blok barrier 12 posisi, dipasang dengan sekrup ke mounting plate. Sisi bawah untuk kabel lapangan (suplai yang masuk dari bawah, kabel motor, dan lampu R-S-T ke pintu). Sisi atas untuk kabel dalam panel.',term:'1 L1 · 2 L2 · 3 L3 · 4 N · 5 PE · 6 U1\n7 V1 · 8 W1 · 9 PE · 10 L1.1 · 11 L2.1 · 12 L3.1',act:''},
+  X2:{name:'Terminal kontrol X2 · TB-1512',fn:'Titik sambung kabel kontrol menuju pintu panel. Nomor kabel sama dengan alamat di tube marking, jadi pintu bisa dilepas dan dipasang lagi tanpa salah sambung.',term:'1 (1) · 2 (2) · 3 (3) · 4 (4) · 5 (5) · 6 (7)\n7 (10) · 8 (11) · 9 (12) · 10 N · 11–12 cadangan',act:''},
+  H1:{name:'Lampu fasa R',fn:'Menyala bila L1 ada setelah Q1.',term:'X1 (L1.1) – X2 (N)',act:''},
+  H2:{name:'Lampu fasa S',fn:'Menyala bila L2 ada setelah Q1.',term:'X1 (L2.1) – X2 (N)',act:''},
+  H3:{name:'Lampu fasa T',fn:'Menyala bila L3 ada setelah Q1. Coba “Putus fasa T”.',term:'X1 (L3.1) – X2 (N)',act:''},
+  H4:{name:'Lampu READY (putih)',fn:'Menyala bila kontrol normal dan kedua kontaktor lepas (lewat K1 31-32 dan K2 31-32).',term:'X1 (10) – X2 (N)',act:''},
+  H5:{name:'Lampu FORWARD (hijau)',fn:'Menyala saat K1 menarik, lewat kontak K1 43-44.',term:'X1 (11) – X2 (N)',act:''},
+  H6:{name:'Lampu REVERSE (kuning)',fn:'Menyala saat K2 menarik, lewat kontak K2 43-44.',term:'X1 (12) – X2 (N)',act:''},
+  H7:{name:'Lampu EMG (merah)',fn:'Menyala saat tombol darurat ditekan, lewat S0 13-14.',term:'X1 (13) – X2 (N)',act:''},
+  S0:{name:'Tombol emergency stop (jamur, mengunci)',fn:'Kontak NC 11-12 memutus seluruh rangkaian koil. Tetap terkunci sampai diputar.',term:'NC 11 (1) – 12 (2)\nNO 13 (1) – 14 (13)',act:'Ketuk untuk menekan, ketuk lagi untuk melepas.'},
+  S1:{name:'Tombol STOP (merah)',fn:'Kontak NC. Memutus kedua jalur koil sekaligus.',term:'NC 11 (3) – 12 (4)',act:'Tekan dan tahan, lalu lepas.'},
+  S2:{name:'Tombol FORWARD (hijau)',fn:'Kontak NO. Memberi tegangan ke koil K1 bila K2 tidak sedang menarik.',term:'NO 13 (4) – 14 (5)',act:'Tekan lalu lepas.'},
+  S3:{name:'Tombol REVERSE (biru)',fn:'Kontak NO. Memberi tegangan ke koil K2 bila K1 tidak sedang menarik.',term:'NO 13 (4) – 14 (7)',act:'Tekan lalu lepas.'},
+  M1:{name:'Motor induksi 3 fasa',fn:'Arah putar ditentukan urutan fasa. Cakram kuning-hitam menunjukkan arah: searah jarum jam = FORWARD, berlawanan = REVERSE.',term:'U1 · V1 · W1 · PE',act:''},
+  kabel:{name:'Standar kabel, skun Y dan tube marking',fn:'Kabel daya kuning, kabel kontrol biru. Setiap ujung kabel dipasang skun Y (fork) berisolasi yang di-press rapat, lalu tube marking bertuliskan alamat kabel. Nomor di kedua ujung harus sama dan dibaca dari kiri ke kanan atau dari bawah ke atas.',term:'Skun Y biru: 1,5–2,5 mm² (daya)\nSkun Y merah: 0,5–1,5 mm² (kontrol)\nMarking: L1…, U0/U1…, 1–13, N, PE',act:'Zoom ke terminal untuk membaca tube marking.'},
+  panel:{name:'Box panel 400 × 600 × 200 mm',fn:'Box baja dinding dengan mounting plate, DIN rail 35 mm, dan kabel duct terbuka (tutup dilepas agar jalur kabel terlihat). Kabel suplai dan kabel motor masuk dari bawah lewat cable gland, supaya air yang mengalir di kabel dan debu tidak masuk dari atas.',term:'Cable gland bawah: suplai (kiri) · motor (kanan)',act:'Ketuk pintu atau gagangnya untuk membuka / menutup.'},
+};
+const ORDER=['Q1','F1','K1','K2','F2','X1','X2','H1','H2','H3','H4','H5','H6','H7','S2','S3','S1','S0','M1','kabel','panel'];
+
+/* ================= UI ================= */
+let toastTimer;
+function toast(html,ms){const t=$('toast');t.innerHTML=html;t.classList.remove('hide');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.add('hide'),ms||4600);}
+let actx=null,hum=null,humGain=null;
+function audio(){if(actx)return actx;try{actx=new(window.AudioContext||window.webkitAudioContext)();hum=actx.createOscillator();hum.type='sawtooth';hum.frequency.value=100;
+  const f=actx.createBiquadFilter();f.type='lowpass';f.frequency.value=420;humGain=actx.createGain();humGain.gain.value=0;hum.connect(f);f.connect(humGain);humGain.connect(actx.destination);hum.start();}catch(e){actx=null}return actx;}
+function snd(kind){if(!S.sound)return;const a=audio();if(!a)return;try{
+  const len=kind==='door'?0.12:kind.startsWith('k')?0.05:0.03;const buf=a.createBuffer(1,Math.floor(a.sampleRate*len),a.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++){d[i]=(Math.random()*2-1)*Math.exp(-i/(d.length*(kind==='door'?0.4:0.18)));}
+  const src=a.createBufferSource();src.buffer=buf;const g=a.createGain();g.gain.value=kind==='kon'?0.55:kind==='door'?0.18:0.3;
+  const f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=kind==='kon'?1400:kind==='mcb'?2600:kind==='door'?500:3200;
+  src.connect(f);f.connect(g);g.connect(a.destination);src.start();}catch(e){}}
+
+/* ================= PRAKTIKUM ================= */
+const STEPS=[
+ {t:'Buka pintu panel',d:'Amati kabel suplai yang masuk dari bawah ke X1, jalur kabel kuning (daya) dan biru (kontrol). Zoom ke terminal untuk membaca tube marking.',ok:()=>S.doorTarget===1},
+ {t:'ON-kan MCB utama Q1',d:'Lampu R, S, T menyala.',ok:()=>D.L1&&D.L2&&D.L3},
+ {t:'ON-kan MCB kontrol F1',d:'Lampu READY menyala.',ok:()=>D.ready},
+ {t:'Tekan FORWARD',d:'K1 menarik, lampu FWD menyala, motor berputar searah jarum jam.',ok:()=>D.k1},
+ {t:'Tekan REVERSE saat motor FORWARD',d:'Tidak terjadi apa-apa: kontak NC K1 21-22 membuka jalur koil K2 (interlock).',ok:(ev)=>ev==='rev'&&D.k1&&!D.k2},
+ {t:'Tekan STOP',d:'K1 lepas, motor melambat lalu berhenti, READY menyala lagi.',ok:(ev,was)=>ev==='stop'&&was&&!D.k1&&!D.k2},
+ {t:'Tekan REVERSE',d:'K2 menarik, lampu REV menyala, motor berputar berlawanan jarum jam.',ok:()=>D.k2&&!D.k1},
+ {t:'Tekan EMG',d:'Kontaktor lepas seketika, lampu EMG menyala.',ok:(ev,was)=>ev==='emgOn'&&was},
+ {t:'Lepas EMG, jalankan motor lagi',d:'Ketuk EMG lagi untuk melepas, lalu tekan FORWARD atau REVERSE.',ok:()=>!S.emg&&(D.k1||D.k2)},
+ {t:'Uji salah wiring: lepas interlock',d:'Tekan “Lepas interlock”, jalankan FORWARD, lalu tekan REVERSE. K1 dan K2 menarik bersamaan: hubung singkat L1–L3.',ok:ev=>ev==='short'},
+ {t:'Pasang interlock, nyalakan ulang',d:'Tekan lagi “Lepas interlock” agar terpasang, ON-kan Q1, lalu jalankan motor.',ok:()=>!S.bypass&&(D.k1||D.k2)},
+];
+let stepIdx=0;
+function emit(ev,was){let e=ev,moved=false;while(stepIdx<STEPS.length&&STEPS[stepIdx].ok(e,was)){stepIdx++;e='_';moved=true;}
+  if(moved){renderSteps();if(stepIdx===STEPS.length)toast('<b>Praktikum selesai.</b> Diskusikan pertanyaan pemantik.',6000);}}
+function renderSteps(){const ol=$('steps');ol.innerHTML='';STEPS.forEach((s,i)=>{const li=document.createElement('li');li.className=i<stepIdx?'done':i===stepIdx?'cur':'';
+  li.innerHTML=`<span class="n">${i<stepIdx?'✓':i+1}</span><div><div class="t">${s.t}</div><div class="d">${s.d}</div></div>`;ol.appendChild(li);});
+  $('progTxt').textContent=`${stepIdx} / ${STEPS.length}`;$('progBar').style.width=(stepIdx/STEPS.length*100)+'%';}
+
+/* ================= AKSI ================= */
+function act(name){
+  const was=S.k1||S.k2;let ev=name;S.short=false;
+  switch(name){
+    case 'door':S.doorTarget=S.doorTarget?0:1;snd('door');break;
+    case 'q1':S.q1=!S.q1;snd('mcb');break;
+    case 'f1':S.f1=!S.f1;snd('mcb');break;
+    case 'fwd':if(S.fwd)return;S.fwd=true;snd('btn');break;
+    case 'fwdUp':if(!S.fwd)return;S.fwd=false;break;
+    case 'rev':if(S.rev)return;S.rev=true;snd('btn');break;
+    case 'revUp':if(!S.rev)return;S.rev=false;break;
+    case 'stop':if(S.stop)return;S.stop=true;snd('btn');break;
+    case 'stopUp':if(!S.stop)return;S.stop=false;break;
+    case 'emg':S.emg=!S.emg;snd('btn');ev=S.emg?'emgOn':'emgOff';
+      if(S.emg)toast('<span class="code">S0</span><b>Emergency stop ditekan.</b> Kontak NC 11-12 memutus kedua koil.');break;
+    case 'overload':if(S.overload){S.overload=false;break;}
+      if(!D.running){toast('<b>Motor belum berputar.</b> Jalankan motor dulu.');return;}
+      S.overload=true;toast('<span class="code">F2</span><b>Beban lebih.</b> Bimetal TOR mulai memanas…');break;
+    case 'phase':S.phaseLoss=!S.phaseLoss;toast(S.phaseLoss?'<b>Fasa T putus.</b> Lampu T padam, motor yang berjalan akan mendengung.':'<b>Fasa T tersambung kembali.</b>');break;
+    case 'bypass':S.bypass=!S.bypass;
+      toast(S.bypass?'<b>Interlock dilepas.</b> Kontak 21-22 dijumper (simulasi salah wiring). Jangan lakukan di panel sungguhan.':'<b>Interlock terpasang kembali.</b>');break;
+    case 'reset':if(!S.olTrip){toast('<span class="code">F2</span>TOR tidak sedang trip.');return;}
+      if(S.heat>0.55){toast('<span class="code">F2</span><b>Bimetal masih panas.</b> Tunggu beberapa detik.');return;}
+      S.olTrip=false;snd('mcb');toast('<span class="code">F2</span><b>TOR di-reset.</b> Tekan FORWARD atau REVERSE untuk menjalankan.');break;
+  }
+  solve();
+  if(name==='rev'&&D.k1&&!D.k2&&!S.bypass) toast('<span class="code">K1 21-22</span><b>Interlock bekerja.</b> K2 tidak bisa menarik selama K1 masih ON. Tekan STOP dulu.');
+  if(name==='fwd'&&D.k2&&!D.k1&&!S.bypass) toast('<span class="code">K2 21-22</span><b>Interlock bekerja.</b> K1 tidak bisa menarik selama K2 masih ON. Tekan STOP dulu.');
+  emit(S.short?'short':ev,was);
+}
+
+/* ================= DIAGRAM ================= */
+const NS='http://www.w3.org/2000/svg';
+function el(tag,a,p){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+const dyn=[];
+function seg(svg,pts,fn){const e=el('polyline',{points:pts.map(p=>p.join(',')).join(' '),class:'w'+(fn?'':' n')},svg);if(fn)dyn.push({e,fn,k:'live'});return e;}
+function dotN(svg,x,y){el('circle',{cx:x,cy:y,r:2.6,class:'dotn'},svg);}
+function txt(svg,x,y,s,cls,anchor){const t=el('text',{x,y,class:cls},svg);if(anchor)t.setAttribute('text-anchor',anchor);t.textContent=s;return t;}
+function wn(svg,x,y,s){txt(svg,x,y-4,s,'wn');}
+function contactH(svg,x,y,type,code,sub,fn){const g=el('g',{class:'ct'},svg);
+  el('line',{x1:x,y1:y,x2:x+8,y2:y},g);el('line',{x1:x+16,y1:y,x2:x+24,y2:y},g);el('rect',{x:x+8.8,y:y-7,width:6.4,height:14,class:'fc'},g);
+  el('line',{x1:x+8,y1:y-8,x2:x+8,y2:y+8},g);el('line',{x1:x+16,y1:y-8,x2:x+16,y2:y+8},g);
+  if(type==='NC')el('line',{x1:x+4,y1:y+9,x2:x+20,y2:y-9},g);
+  txt(g,x+12,y-12,code,'code');txt(g,x+12,y+19,sub,'sub');dyn.push({e:g,fn,k:'closed'});return g;}
+function coil(svg,x,y,code,sub,fn){el('line',{x1:x,y1:y,x2:x+4,y2:y,class:'sym'},svg);el('line',{x1:x+20,y1:y,x2:x+24,y2:y,class:'sym'},svg);
+  const r=el('rect',{x:x+4,y:y-8,width:16,height:16,class:'coil'},svg);txt(svg,x+12,y-12,code,'code');txt(svg,x+12,y+19,sub,'sub');dyn.push({e:r,fn,k:'on'});}
+function lampSym(svg,x,y,code,sub,color,fn){el('line',{x1:x,y1:y,x2:x+4,y2:y,class:'sym'},svg);el('line',{x1:x+20,y1:y,x2:x+24,y2:y,class:'sym'},svg);
+  const c=el('circle',{cx:x+12,cy:y,r:8,class:'lamp'},svg);el('line',{x1:x+6.4,y1:y-5.6,x2:x+17.6,y2:y+5.6,class:'sym'},svg);el('line',{x1:x+6.4,y1:y+5.6,x2:x+17.6,y2:y-5.6,class:'sym'},svg);
+  if(code)txt(svg,x+12,y-12,code,'code');if(sub)txt(svg,x+12,y+19,sub,'sub');dyn.push({e:c,fn,k:'lamp',color});}
+const bypassMarks=[];
+function buildCtl(){
+  const s=$('svgCtl');
+  txt(s,30,12,'L1.1','lab','middle');seg(s,[[30,15],[30,22]],()=>D.L1);
+  el('rect',{x:25,y:22,width:10,height:18,class:'sym'},s);el('line',{x1:30,y1:22,x2:30,y2:40,class:'sym'},s);txt(s,40,35,'F1','code','start');
+  seg(s,[[30,40],[30,320]],()=>D.ctrl);txt(s,22,52,'1','wn');
+  txt(s,356,30,'N','lab','middle');seg(s,[[356,36],[356,320]]);
+  // Rung 1 FWD
+  const y1=56,h1=94;
+  seg(s,[[30,y1],[46,y1]],()=>D.ctrl);
+  contactH(s,46,y1,'NC','S0','11-12',()=>!S.emg);
+  seg(s,[[70,y1],[86,y1]],()=>D.n2);wn(s,78,y1,'2');
+  contactH(s,86,y1,'NC','F2','95-96',()=>!S.olTrip);
+  seg(s,[[110,y1],[126,y1]],()=>D.n3);wn(s,118,y1,'3');
+  contactH(s,126,y1,'NC','S1','11-12',()=>!S.stop);
+  seg(s,[[150,y1],[170,y1]],()=>D.n4);wn(s,155,y1,'4');
+  seg(s,[[160,y1],[160,h1],[170,h1]],()=>D.n4);
+  contactH(s,170,y1,'NO','S2','13-14',()=>S.fwd);
+  contactH(s,170,h1,'NO','K1','13-14',()=>D.k1);
+  seg(s,[[194,y1],[206,y1]],()=>D.n4&&S.fwd);seg(s,[[194,h1],[206,h1]],()=>D.n4&&D.k1);
+  seg(s,[[206,h1],[206,y1]],()=>D.n5);seg(s,[[206,y1],[220,y1]],()=>D.n5);wn(s,213,y1,'5');
+  const c1=contactH(s,220,y1,'NC','K2','21-22',()=>!D.k2||S.bypass);
+  seg(s,[[244,y1],[300,y1]],()=>D.k1);wn(s,272,y1,'6');
+  coil(s,300,y1,'K1','FWD',()=>D.k1);seg(s,[[324,y1],[356,y1]]);
+  // Rung 2 REV
+  const y2=134,h2=172;
+  seg(s,[[160,h1],[160,y2],[170,y2]],()=>D.n4);seg(s,[[160,y2],[160,h2],[170,h2]],()=>D.n4);
+  contactH(s,170,y2,'NO','S3','13-14',()=>S.rev);
+  contactH(s,170,h2,'NO','K2','13-14',()=>D.k2);
+  seg(s,[[194,y2],[206,y2]],()=>D.n4&&S.rev);seg(s,[[194,h2],[206,h2]],()=>D.n4&&D.k2);
+  seg(s,[[206,h2],[206,y2]],()=>D.n7);seg(s,[[206,y2],[220,y2]],()=>D.n7);wn(s,213,y2,'7');
+  const c2=contactH(s,220,y2,'NC','K1','21-22',()=>!D.k1||S.bypass);
+  seg(s,[[244,y2],[300,y2]],()=>D.k2);wn(s,272,y2,'8');
+  coil(s,300,y2,'K2','REV',()=>D.k2);seg(s,[[324,y2],[356,y2]]);
+  [[232,y1],[232,y2]].forEach(([x,y])=>{const t=txt(s,x,y+30,'JUMPER!','warnTxt');t.style.display='none';bypassMarks.push(t);});
+  // Rung 3-5 dari node 3
+  const y3=212,y4=248,y5=284;
+  seg(s,[[118,y1],[118,y5]],()=>D.n3);
+  seg(s,[[118,y3],[140,y3]],()=>D.n3);contactH(s,140,y3,'NC','K1','31-32',()=>!D.k1);
+  seg(s,[[164,y3],[190,y3]],()=>D.n9);wn(s,177,y3,'9');contactH(s,190,y3,'NC','K2','31-32',()=>!D.k2);
+  seg(s,[[214,y3],[300,y3]],()=>D.ready);wn(s,256,y3,'10');lampSym(s,300,y3,'H4','READY','#e8eef4',()=>D.ready);seg(s,[[324,y3],[356,y3]]);
+  seg(s,[[118,y4],[140,y4]],()=>D.n3);contactH(s,140,y4,'NO','K1','43-44',()=>D.k1);
+  seg(s,[[164,y4],[300,y4]],()=>D.lampF);wn(s,232,y4,'11');lampSym(s,300,y4,'H5','FWD','#3fcf7d',()=>D.lampF);seg(s,[[324,y4],[356,y4]]);
+  seg(s,[[118,y5],[140,y5]],()=>D.n3);contactH(s,140,y5,'NO','K2','43-44',()=>D.k2);
+  seg(s,[[164,y5],[300,y5]],()=>D.lampR);wn(s,232,y5,'12');lampSym(s,300,y5,'H6','REV','#f3b52f',()=>D.lampR);seg(s,[[324,y5],[356,y5]]);
+  // Rung 6 EMG
+  const y6=320;
+  seg(s,[[30,y6],[46,y6]],()=>D.ctrl);contactH(s,46,y6,'NO','S0','13-14',()=>S.emg);
+  seg(s,[[70,y6],[300,y6]],()=>D.emgLamp);wn(s,185,y6,'13');lampSym(s,300,y6,'H7','EMG','#ff4d4d',()=>D.emgLamp);seg(s,[[324,y6],[356,y6]]);
+  [[30,y1],[118,y1],[160,y1],[206,y1],[160,h1],[160,y2],[206,y2],[118,y3],[118,y4],[356,y1],[356,y2],[356,y3],[356,y4],[356,y5]].forEach(p=>dotN(s,p[0],p[1]));
+  txt(s,8,y1+4,'1','lab');txt(s,8,y2+4,'2','lab');txt(s,8,y3+4,'3','lab');txt(s,8,y4+4,'4','lab');txt(s,8,y5+4,'5','lab');txt(s,8,y6+4,'6','lab');
+}
+const blades=[];
+function contactV(svg,x,y,fn){el('line',{x1:x,y1:y,x2:x,y2:y+6,class:'sym'},svg);el('line',{x1:x,y1:y+20,x2:x,y2:y+26,class:'sym'},svg);
+  const b=el('line',{x1:x,y1:y+20,x2:x,y2:y+6,class:'blade'},svg);blades.push({b,x,y,fn});}
+function buildPow(){
+  const s=$('svgPow');const X=[110,140,170],K2X=[250,280,310],P=['L1','L2','L3'];
+  const sup=[()=>true,()=>true,()=>D.up3],aq=[()=>D.L1,()=>D.L2,()=>D.L3];
+  const k1o=[()=>D.k1&&D.L1,()=>D.k1&&D.L2,()=>D.k1&&D.L3],k2o=[()=>D.k2&&D.L1,()=>D.k2&&D.L2,()=>D.k2&&D.L3];
+  const out=[()=>D.U,()=>D.V,()=>D.W];
+  X.forEach((x,i)=>{
+    txt(s,x,13,P[i],'lab','middle');seg(s,[[x,18],[x,46]],sup[i]);contactV(s,x,46,()=>S.q1);
+    el('line',{x1:x-3,y1:49,x2:x+3,y2:55,class:'sym'},s);el('line',{x1:x+3,y1:49,x2:x-3,y2:55,class:'sym'},s);
+    seg(s,[[x,72],[x,150]],aq[i]);contactV(s,x,150,()=>D.k1);seg(s,[[x,176],[x,240]],k1o[i]);
+    const ty=[92,104,116][i];
+    seg(s,[[x,ty],[K2X[i],ty],[K2X[i],150]],aq[i]);dotN(s,x,ty);contactV(s,K2X[i],150,()=>D.k2);
+    seg(s,[[x,226],[x,240]],out[i]);seg(s,[[x,240],[x,248],[x+5,251],[x-5,257],[x,260],[x,270]],out[i]);seg(s,[[x,270],[x,292]],out[i]);
+  });
+  txt(s,184,88,'L1.1 · L2.1 · L3.1','wn','start');
+  // K2 keluar: L1→W, L2→V, L3→U
+  const map=[2,1,0],jy=[194,206,218];
+  K2X.forEach((x,j)=>{const tgt=X[map[j]];seg(s,[[x,176],[x,jy[j]],[tgt,jy[j]]],k2o[j]);dotN(s,tgt,jy[j]);});
+  [['U0',0],['V0',1],['W0',2]].forEach(([n,i])=>txt(s,X[i]-11,236,n,'wn'));
+  [['U1',0],['V1',1],['W1',2]].forEach(([n,i])=>txt(s,X[i]-11,286,n,'wn'));
+  el('line',{x1:100,y1:59,x2:182,y2:59,class:'sym','stroke-dasharray':'3 3'},s);txt(s,190,63,'Q1','code','start');
+  el('line',{x1:100,y1:163,x2:182,y2:163,class:'sym','stroke-dasharray':'3 3'},s);txt(s,72,167,'K1 FWD','code','middle');
+  el('line',{x1:240,y1:163,x2:322,y2:163,class:'sym','stroke-dasharray':'3 3'},s);txt(s,350,167,'K2 REV','code','middle');
+  el('rect',{x:96,y:238,width:88,height:34,class:'sym','stroke-dasharray':'4 3'},s);txt(s,192,259,'F2','code','start');
+  txt(s,280,212,'L1 ↔ L3','warnTxt');
+  seg(s,[[110,292],[126,304]],out[0]);seg(s,[[140,292],[140,300]],out[1]);seg(s,[[170,292],[154,304]],out[2]);
+  const mc=el('circle',{cx:140,cy:322,r:22,class:'mot'},s);
+  txt(s,140,320,'M','code');txt(s,140,332,'3~','sub');txt(s,172,326,'M1','code','start');
+  const arr=txt(s,140,302,'','lab','middle');
+  dyn.push({e:mc,fn:()=>D.running,k:'on'});
+  dyn.push({e:arr,fn:()=>true,k:'text',t:()=>D.running?(D.dir>0?'↻ kanan':'↺ kiri'):''});
+}
+function updateSvgs(){
+  for(const d of dyn){
+    if(d.k==='text'){d.e.textContent=d.t();continue;}
+    const v=!!d.fn();
+    if(d.k==='live')d.e.classList.toggle('live',v);
+    else if(d.k==='closed')d.e.classList.toggle('closed',v);
+    else if(d.k==='on')d.e.classList.toggle('on',v);
+    else if(d.k==='lamp'){d.e.style.fill=v?d.color:'transparent';d.e.style.fillOpacity=v?0.85:0;}
+  }
+  for(const b of blades){const c=b.fn();b.b.setAttribute('x2',c?b.x:b.x-9);b.b.setAttribute('y2',c?b.y+6:b.y+9);}
+  bypassMarks.forEach(t=>t.style.display=S.bypass?'':'none');
+}
+
+/* ================= UPDATE UI ================= */
+function setCtl(id,on,st,v){const b=$(id);b.classList.toggle('on',on);b.querySelector('.st').textContent=st;if(v)b.querySelector('.v').textContent=v;b.setAttribute('aria-pressed',on?'true':'false');}
+function chip(id,cls){const c=$(id);c.classList.remove('good','warn','bad');if(cls)c.classList.add(cls);}
+function updateUI(){
+  setCtl('bDoor',S.doorTarget===1,S.doorTarget?'Terbuka':'Tertutup',S.doorTarget?'Tutup':'Buka');
+  setCtl('bQ1',S.q1,S.q1?'ON':'OFF');setCtl('bF1',S.f1,S.f1?'ON':'OFF');setCtl('bEmg',S.emg,S.emg?'terkunci':'lepas');
+  $('bFwd').classList.toggle('held',S.fwd);$('bRev').classList.toggle('held',S.rev);$('bStop').classList.toggle('held',S.stop);
+  const lc=['#ff4d4d','#f3c623','#4f8cff'];
+  [['dR',D.L1],['dS',D.L2],['dT',D.L3]].forEach(([id,v],i)=>{$(id).style.background=v?lc[i]:'#333b44';$(id).style.boxShadow=v?`0 0 8px ${lc[i]}`:'none';});
+  const n=(D.L1?1:0)+(D.L2?1:0)+(D.L3?1:0);
+  $('supTxt').textContent=n===3?'Lengkap':n===0?'Padam':'Fasa hilang';chip('cSup',n===3?'good':n===0?'':'bad');
+  $('ctlTxt').textContent=!D.ctrl?'Tidak bertegangan':S.emg?'EMG terkunci':S.olTrip?'TOR trip':(D.k1||D.k2)?'Bekerja':'Siap (READY)';
+  chip('cCtl',!D.ctrl?'':(S.emg||S.olTrip)?'bad':'good');
+  $('kTxt').textContent=`K1 ${D.k1?'ON':'lepas'} · K2 ${D.k2?'ON':'lepas'}`;chip('cK',D.k1||D.k2?'good':'');
+  updateMotorText();
+  $('torTxt').textContent=S.olTrip?'TRIP':S.heat>0.02?'Memanas':'Normal';$('torTxt').style.color=S.olTrip?'var(--danger)':S.heat>0.02?'var(--accent)':'';
+  $('fOver').setAttribute('aria-pressed',S.overload?'true':'false');$('fPhase').setAttribute('aria-pressed',S.phaseLoss?'true':'false');
+  $('fBypass').setAttribute('aria-pressed',S.bypass?'true':'false');$('fBypass').textContent=S.bypass?'Pasang interlock':'Lepas interlock';
+  updateSvgs();
+}
+function updateMotorText(){
+  const sp=S.speed;let t;
+  if(D.running){t=(D.dir>0?'Putar kanan (FWD)':'Putar kiri (REV)');if(sp*D.dir<0.05)t='Membalik arah…';}
+  else if(D.single)t='Mendengung (2 fasa)';else if(Math.abs(sp)>0.05)t='Melambat…';else t='Berhenti';
+  $('motTxt').textContent=t;chip('cMot',D.running?(sp*D.dir<0?'warn':'good'):D.single?'bad':'');
+}
+
+/* ================= TABS, KOMPONEN ================= */
+const tabs=['prak','ctl','daya','kbl','komp'];
+function showTab(k){tabs.forEach(t=>{$('tab-'+t).setAttribute('aria-selected',t===k?'true':'false');$('p-'+t).hidden=t!==k;});}
+tabs.forEach(t=>$('tab-'+t).addEventListener('click',()=>showTab(t)));
+let selected='K1';
+function renderInfo(){const i=INFO[selected];if(!i)return;
+  $('info').innerHTML=`<div class="code">${selected==='panel'?'Box panel':selected==='kabel'?'Kabel':selected}</div><div class="ttl">${i.name}</div><p>${i.fn}</p>${i.act?`<p class="small">${i.act}</p>`:''}<div class="term">${i.term.replace(/\n/g,'<br>')}</div>`;
+  document.querySelectorAll('.cbtn').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===selected?'true':'false'));}
+function buildComps(){const c=$('comps');ORDER.forEach(id=>{const b=document.createElement('button');b.className='cbtn';b.dataset.id=id;b.textContent=id==='panel'?'Box':id==='kabel'?'Kabel':id;b.title=INFO[id].name;
+  b.addEventListener('click',()=>select(id,true));c.appendChild(b);});}
+
+/* ================= KONTROL HTML ================= */
+function holdBtn(id,down,up){const b=$(id);
+  b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture&&b.setPointerCapture(e.pointerId);audio();act(down);});
+  const rel=()=>act(up);b.addEventListener('pointerup',rel);b.addEventListener('pointercancel',rel);b.addEventListener('lostpointercapture',rel);
+  b.addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();act(down);}});
+  b.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();act(up);}});b.addEventListener('contextmenu',e=>e.preventDefault());}
+$('bDoor').addEventListener('click',()=>act('door'));$('bQ1').addEventListener('click',()=>act('q1'));$('bF1').addEventListener('click',()=>act('f1'));$('bEmg').addEventListener('click',()=>act('emg'));
+holdBtn('bFwd','fwd','fwdUp');holdBtn('bRev','rev','revUp');holdBtn('bStop','stop','stopUp');
+$('fOver').addEventListener('click',()=>act('overload'));$('fPhase').addEventListener('click',()=>act('phase'));$('fBypass').addEventListener('click',()=>act('bypass'));$('fReset').addEventListener('click',()=>act('reset'));
+$('bRestart').addEventListener('click',()=>{stepIdx=0;Object.assign(S,{q1:false,f1:false,fwd:false,rev:false,stop:false,emg:false,olTrip:false,phaseLoss:false,overload:false,bypass:false,heat:0,k1:false,k2:false,doorTarget:0});
+  solve();renderSteps();toast('Panel dikembalikan ke kondisi awal.');});
+function toggleBtn(id,key,after){$(id).addEventListener('click',()=>{S[key]=!S[key];$(id).setAttribute('aria-pressed',S[key]?'true':'false');after&&after();});}
+toggleBtn('tLabel','labels');toggleBtn('tFlow','flow');toggleBtn('tSound','sound',()=>{if(!S.sound&&humGain)humGain.gain.value=0;});
+
+buildCtl();buildPow();buildComps();buildTable();renderSteps();solve();renderInfo();
+
+/* ================= 3D ================= */
+function fail3D(msg){const l=$('loading');if(l){l.style.padding='16px';l.style.textAlign='center';l.textContent=msg;}}
+window.__libs.then(()=>Promise.race([document.fonts?document.fonts.ready:Promise.resolve(),new Promise(r=>setTimeout(r,1500))]))
+  .then(()=>{try{init3D();}catch(e){console.error(e);fail3D('Tampilan 3D gagal dibuat di perangkat ini ('+(e&&e.message||e)+'). Panel kontrol, diagram dan tabel di bawah tetap bisa dipakai.');}})
+  .catch(()=>fail3D('Pustaka 3D tidak bisa diunduh. Periksa koneksi internet lalu muat ulang halaman. Panel kontrol, diagram dan tabel tetap bisa dipakai.'));
+
+function init3D(){
+const V3=THREE.Vector3;
+const canvas=$('c'),view=$('view');
+const LITE=window.matchMedia&&matchMedia('(pointer:coarse)').matches;
+const renderer=new THREE.WebGLRenderer({canvas,antialias:!LITE,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,LITE?1.5:2));renderer.shadowMap.enabled=!LITE;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();const d=document.createElement('div');d.className='loading';d.id='loading';view.appendChild(d);fail3D('Tampilan 3D berhenti karena memori grafis perangkat penuh. Tutup tab lain lalu muat ulang halaman.');});
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1015);scene.fog=new THREE.Fog(0x0b1015,170,330);
+const camera=new THREE.PerspectiveCamera(38,1,0.3,800);
+
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let pdown=null;
+canvas.addEventListener('pointerdown',e=>{audio();const id=pick(e);pdown={x:e.clientX,y:e.clientY,id,act:null};const A=id&&ACT[id];
+  if(A){controls.enabled=false;pdown.act=id;if(A.down)A.down();}});
+window.addEventListener('pointerup',e=>{if(!pdown)return;const moved=Math.hypot(e.clientX-pdown.x,e.clientY-pdown.y)>8;
+  if(pdown.act){const A=ACT[pdown.act];if(A.up)A.up();if(A.tap&&!moved)A.tap();controls.enabled=true;}
+  if(!moved&&pdown.id){ if(pdown.id.startsWith('W:')) selectWire(pdown.id.slice(2),false); else select(pdown.id,false); }
+  pdown=null;});
+canvas.addEventListener('pointercancel',()=>{if(pdown&&pdown.act){const A=ACT[pdown.act];if(A.up)A.up();}controls.enabled=true;pdown=null;});
+const controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true;controls.dampingFactor=0.08;controls.minDistance=6;controls.maxDistance=230;controls.maxPolarAngle=Math.PI*0.62;
+controls.addEventListener('start',()=>{camTween=null;});
+
+scene.add(new THREE.HemisphereLight(0xf2f5ff,0x3a3f46,0.75));
+const sun=new THREE.DirectionalLight(0xffffff,0.75);sun.position.set(45,70,80);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+Object.assign(sun.shadow.camera,{left:-60,right:60,top:60,bottom:-60,near:10,far:220});sun.shadow.bias=-0.0006;sun.target.position.set(5,-5,0);scene.add(sun,sun.target);
+const fill=new THREE.DirectionalLight(0xdfe8ff,0.25);fill.position.set(-60,20,40);scene.add(fill);
+const inner=new THREE.PointLight(0xffffff,0.5,60);inner.position.set(2,12,6);scene.add(inner);
+
+const mat=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.6,metalness:.05},o||{}));
+const M={steel:mat(0xd6d7d0,{roughness:.55,metalness:.12}),plate:mat(0xc9c5b6,{roughness:.5,metalness:.35}),rail:mat(0xb8b8ae,{roughness:.32,metalness:.75}),
+  white:mat(0xf0f0ec,{roughness:.5}),grey:mat(0xc7cac8,{roughness:.55}),dark:mat(0x26292e,{roughness:.5}),dark2:mat(0x3a3e45,{roughness:.55}),
+  black:mat(0x151618,{roughness:.45}),chrome:mat(0xc9ced3,{roughness:.22,metalness:.9}),bezel:mat(0x2d3034,{roughness:.35,metalness:.5}),
+  blue:mat(0x2d6fd0,{roughness:.4}),orange:mat(0xff8a1f,{roughness:.4}),motor:mat(0x45627f,{roughness:.45,metalness:.25}),motor2:mat(0x3a536c,{roughness:.5,metalness:.25}),
+  wall:mat(0xdedbd3,{roughness:.95}),floor:mat(0x8c8f8f,{roughness:.95}),gy:mat(0x8fc23a,{roughness:.5}),nblue:mat(0x2f62c9,{roughness:.5}),tb:mat(0x1d1f22,{roughness:.55})};
+
+const pickables=[];
+function box(w,h,d,m,x,y,z,p){const me=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);me.position.set(x||0,y||0,z||0);me.castShadow=true;me.receiveShadow=true;if(p)p.add(me);return me;}
+function cylZ(r,h,m,x,y,z,p,seg){const g=new THREE.CylinderGeometry(r,r,h,seg||28);g.rotateX(Math.PI/2);const me=new THREE.Mesh(g,m);me.position.set(x||0,y||0,z||0);me.castShadow=true;me.receiveShadow=true;if(p)p.add(me);return me;}
+function tex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');draw(x,w,h);const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t;}
+function plane(w,h,t,x,y,z,p,o){const m=new THREE.MeshStandardMaterial(Object.assign({map:t,roughness:.6},o||{}));const me=new THREE.Mesh(new THREE.PlaneGeometry(w,h),m);me.position.set(x,y,z);if(p)p.add(me);return me;}
+function legend(text,w,h,bg,fg,font){return tex(w,h,(x,W,H)=>{x.fillStyle=bg;x.fillRect(0,0,W,H);x.fillStyle=fg;x.font=font||`700 ${Math.round(H*0.62)}px 'Barlow Condensed', Arial`;x.textAlign='center';x.textBaseline='middle';x.fillText(text,W/2,H/2+1);});}
+function tag(obj,id){obj.userData.id=id;obj.traverse(o=>{if(o.isMesh)pickables.push(o);});return obj;}
+function polyCurve(P,r){const path=new THREE.CurvePath();let cur=P[0].clone();
+  for(let i=1;i<P.length-1;i++){const a=P[i-1],b=P[i],c=P[i+1];const d1=b.clone().sub(a),d2=c.clone().sub(b);const rr=Math.min(r,d1.length()/2,d2.length()/2);
+    const p1=b.clone().sub(d1.normalize().multiplyScalar(rr)),p2=b.clone().add(d2.normalize().multiplyScalar(rr));
+    if(cur.distanceTo(p1)>1e-3)path.add(new THREE.LineCurve3(cur.clone(),p1));if(rr>1e-3)path.add(new THREE.QuadraticBezierCurve3(p1,b.clone(),p2));cur=p2;}
+  path.add(new THREE.LineCurve3(cur,P[P.length-1]));return path;}
+function dedupe(P){const o=[P[0]];for(let i=1;i<P.length;i++){if(P[i].distanceTo(o[o.length-1])>0.06)o.push(P[i]);}return o;}
+
+/* ruang */
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(400,200),M.wall);wall.position.set(0,20,-10.8);wall.receiveShadow=true;scene.add(wall);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(400,200),M.floor);floor.rotation.x=-Math.PI/2;floor.position.set(0,-42,80);floor.receiveShadow=true;scene.add(floor);
+
+/* box panel */
+const W=40,H=60,DP=20,T=0.15,PZ=-9.35,ZC=PZ+0.75;
+const body=new THREE.Group();scene.add(body);
+box(W,H,T,M.steel,0,0,-10+T/2,body);box(T,H,DP,M.steel,-W/2+T/2,0,0,body);box(T,H,DP,M.steel,W/2-T/2,0,0,body);
+box(W,T,DP,M.steel,0,H/2-T/2,0,body);box(W,T,DP,M.steel,0,-H/2+T/2,0,body);
+box(W,1.1,T,M.steel,0,H/2-0.55,10-T/2,body);box(W,1.1,T,M.steel,0,-H/2+0.55,10-T/2,body);box(1.1,H,T,M.steel,-W/2+0.55,0,10-T/2,body);box(1.1,H,T,M.steel,W/2-0.55,0,10-T/2,body);
+[[-15,31],[15,31],[-15,-31],[15,-31]].forEach(([x,y])=>box(3,2.4,0.4,M.steel,x,y,-10.4,body));
+// cable gland di bawah: suplai (kiri), motor (kanan)
+const GL_SUP=-11,GL_MOT=-5;
+[GL_SUP,GL_MOT].forEach(x=>{const g=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,0.9,20),M.black);g.position.set(x,-30.45,-5);body.add(g);
+  const n=new THREE.Mesh(new THREE.CylinderGeometry(1.45,1.45,0.5,6),M.dark2);n.position.set(x,-31.1,-5);body.add(n);
+  const d=new THREE.Mesh(new THREE.CylinderGeometry(0.85,1.1,0.9,20),M.black);d.position.set(x,-31.8,-5);body.add(d);});
+tag(body,'panel');tag(box(36,56,0.3,M.plate,0,0,-9.5,scene),'panel');
+
+/* duct */
+function stripeTex(v){return tex(64,64,(x,w,h)=>{x.fillStyle='#9a9ea3';x.fillRect(0,0,w,h);x.fillStyle='#4a4e53';if(v)x.fillRect(0,22,w,20);else x.fillRect(22,0,20,h);});}
+const stH=stripeTex(false),stV=stripeTex(true);
+function duct(x,y,w,h,v){const g=new THREE.Group();g.position.set(x,y,PZ);scene.add(g);box(w,h,0.12,mat(0x8b8f94,{roughness:.7}),0,0,0.06,g);
+  const t=(v?stV:stH).clone();t.needsUpdate=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;if(v)t.repeat.set(1,h/1.1);else t.repeat.set(w/1.1,1);
+  const wm=mat(0xffffff,{map:t,roughness:.7});
+  if(v){box(0.15,h,6,wm,-w/2+0.075,0,3,g);box(0.15,h,6,wm,w/2-0.075,0,3,g);}else{box(w,0.15,6,wm,0,h/2-0.075,3,g);box(w,0.15,6,wm,0,-h/2+0.075,3,g);}
+  tag(g,'panel');}
+duct(-16,-0.5,3,54,true);duct(16,-0.5,3,54,true);
+const DY={top:24.5,mid1:8.5,mid2:-11,bot:-25.5};
+duct(0,DY.top,29,4);duct(0,DY.mid1,29,4);duct(0,DY.mid2,29,4);duct(0,DY.bot,29,4);
+[16.5,0].forEach(y=>{box(28,3.5,0.18,M.rail,0,y,PZ+0.09,scene);box(28,0.6,0.75,M.rail,0,y+1.45,PZ+0.375,scene);box(28,0.6,0.75,M.rail,0,y-1.45,PZ+0.375,scene);});
+
+/* terminal (titik sambung) */
+const PIN={};
+function pin(name,x,y,z,dir,duct){PIN[name]={kind:'term',p:new V3(x,y,z),dir,duct};}
+
+/* MCB */
+function mcb(id,poles,x,y,rating,lm){const g=new THREE.Group();g.position.set(x,y,ZC);scene.add(g);const mw=1.8,w=mw*poles;
+  box(w-0.06,9,5.2,M.white,0,0,2.6,g);box(w-0.06,4.4,1.2,M.white,0,0,5.8,g);for(let i=1;i<poles;i++)box(0.05,8.8,0.05,M.grey,-w/2+i*mw,0,5.22,g);
+  const lev=new THREE.Group();lev.position.set(0,-0.3,6.4);g.add(lev);const lg=new THREE.BoxGeometry(poles>1?w-0.7:0.8,0.6,1.7);lg.translate(0,0,0.85);const le=new THREE.Mesh(lg,lm);le.castShadow=true;lev.add(le);
+  const win=plane(0.7,0.4,null,0,1.45,6.41,g,{color:0x2bb24c});plane(w-0.3,0.7,legend(rating,128,40,'#f0f0ec','#222'),0,-2.75,5.21,g);
+  const nums=poles>1?[['1','2'],['3','4'],['5','6']]:[['1','2']];
+  for(let i=0;i<poles;i++){const px=-w/2+mw/2+i*mw;cylZ(0.34,0.1,M.chrome,px,3.55,5.25,g);cylZ(0.34,0.1,M.chrome,px,-3.55,5.25,g);
+    pin(id+':'+nums[i][0],x+px,y+4.5,ZC+4.0,'up','top');pin(id+':'+nums[i][1],x+px,y-4.5,ZC+4.0,'down','mid1');}
+  tag(g,id);return{g,lev,win};}
+const q1=mcb('Q1',3,-9,16.5,'Q1  C16',M.dark2);
+const f1=mcb('F1',1,-5.3,16.5,'F1 C2',M.blue);
+
+/* kontaktor */
+function contactor(id,cx,txt){const cy=2.2;const g=new THREE.Group();g.position.set(cx,cy,ZC);scene.add(g);
+  box(4.8,7.5,5.6,M.grey,0,0,2.8,g);
+  box(3.6,3.8,1.8,M.white,0,0,6.5,g);
+  plane(3.2,0.8,legend(txt,192,48,'#f0f0ec','#1d1f22'),0,0.9,7.41,g);
+  const pl=box(1.1,1.0,0.5,M.dark,0,-0.55,7.55,g);
+  const top=[['13',-2.05],['1',-1.2],['3',0],['5',1.2],['A1',2.05]],bot=[['14',-2.05],['2',-1.2],['4',0],['6',1.2],['A2',2.05]];
+  top.forEach(([n,x])=>{cylZ(0.27,0.1,M.chrome,x,3.15,5.65,g);pin(id+':'+n,cx+x,cy+3.75,ZC+4.4,'up','mid1');});
+  bot.forEach(([n,x])=>{cylZ(0.27,0.1,M.chrome,x,-3.15,5.65,g);pin(id+':'+n,cx+x,cy-3.75,ZC+4.4,'down','mid2');});
+  [['21',-1.1],['31',0],['43',1.1]].forEach(([n,x])=>{cylZ(0.22,0.1,M.chrome,x,1.55,7.45,g);pin(id+':'+n,cx+x,cy+1.9,ZC+6.7,'up','mid1');});
+  [['22',-1.1],['32',0],['44',1.1]].forEach(([n,x])=>{cylZ(0.22,0.1,M.chrome,x,-1.55,7.45,g);pin(id+':'+n,cx+x,cy-1.9,ZC+6.7,'down','mid2');});
+  tag(g,id);return{g,pl};}
+const K1=contactor('K1',-8.5,'K1 FWD 2a2b');
+const K2=contactor('K2',-1.5,'K2 REV 2a2b');
+
+/* TOR dengan dudukan */
+const TR=new THREE.Group();const tx=7,ty=0.6;TR.position.set(tx,ty,ZC);scene.add(TR);
+box(5.0,5.4,1.6,M.dark,0,0,0.8,TR);box(4.8,5,4.6,M.dark2,0,0,3.9,TR);box(3.6,3.2,1.2,M.grey,0,0,6.8,TR);
+cylZ(0.75,0.25,M.white,-0.85,0.25,7.5,TR);box(0.12,0.6,0.05,M.dark,-0.85,0.5,7.64,TR);
+const resetBtn=cylZ(0.45,0.5,M.blue,0.95,0.55,7.65,TR);const tripFlag=box(0.7,0.4,0.3,M.orange,0.95,-0.75,7.35,TR);
+plane(2.8,0.6,legend('F2  TOR',160,34,'#c7cac8','#1d1f22'),0,-1.25,7.41,TR);
+[['1',-1.2],['3',0],['5',1.2]].forEach(([n,x])=>{cylZ(0.3,0.1,M.chrome,x,2.0,6.25,TR);pin('F2:'+n,tx+x,ty+2.7,ZC+5.2,'up','mid1');});
+[['2',-1.2],['4',0],['6',1.2],['95',-2.0],['96',2.0]].forEach(([n,x])=>{cylZ(0.27,0.1,M.chrome,x,-2.0,6.25,TR);pin('F2:'+n,tx+x,ty-2.7,ZC+5.2,'down','mid2');});
+tag(TR,'F2');resetBtn.userData.id='F2R';
+
+/* terminal TB-1512: 12 posisi, barrier, dipasang sekrup langsung ke mounting plate */
+function tb1512(id,cx,names){
+  const y0=-18,Pt=0.95,n=12,L=n*Pt+1.8;const g=new THREE.Group();g.position.set(cx,y0,PZ);scene.add(g);
+  box(L,3.2,1.1,M.tb,0,0,0.55,g);
+  [-1,1].forEach(s=>{box(0.9,1.6,0.5,M.tb,s*(L/2-0.45),0,1.3,g);cylZ(0.26,0.12,M.chrome,s*(L/2-0.45),0,1.6,g);});
+  for(let i=0;i<=n;i++)box(0.09,3.2,1.25,M.tb,-n*Pt/2+i*Pt,0,1.72,g);
+  box(n*Pt,0.78,0.5,M.tb,0,0,1.35,g);
+  const lab=tex(n*80,80,(x,w,h)=>{x.fillStyle='#1d1f22';x.fillRect(0,0,w,h);x.textAlign='center';
+    names.forEach((nm,i)=>{const cxp=i*80+40;x.fillStyle='#d8dadc';x.font="600 24px 'IBM Plex Mono', monospace";x.fillText(String(i+1),cxp,28);
+      if(nm&&!nm.startsWith('c')){x.fillStyle='#f3f3ee';x.fillRect(i*80+6,40,68,34);x.fillStyle='#111';x.font=`700 ${nm.length>3?22:28}px 'Barlow Condensed', Arial`;x.fillText(nm==='PE2'?'PE':nm,cxp,67);}});});
+  plane(n*Pt,0.78,lab,0,0,1.61,g);
+  plane(1.6,0.45,legend('TB-1512',96,28,'#1d1f22','#9aa0a6',"600 18px 'IBM Plex Mono', monospace"),-L/2+0.9,1.25,1.56,g).rotation.z=0;
+  names.forEach((nm,i)=>{const x=-n*Pt/2+Pt/2+i*Pt;
+    [0.95,-0.95].forEach(yy=>{cylZ(0.3,0.22,M.chrome,x,yy,1.42,g);box(0.42,0.07,0.03,M.dark,x,yy,1.54,g);});
+    if(nm&&!nm.startsWith('c')){pin(id+':'+nm,cx+x,y0+0.95,PZ+1.55,'up','mid2');pin(id+':'+nm+'b',cx+x,y0-0.95,PZ+1.55,'down','bot');}});
+  tag(g,id);return g;}
+const X1N=['L1','L2','L3','N','PE','U1','V1','W1','PE2','L1.1','L2.1','L3.1'];
+const X2N=['1','2','3','4','5','7','10','11','12','N','c1','c2'];
+const XG1=tb1512('X1',-7,X1N);
+const XG2=tb1512('X2',7,X2N);
+
+/* ---------- KABEL, SKUN Y, TUBE MARKING ---------- */
+const COL={P:0xf2c81c,C:0x1f5fd6,N:0x2f6be0,PE:0x3a9a3a};
+const sleeveMat={P:mat(0x1d4ed8,{roughness:.35}),C:mat(0xd02020,{roughness:.35})};
+const G={barrel:new THREE.CylinderGeometry(0.12,0.12,0.3,10),sleeve:new THREE.CylinderGeometry(0.23,0.25,0.6,14),marker:new THREE.CylinderGeometry(0.22,0.22,0.72,16),
+  fork:new THREE.BoxGeometry(0.55,0.05,0.5)};
+const markerMats={};
+function markerMat(label){if(markerMats[label])return markerMats[label];
+  const t=tex(64,160,(x,w,h)=>{x.fillStyle='#f6f6f1';x.fillRect(0,0,w,h);x.save();x.translate(w/2,h/2);x.rotate(-Math.PI/2);x.fillStyle='#111';
+    x.font=`700 ${label.length>3?40:48}px 'IBM Plex Mono', Consolas, monospace`;x.textAlign='center';x.textBaseline='middle';x.fillText(label,0,2);x.restore();});
+  t.wrapS=THREE.RepeatWrapping;t.repeat.set(2,1);t.offset.set(0.5,0);
+  return markerMats[label]=new THREE.MeshStandardMaterial({map:t,roughness:.55});}
+const WIRES={}; // no -> [{m,meshes}]
+function regWire(no,m,meshes){(WIRES[no]=WIRES[no]||[]).push({m,meshes,c:m.color.getHex()});meshes.forEach(me=>{me.userData.id='W:'+no;pickables.push(me);});}
+function skun(t,no,cat,parent,dirv){
+  const d=dirv||new V3(0,t.dir==='up'?1:-1,0);const out=[];
+  const add=(geo,m,dist)=>{const me=new THREE.Mesh(geo,m);me.position.copy(t.p).addScaledVector(d,dist);
+    me.quaternion.setFromUnitVectors(new V3(0,1,0),d);me.castShadow=true;parent.add(me);out.push(me);return me;};
+  const f=add(G.fork,M.chrome,0.02);
+  add(G.barrel,M.chrome,0.18);add(G.sleeve,sleeveMat[cat==='P'?'P':'C'],0.6);add(G.marker,markerMat(no==='PE2'?'PE':no),1.28);
+  return out;}
+function wireMesh(pts,color,r,parent){const m=new THREE.MeshStandardMaterial({color,roughness:.5});
+  const curve=polyCurve(pts,0.7);const n=Math.min(260,Math.max(24,Math.ceil(curve.getLength()*1.6)));
+  const me=new THREE.Mesh(new THREE.TubeGeometry(curve,n,r,7,false),m);me.castShadow=true;(parent||scene).add(me);return{me,m};}
+let wi=0;
+function route(a,b){
+  const i=wi++;const zl=-8.2+(i%9)*0.38,yo=((i*37)%9-4)*0.2,xo=((i*53)%7-3)*0.32;
+  const lead=t=>{if(t.kind!=='term')return[t.p.clone()];const s=t.dir==='up'?1:-1;return[t.p.clone(),t.p.clone().add(new V3(0,s*1.65,0))];};
+  const P=[...lead(a)];const ya=DY[a.duct]+yo;P.push(new V3(a.p.x,ya,zl));
+  if(b.kind==='harness'){const vx=-16+xo*0.6;P.push(new V3(vx,ya,zl),new V3(vx,-2.2,zl),new V3(-17.2,-2.2,-4.6));return dedupe(P);}
+  const yb=DY[b.duct]+yo;
+  if(a.duct!==b.duct){const vx=((a.p.x+b.p.x)/2<-3?-16:16)+xo*0.6;P.push(new V3(vx,ya,zl),new V3(vx,yb,zl));}
+  P.push(new V3(b.p.x,yb,zl));P.push(...lead(b).reverse());return dedupe(P);}
+function W_(no,from,to,cat){
+  const a=typeof from==='string'?PIN[from]:from,b=typeof to==='string'?PIN[to]:to;
+  if(!a||!b){console.warn('pin?',from,to);return;}
+  const color=no==='N'?COL.N:no==='PE'||no==='PE2'?COL.PE:COL[cat];
+  const {me,m}=wireMesh(route(a,b),color,cat==='P'?0.17:0.13);
+  const parts=[me];if(a.kind==='term')parts.push(...skun(a,no,cat,scene));if(b.kind==='term')parts.push(...skun(b,no,cat,scene));
+  regWire(no==='PE2'?'PE':no,m,parts);}
+const glandB=x=>({kind:'gland',p:new V3(x,-30.0,-5),duct:'bot'});
+const HARN={kind:'harness'};
+// daya
+// suplai masuk dari bawah → X1 sisi bawah, lalu X1 sisi atas → Q1
+W_('L1',glandB(GL_SUP-0.4),'X1:L1b','P');W_('L2',glandB(GL_SUP-0.15),'X1:L2b','P');W_('L3',glandB(GL_SUP+0.1),'X1:L3b','P');
+W_('N',glandB(GL_SUP+0.35),'X1:Nb','P');W_('PE',glandB(GL_SUP+0.6),'X1:PEb','P');
+W_('L1','X1:L1','Q1:1','P');W_('L2','X1:L2','Q1:3','P');W_('L3','X1:L3','Q1:5','P');
+W_('L1.1','Q1:2','K1:1','P');W_('L2.1','Q1:4','K1:3','P');W_('L3.1','Q1:6','K1:5','P');
+W_('L1.1','K1:1','K2:1','P');W_('L2.1','K1:3','K2:3','P');W_('L3.1','K1:5','K2:5','P');
+W_('U0','K1:2','F2:1','P');W_('V0','K1:4','F2:3','P');W_('W0','K1:6','F2:5','P');
+W_('W0','K2:2','K1:6','P');W_('V0','K2:4','K1:4','P');W_('U0','K2:6','K1:2','P');
+W_('U1','F2:2','X1:U1','P');W_('V1','F2:4','X1:V1','P');W_('W1','F2:6','X1:W1','P');
+W_('U1','X1:U1b',glandB(GL_MOT-0.35),'P');W_('V1','X1:V1b',glandB(GL_MOT-0.1),'P');W_('W1','X1:W1b',glandB(GL_MOT+0.15),'P');W_('PE','X1:PE2b',glandB(GL_MOT+0.4),'P');
+// kontrol
+W_('L1.1','Q1:2','F1:1','C');W_('L1.1','F1:1','X1:L1.1','C');W_('L2.1','Q1:4','X1:L2.1','C');W_('L3.1','Q1:6','X1:L3.1','C');
+W_('1','F1:2','X2:1','C');W_('2','X2:2','F2:95','C');W_('3','F2:96','X2:3','C');
+W_('3','X2:3','K1:31','C');W_('3','K1:31','K1:43','C');W_('3','K1:43','K2:43','C');
+W_('4','X2:4','K1:13','C');W_('4','K1:13','K2:13','C');
+W_('5','X2:5','K1:14','C');W_('5','K1:14','K2:21','C');W_('6','K2:22','K1:A1','C');
+W_('7','X2:7','K2:14','C');W_('7','K2:14','K1:21','C');W_('8','K1:22','K2:A1','C');
+W_('9','K1:32','K2:31','C');W_('10','K2:32','X2:10','C');W_('11','K1:44','X2:11','C');W_('12','K2:44','X2:12','C');
+W_('N','X1:N','X2:N','C');W_('N','X2:N','K1:A2','C');W_('N','K1:A2','K2:A2','C');
+X2N.filter(n=>!n.startsWith('c')).forEach(n=>W_(n,'X2:'+n+'b',HARN,'C'));['L1.1','L2.1','L3.1'].forEach(n=>W_(n,'X1:'+n+'b',HARN,'C'));
+// kabel suplai & kabel motor (luar)
+const supCable=wireMesh([new V3(GL_SUP,-32.2,-5),new V3(GL_SUP,-40.4,-5),new V3(GL_SUP-3,-41.4,-7),new V3(-80,-41.4,-8)],0x1b1b1b,0.62,scene);
+const motorCable=wireMesh([new V3(GL_MOT,-32.2,-5),new V3(GL_MOT,-40.8,-5),new V3(GL_MOT+4,-41.4,-1),new V3(26,-41.4,2),new V3(28.2,-38,3.5),new V3(29.3,-31.2,4),new V3(30.4,-31.2,4)],0x1b1b1b,0.5,scene);
+
+/* ---------- PINTU ---------- */
+const doorPivot=new THREE.Group();doorPivot.position.set(-20,0,10.1);scene.add(doorPivot);
+const doorG=new THREE.Group();doorPivot.add(doorG);
+box(40,60,0.2,M.steel,20,0,0,doorG);
+box(39,0.15,1.6,M.steel,20,29.4,-0.9,doorG);box(39,0.15,1.6,M.steel,20,-29.4,-0.9,doorG);box(0.15,59,1.6,M.steel,0.6,0,-0.9,doorG);box(0.15,59,1.6,M.steel,39.4,0,-0.9,doorG);
+[20,-20].forEach(y=>{const h=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,4,14),M.chrome);h.position.set(-0.1,y,0.1);doorG.add(h);});
+box(1.8,7,0.3,M.dark,37.2,0,0.25,doorG);box(1.0,4.6,1.2,M.black,37.2,-0.4,0.9,doorG);cylZ(0.3,0.1,M.chrome,37.2,2.6,0.45,doorG);
+plane(28,3.6,tex(840,108,(x,w,h)=>{x.fillStyle='#1e252d';x.fillRect(0,0,w,h);x.strokeStyle='#c9ced3';x.lineWidth=4;x.strokeRect(6,6,w-12,h-12);
+  x.fillStyle='#fff';x.textAlign='center';x.font="700 38px 'Barlow Condensed', Arial";x.fillText('PANEL MOTOR M1 · FORWARD - REVERSE',w/2,50);
+  x.fillStyle='#f3b52f';x.font="600 26px 'Barlow Condensed', Arial";x.fillText('380 V / 3 FASA / 50 Hz · LAB TOI SMKS 2 TRIPLE J',w/2,86);}),20,25.6,0.11,doorG);
+plane(5,4.4,tex(240,208,(x,w,h)=>{x.clearRect(0,0,w,h);x.fillStyle='#f3c623';x.strokeStyle='#111';x.lineWidth=12;x.lineJoin='round';
+  x.beginPath();x.moveTo(w/2,12);x.lineTo(w-10,h-14);x.lineTo(10,h-14);x.closePath();x.fill();x.stroke();
+  x.fillStyle='#111';x.beginPath();x.moveTo(132,62);x.lineTo(94,136);x.lineTo(122,136);x.lineTo(104,184);x.lineTo(152,110);x.lineTo(124,110);x.lineTo(142,62);x.closePath();x.fill();}),33,-24,0.11,doorG,{transparent:true});
+tag(doorG,'door');
+
+const glowTex=tex(128,128,(x,w,h)=>{const g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.25,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h);});
+const doorItems={};const DPIN={};
+function legendPlate(text,x,y,p){plane(4.6,1.25,legend(text,184,50,'#24282d','#f2f2f2'),x,y,0.11,p);}
+function backBlock(g){box(2.5,2.5,2.8,M.grey,0,0,-1.6,g);box(2.6,0.6,0.5,M.dark2,0,1.0,-3.2,g);}
+function dpins(id,x,y,list){list.forEach(([n,dx,dy,no])=>{DPIN[id+':'+n]={kind:'term',p:new V3(x+dx,y+dy,0.1-3.0),dir:'back',no};});}
+function pilot(id,color,x,y,text,noIn){const g=new THREE.Group();g.position.set(x,y,0.1);doorG.add(g);cylZ(1.45,0.35,M.bezel,0,0,0.175,g);
+  const off=new THREE.Color(color).lerp(new THREE.Color(0x2a2a2a),0.55);const lm=new THREE.MeshStandardMaterial({color:off,emissive:color,emissiveIntensity:0,roughness:.25});cylZ(1.1,0.7,lm,0,0,0.6,g);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:0}));sp.position.set(0,0,1.3);sp.scale.set(7,7,1);g.add(sp);
+  backBlock(g);legendPlate(text,0,-2.65,g);tag(g,id);doorItems[id]={g,lm,sp,off,color:new THREE.Color(color)};
+  dpins(id,x,y,[['X1',-0.7,0.4,noIn],['X2',0.7,0.4,'N']]);}
+pilot('H1',0xff3b30,12,19,'R','L1.1');pilot('H2',0xffc61a,20,19,'S','L2.1');pilot('H3',0x3d7bff,28,19,'T','L3.1');
+pilot('H4',0xf2f6ff,8,9,'READY','10');pilot('H5',0x2fe06a,16,9,'FWD','11');pilot('H6',0xffa21a,24,9,'REV','12');pilot('H7',0xff2a2a,32,9,'EMG','13');
+function pushBtn(id,color,x,y,text,pins){const g=new THREE.Group();g.position.set(x,y,0.1);doorG.add(g);cylZ(1.45,0.45,M.bezel,0,0,0.225,g);
+  const cap=cylZ(1.05,0.8,mat(color,{roughness:.35}),0,0,0.75,g);backBlock(g);legendPlate(text,0,-2.65,g);tag(g,id);doorItems[id]={g,cap};dpins(id,x,y,pins);}
+pushBtn('S2',0x1fa34a,11,-2,'FORWARD',[['13',-0.7,0.4,'4'],['14',0.7,0.4,'5']]);
+pushBtn('S3',0x2563c9,20,-2,'REVERSE',[['13',-0.7,0.4,'4'],['14',0.7,0.4,'7']]);
+pushBtn('S1',0xd42020,29,-2,'STOP',[['11',-0.7,0.4,'3'],['12',0.7,0.4,'4']]);
+(function(){const g=new THREE.Group();g.position.set(20,-14.5,0.1);doorG.add(g);
+  const ring=tex(256,256,(x,w,h)=>{x.clearRect(0,0,w,h);x.fillStyle='#f3c623';x.beginPath();x.arc(128,128,126,0,Math.PI*2);x.fill();x.fillStyle='#111';x.font="700 30px 'Barlow Condensed', Arial";x.textAlign='center';x.textBaseline='middle';
+    const arc=(s,st,dir)=>{const step=0.135;let a=st-dir*step*(s.length-1)/2;for(const ch of s){x.save();x.translate(128+Math.cos(a)*104,128+Math.sin(a)*104);x.rotate(a+dir*Math.PI/2);x.fillText(ch,0,0);x.restore();a+=dir*step;}};
+    arc('EMERGENCY',-Math.PI/2,1);arc('STOP',Math.PI/2,-1);});
+  const pg=new THREE.CylinderGeometry(3.3,3.3,0.12,48);pg.rotateX(Math.PI/2);const p=new THREE.Mesh(pg,mat(0xf3c623));p.position.z=0.06;g.add(p);plane(6.6,6.6,ring,0,0,0.13,g,{transparent:true});
+  cylZ(1.6,0.6,M.black,0,0,0.42,g);const head=new THREE.Group();g.add(head);
+  const prof=[[0,1.35],[0.9,1.3],[1.6,1.12],[2.05,0.8],[2.1,0.4],[1.95,0.18],[1.1,0.1],[0.9,0]].map(p=>new THREE.Vector2(p[0],p[1]));
+  const lg=new THREE.LatheGeometry(prof,40);lg.rotateX(Math.PI/2);const hm=new THREE.Mesh(lg,mat(0xd41c1c,{roughness:.3}));hm.position.z=0.75;hm.castShadow=true;head.add(hm);cylZ(0.9,0.5,mat(0xb51717),0,0,0.6,head);
+  backBlock(g);tag(g,'S0');doorItems.S0={g,head};
+  dpins('S0',20,-14.5,[['11',-0.7,0.5,'1'],['12',0.7,0.5,'2'],['13',-0.7,-0.5,'1'],['14',0.7,-0.5,'13']]);})();
+// bundel pintu
+const BY={19:16.3,9:6.3,'-2':-4.7,'-14.5':-17.2};
+const bundleMat=new THREE.MeshStandardMaterial({color:0x222222,roughness:.6});
+function bundle(pts,r){const me=new THREE.Mesh(new THREE.TubeGeometry(polyCurve(pts.map(p=>new V3(...p)),1.0),60,r,8,false),bundleMat);me.castShadow=true;doorG.add(me);}
+[16.3,6.3,-4.7,-17.2].forEach(y=>bundle([[3,y,-4.6],[34,y,-4.6]],0.4));
+bundle([[3,16.3,-4.6],[3,-17.2,-4.6]],0.5);bundle([[3,-2.2,-4.6],[1.6,-2.2,-3.2]],0.5);
+Object.entries(DPIN).forEach(([k,t])=>{const rowY=t.p.y>14?16.3:t.p.y>4?6.3:t.p.y>-8?-4.7:-17.2;
+  const pts=[t.p.clone(),t.p.clone().add(new V3(0,0,-1.6)),new V3(t.p.x,rowY+0.35,-4.4)];
+  const {me,m}=wireMesh(pts,t.no==='N'?COL.N:COL.C,0.12,doorG);
+  const parts=[me,...skun(t,t.no,'C',doorG,new V3(0,0,-1))];regWire(t.no,m,parts);});
+// harness pintu ↔ badan
+const harnessMat=new THREE.MeshStandardMaterial({color:0x222222,roughness:.6});
+const hMesh=new THREE.Mesh(new THREE.BufferGeometry(),harnessMat);hMesh.castShadow=true;scene.add(hMesh);let lastAng=null;
+function updateHarness(){const ang=doorPivot.rotation.y;if(lastAng!==null&&Math.abs(ang-lastAng)<0.004)return;lastAng=ang;doorPivot.updateMatrixWorld(true);
+  const a=new V3(-17.2,-2.2,-4.6),b=new V3(-18.6,-2.2,3.5);const d1=doorG.localToWorld(new V3(1.4,-2.2,-2.6)),d2=doorG.localToWorld(new V3(3,-2.2,-4.4));
+  const mid=new V3(-19.3,-2.2,9.2).lerp(new V3((b.x+d1.x)/2-1.5,-2.2,(b.z+d1.z)/2),Math.min(1,Math.abs(ang)/1.2));
+  hMesh.geometry.dispose();hMesh.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3([a,b,mid,d1,d2]),40,0.5,8,false);}
+
+/* ---------- MOTOR ---------- */
+const MG=new THREE.Group();MG.position.set(33,-36.5,3);scene.add(MG);
+cylZ(4.5,10,M.motor,0,0,0,MG,40);
+for(let i=0;i<20;i++){const a=i/20*Math.PI*2;if(Math.cos(a)>0.85)continue;const f=box(0.22,0.8,9.6,M.motor,Math.cos(a)*4.75,Math.sin(a)*4.75,0,MG);f.rotation.z=a+Math.PI/2;}
+cylZ(4.25,1.2,M.motor,0,0,5.6,MG,40);cylZ(1.6,0.6,M.motor,0,0,6.5,MG);cylZ(0.55,3,M.chrome,0,0,8.2,MG);
+const disc=new THREE.Group();disc.position.z=9.6;MG.add(disc);
+const dt=tex(256,256,x=>{for(let i=0;i<4;i++){x.fillStyle=i%2?'#151515':'#f3c623';x.beginPath();x.moveTo(128,128);x.arc(128,128,128,i*Math.PI/2,(i+1)*Math.PI/2);x.fill();}
+  x.fillStyle='#fff';x.beginPath();x.moveTo(128,18);x.lineTo(150,52);x.lineTo(106,52);x.closePath();x.fill();x.fillStyle='#ccc';x.beginPath();x.arc(128,128,20,0,Math.PI*2);x.fill();});
+const dg=new THREE.CylinderGeometry(3.1,3.1,0.7,48);dg.rotateX(Math.PI/2);const dm=new THREE.Mesh(dg,mat(0x333333));dm.castShadow=true;disc.add(dm);plane(6.2,6.2,dt,0,0,0.36,disc,{transparent:true});
+cylZ(4.35,3.4,M.motor2,0,0,-6.7,MG,40);
+box(10.5,0.5,10,M.motor2,0,-5.25,0,MG);box(1.6,1.6,9,M.motor,-3.5,-4.4,0,MG);box(1.6,1.6,9,M.motor,3.5,-4.4,0,MG);
+box(3.6,2.2,3.6,M.motor,0,5.4,1,MG);box(3.9,0.3,3.9,M.motor2,0,6.6,1,MG);
+const np=plane(3.4,2.1,tex(204,126,(x,w,h)=>{x.fillStyle='#d9dcdf';x.fillRect(0,0,w,h);x.fillStyle='#111';x.font="700 24px 'Barlow Condensed', Arial";x.fillText('M1  3~ MOTOR',10,30);
+  x.font="500 18px 'IBM Plex Mono', monospace";x.fillText('0,75 kW  50 Hz',10,60);x.fillText('380 V Y  1,9 A',10,86);x.fillText('1400 rpm IP55',10,112);}),4.62,0.6,0,MG);np.rotation.y=Math.PI/2;
+tag(MG,'M1');
+
+/* ---------- AKSI & PICK ---------- */
+const ACT={door:{tap:()=>act('door')},Q1:{tap:()=>act('q1')},F1:{tap:()=>act('f1')},S2:{down:()=>act('fwd'),up:()=>act('fwdUp')},S3:{down:()=>act('rev'),up:()=>act('revUp')},
+  S1:{down:()=>act('stop'),up:()=>act('stopUp')},S0:{tap:()=>act('emg')},F2R:{tap:()=>act('reset')}};
+function pick(e){const r=canvas.getBoundingClientRect();mouse.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects(pickables,false)[0];if(!hit)return null;let o=hit.object;while(o){if(o.userData.id)return o.userData.id;o=o.parent;}return null;}
+
+const selBox=new THREE.BoxHelper(undefined,0xf3b52f);selBox.visible=false;scene.add(selBox);
+const OBJ={Q1:q1.g,F1:f1.g,K1:K1.g,K2:K2.g,F2:TR,X1:XG1,X2:XG2,M1:MG,panel:body};
+['H1','H2','H3','H4','H5','H6','H7','S0','S1','S2','S3'].forEach(k=>OBJ[k]=doorItems[k].g);
+const INSIDE=new Set(['Q1','F1','K1','K2','F2','X1','X2','kabel']);
+const DOORSET=new Set(['H1','H2','H3','H4','H5','H6','H7','S0','S1','S2','S3']);
+function stateLine(id){switch(id){
+  case 'Q1':return S.q1?'ON.':'OFF: ketuk tuas untuk ON.';case 'F1':return S.f1?'ON.':'OFF: ketuk tuas untuk ON.';
+  case 'K1':return D.k1?'Menarik: motor FORWARD.':'Lepas.';case 'K2':return D.k2?'Menarik: motor REVERSE.':'Lepas.';
+  case 'F2':return S.olTrip?'TRIP. Ketuk tombol biru untuk reset.':'Normal.';case 'S0':return S.emg?'Terkunci. Ketuk lagi untuk melepas.':'Ketuk untuk menekan.';
+  case 'M1':return D.running?(D.dir>0?'Putar kanan.':'Putar kiri.'):'Berhenti.';default:return INFO[id].act||INFO[id].fn.split('. ')[0]+'.';}}
+select=function(id,focus){if(id==='door')id='panel';if(id==='F2R')id='F2';if(!INFO[id])return;selected=id;renderInfo();
+  const o=OBJ[id];if(o&&id!=='panel'){selBox.setFromObject(o);selBox.visible=true;}else selBox.visible=false;
+  toast(`<span class="code">${id==='panel'?'Box':id==='kabel'?'Kabel':id}</span><b>${INFO[id].name}</b><br>${stateLine(id)}`,4800);
+  if(focus){if(INSIDE.has(id)&&S.doorTarget!==1)act('door');if(DOORSET.has(id)&&S.doorTarget===1)act('door');
+    if(id==='kabel')focusPoint(PIN['K1:1'].p.clone(),14,new V3(0.3,0.15,1));else focusOn(id);}};
+let hiNo=null;
+selectWire=function(no,focus,row){selWire=no;markRows();hiNo=no;selBox.visible=false;
+  toast(wireSummary(no),6000);
+  if(focus){const pk=v=>PIN[v.replace(' (bawah)','b')];const firstEnd=row?(pk(row[1])||pk(row[2])||DPIN[row[1]]||DPIN[row[2]]):null;
+    if(firstEnd){const isDoor=!!(DPIN[row[1]]||DPIN[row[2]])&&!(pk(row[1])||pk(row[2]));
+      if(S.doorTarget!==1)act('door');
+      if(isDoor){setTimeout(()=>{doorPivot.updateMatrixWorld(true);focusPoint(doorG.localToWorld(firstEnd.p.clone()),16,new V3(0.9,0.2,0.4).normalize());},450);}
+      else focusPoint(firstEnd.p.clone(),13,new V3(0.25,0.12,1).normalize());}}};
+
+/* label HTML */
+const LBL=[];
+function addLbl(id,text,obj,off,cls){const d=document.createElement('button');d.className='lbl '+(cls||'');d.textContent=text;d.addEventListener('click',()=>select(id,false));$('labels').appendChild(d);LBL.push({id,d,obj,off:new V3(...off),door:cls==='door'});}
+addLbl('Q1','Q1',q1.g,[0,6.2,4]);addLbl('F1','F1',f1.g,[0,6.2,4]);addLbl('K1','K1 FWD',K1.g,[0,5.4,6]);addLbl('K2','K2 REV',K2.g,[0,5.4,6]);
+addLbl('F2','F2 TOR',TR,[0,4.4,6]);addLbl('X1','X1 TB-1512',XG1,[-4.5,2.3,2]);addLbl('X2','X2 TB-1512',XG2,[4.5,2.3,2]);
+['H1','H2','H3','H4','H5','H6','H7','S2','S3','S1'].forEach(id=>addLbl(id,id,doorItems[id].g,[1.9,1.9,0.5],'door'));
+addLbl('S0','S0 EMG',doorItems.S0.g,[3.6,3.2,0.5],'door');
+addLbl('M1','M1 motor',MG,[0,9,1]);
+const mLbl=LBL[LBL.length-1].d;
+const v3=new V3(),cd=new V3(),nrm=new V3();
+function updateLabels(w,h){for(const l of LBL){let vis=S.labels;l.obj.localToWorld(v3.copy(l.off));
+  if(vis){if(l.door){nrm.set(Math.sin(doorPivot.rotation.y),0,Math.cos(doorPivot.rotation.y));cd.copy(camera.position).sub(v3);vis=nrm.dot(cd)>0;}
+    else if(INSIDE.has(l.id)){vis=doorPivot.rotation.y<-0.9&&camera.position.z>-5;}}
+  if(vis){v3.project(camera);if(v3.z>1)vis=false;}
+  if(!vis){l.d.style.display='none';continue;}l.d.style.display='';l.d.classList.toggle('sel',l.id===selected);
+  l.d.style.transform=`translate(${(v3.x*0.5+0.5)*w}px,${(-v3.y*0.5+0.5)*h}px) translate(-50%,-50%)`;}}
+
+/* kamera */
+let camTween=null;const HOME_T=new V3(7,-5,0),HOME_DIR=new V3(0.42,0.2,1).normalize();
+function homeDist(){const a=camera.aspect,t=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));return Math.max(78/(2*t),66/(2*t*a))*1.28;}
+function tweenTo(tt,tc){camTween={t0:performance.now(),dur:650,ft:controls.target.clone(),fc:camera.position.clone(),tt,tc};}
+function goHome(anim){const tp=HOME_T.clone(),cp=HOME_T.clone().add(HOME_DIR.clone().multiplyScalar(homeDist()));if(anim)tweenTo(tp,cp);else{controls.target.copy(tp);camera.position.copy(cp);}}
+function focusPoint(p,dist,dir){tweenTo(p,p.clone().add(dir.clone().normalize().multiplyScalar(dist)));}
+function focusOn(id){const o=OBJ[id];if(!o)return;const c=new THREE.Box3().setFromObject(o).getCenter(new V3());
+  let dist=id==='panel'?homeDist()*0.85:id==='M1'?40:INSIDE.has(id)?26:26;let dir=new V3(0.25,0.12,1);if(DOORSET.has(id))dir.set(0.15,0.1,1);
+  if(id==='panel')dir=HOME_DIR.clone();focusPoint(c,dist,dir);}
+$('tCam').addEventListener('click',()=>goHome(true));
+function resize(){const w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(view);resize();goHome(false);$('loading').remove();
+
+/* loop */
+let last=performance.now(),tAcc=0,lastMotTxt=0;
+function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;tAcc+=dt;
+  const target=S.doorTarget?-1.95:0;doorPivot.rotation.y+=(target-doorPivot.rotation.y)*Math.min(1,dt*4.2);if(Math.abs(target-doorPivot.rotation.y)<0.001)doorPivot.rotation.y=target;updateHarness();
+  // panas TOR
+  let rate=0;if(D.running&&S.overload)rate=1/3.2;if(D.single)rate=1/4.5;if(D.running&&S.speed*D.dir<-0.1)rate=Math.max(rate,1/1.6);
+  if(rate>0){S.heat=Math.min(1,S.heat+rate*dt);if(S.heat>=1&&!S.olTrip){const was=S.k1||S.k2;S.olTrip=true;S.overload=false;snd('koff');
+    toast('<span class="code">F2</span><b>TOR trip!</b> Kontak 95-96 membuka, kedua jalur koil terputus. Tunggu dingin lalu reset.',6000);solve();emit('trip',was);}}
+  else S.heat=Math.max(0,S.heat-dt/5);
+  $('heatBar').style.width=(S.heat*100).toFixed(1)+'%';
+  // motor
+  const tgt=D.running?D.dir*(S.overload?0.82:1):D.single?(Math.abs(S.speed)>0.3?Math.sign(S.speed)*0.55:0):0;
+  const opp=tgt!==0&&Math.sign(tgt)!==Math.sign(S.speed)&&Math.abs(S.speed)>0.01;
+  const acc=opp?1.6:Math.abs(tgt)>Math.abs(S.speed)?0.9:0.45;
+  S.speed+=Math.sign(tgt-S.speed)*Math.min(Math.abs(tgt-S.speed),acc*dt);
+  disc.rotation.z-=S.speed*dt*22;
+  const sh=D.single?0.06:0;MG.position.x=33+(Math.random()-0.5)*sh;MG.position.y=-36.5+(Math.random()-0.5)*sh;
+  if(humGain&&actx){const g=S.sound?(Math.abs(S.speed)*0.035+(D.single?0.05:0)):0;humGain.gain.setTargetAtTime(g,actx.currentTime,0.08);hum.frequency.setTargetAtTime(D.single?100:60+Math.abs(S.speed)*40,actx.currentTime,0.1);}
+  if(tAcc-lastMotTxt>0.25){lastMotTxt=tAcc;updateMotorText();mLbl.textContent=Math.abs(S.speed)>0.1?(S.speed>0?'M1 ↻ kanan':'M1 ↺ kiri'):'M1 motor';}
+  // komponen
+  q1.lev.rotation.x+=((S.q1?-0.6:0.6)-q1.lev.rotation.x)*Math.min(1,dt*18);f1.lev.rotation.x+=((S.f1?-0.6:0.6)-f1.lev.rotation.x)*Math.min(1,dt*18);
+  q1.win.material.color.setHex(S.q1?0xd62828:0x2bb24c);f1.win.material.color.setHex(S.f1?0xd62828:0x2bb24c);
+  K1.pl.position.z+=((D.k1?7.2:7.55)-K1.pl.position.z)*Math.min(1,dt*25);K2.pl.position.z+=((D.k2?7.2:7.55)-K2.pl.position.z)*Math.min(1,dt*25);
+  tripFlag.position.z=S.olTrip?7.65:7.35;M.orange.emissive.setHex(S.olTrip?0xff5a00:0);M.orange.emissiveIntensity=S.olTrip?0.6+0.4*Math.sin(tAcc*8):0;
+  const lampOn={H1:D.L1,H2:D.L2,H3:D.L3,H4:D.ready,H5:D.lampF,H6:D.lampR,H7:D.emgLamp&&Math.sin(tAcc*7)>-0.2};
+  for(const k in lampOn){const L=doorItems[k];const on=!!lampOn[k];L.lm.emissiveIntensity+=((on?1.25:0)-L.lm.emissiveIntensity)*Math.min(1,dt*20);L.lm.color.copy(on?L.color:L.off);L.sp.material.opacity=L.lm.emissiveIntensity*0.55;}
+  const bz=(cap,on)=>{cap.position.z+=((on?0.42:0.75)-cap.position.z)*Math.min(1,dt*30);};
+  bz(doorItems.S2.cap,S.fwd);bz(doorItems.S3.cap,S.rev);bz(doorItems.S1.cap,S.stop);
+  const hd=doorItems.S0.head;hd.position.z+=((S.emg?-0.55:0)-hd.position.z)*Math.min(1,dt*25);
+  // kabel
+  const pulse=0.32+0.22*Math.sin(tAcc*6),hp=0.55+0.35*Math.sin(tAcc*5);
+  for(const no in WIRES){const fn=LIVE[no];const live=S.flow&&fn&&fn();const hi=no===hiNo;
+    for(const w of WIRES[no]){if(hi){w.m.emissive.setHex(0x36d0ff);w.m.emissiveIntensity=hp;}else{w.m.emissive.setHex(live?w.c:0);w.m.emissiveIntensity=live?pulse*1.4:0;}}}
+  const mcOn=S.flow&&(D.U||D.V||D.W);motorCable.m.emissive.setHex(mcOn?0xff5a1f:0);motorCable.m.emissiveIntensity=mcOn?pulse:0;
+  supCable.m.emissive.setHex(S.flow?0xff5a1f:0);supCable.m.emissiveIntensity=S.flow?pulse*0.7:0;
+  harnessMat.emissive.setHex(S.flow&&D.ctrl?0xff5a1f:0);harnessMat.emissiveIntensity=S.flow&&D.ctrl?pulse*0.6:0;
+  if(camTween){const k=Math.min(1,(now-camTween.t0)/camTween.dur),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;controls.target.lerpVectors(camTween.ft,camTween.tt,e);camera.position.lerpVectors(camTween.fc,camTween.tc,e);if(k>=1)camTween=null;}
+  controls.update();if(selBox.visible){const o=OBJ[selected];if(o)selBox.setFromObject(o);}
+  renderer.render(scene,camera);updateLabels(view.clientWidth,view.clientHeight);requestAnimationFrame(frame);}
+requestAnimationFrame(frame);
+window.__sim={S,act,focusPoint,PIN,selectWire,goHome};
+}
+})();
+</script>
+</body>
+</html>
