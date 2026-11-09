@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guru Vokasi — Simulasi 3D Teknik Otomasi Industri</title>
+<meta name="description" content="Kumpulan simulasi 3D interaktif untuk pembelajaran Teknik Otomasi Industri SMK 2 Triple J Citeureup.">
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#fff; --ink:#1c2430; --muted:#5d6878; --line:#dfe3e9;
+    --brand:#0b5cad; --brand-soft:#e6f0fb; --soon:#8a94a3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  header{background:var(--brand);color:#fff;padding:32px 20px 28px}
+  .wrap{max-width:1080px;margin:0 auto}
+  header h1{margin:0 0 6px;font-size:clamp(1.4rem,3.5vw,2rem)}
+  header p{margin:0;opacity:.9;max-width:720px}
+  main{padding:24px 20px 48px}
+  .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:20px}
+  .tools input{flex:1 1 220px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+  .chip{border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 14px;border-radius:999px;font:inherit;font-size:.9rem;cursor:pointer}
+  .chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+  h2{font-size:1.05rem;margin:28px 0 12px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  a.card,div.card{display:flex;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+  a.card:hover,a.card:focus-visible{border-color:var(--brand);transform:translateY(-2px);outline:none}
+  .card .tag{align-self:flex-start;font-size:.75rem;background:var(--brand-soft);color:var(--brand);padding:2px 8px;border-radius:6px}
+  .card h3{margin:2px 0 0;font-size:1rem}
+  .card p{margin:0;color:var(--muted);font-size:.9rem;flex:1}
+  .card .go{font-size:.85rem;font-weight:600;color:var(--brand);margin-top:4px}
+  div.card{opacity:.65}
+  div.card .go{color:var(--soon)}
+  .empty{color:var(--muted);display:none}
+  footer{border-top:1px solid var(--line);padding:20px;color:var(--muted);font-size:.85rem}
+  footer a{color:var(--brand)}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Simulasi 3D Teknik Otomasi Industri</h1>
+    <p>Media pembelajaran interaktif untuk murid SMK 2 Triple J Citeureup. Pilih simulasi di bawah, putar model 3D-nya, dan coba sendiri sebelum praktik di bengkel.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="tools" role="search">
+    <input id="q" type="search" placeholder="Cari simulasi… (mis. motor, resistor, PLC)" aria-label="Cari simulasi">
+  </div>
+  <div class="tools" id="chips" aria-label="Filter kelompok"></div>
+  <div id="list"></div>
+  <p class="empty" id="empty">Tidak ada simulasi yang cocok dengan pencarian.</p>
+</main>
+
+<footer>
+  <div class="wrap">
+    Dibuat oleh Lukman Hakim Tejosaputro — Guru Teknik Otomasi Industri, SMK 2 Triple J Citeureup, Kab. Bogor.<br>
+    Kritik dan saran: <a href="mailto:lukman.hakim5830@guru.smk.belajar.id">lukman.hakim5830@guru.smk.belajar.id</a>
+  </div>
+</footer>
+
+<script>
+/* =========================================================
+   DAFTAR SIMULASI
+   Untuk menambah simulasi baru: salin satu baris { ... },
+   isi judul, folder, kelompok, dan keterangan.
+   - folder : nama folder di repo (huruf besar/kecil harus sama persis)
+   - kosongkan folder ("") jika simulasinya belum diunggah → tampil "Segera hadir"
+   ========================================================= */
+const SIMULASI = [
+  { judul:"Kode Warna Resistor", folder:"simulasi-3D-kode-warna-resistor", kelompok:"Dasar Kelistrikan & Elektronika", ket:"Membaca nilai resistor 4 dan 5 gelang warna." },
+  { judul:"Multimeter Digital", folder:"simulasi-3D-multimeter-digital", kelompok:"Dasar Kelistrikan & Elektronika", ket:"Mengenal fungsi selektor dan cara mengukur tegangan, arus, serta resistansi." },
+  { judul:"Hukum Ohm & Rangkaian Seri–Paralel", folder:"simulasi-3d-hukum-ohm", kelompok:"Dasar Kelistrikan & Elektronika", ket:"Hubungan V, I, R pada rangkaian seri dan paralel." },
+  { judul:"Power Supply 24 VDC", folder:"", kelompok:"Dasar Kelistrikan & Elektronika", ket:"Catu daya 24 VDC untuk panel kontrol." },
+
+  { judul:"Panel DOL", folder:"Simulasi_3D_Panel_DOL", kelompok:"Kendali Elektromagnetik", ket:"Pengasutan langsung (Direct On Line) motor 3 fasa." },
+  { judul:"Panel Forward–Reverse", folder:"Simulasi_3D_Panel_Forward-Reverse", kelompok:"Kendali Elektromagnetik", ket:"Pembalik arah putaran motor 3 fasa dengan interlock." },
+  { judul:"Panel Star–Delta", folder:"Simulasi_3D_Panel_Star-Delta", kelompok:"Kendali Elektromagnetik", ket:"Pengasutan bintang–segitiga dengan timer." },
+
+  { judul:"Forward–Reverse Berbasis PLC (JS-PLC-01)", folder:"", kelompok:"PLC", ket:"Pembalik arah motor dengan program ladder PLC." },
+
+  { judul:"Elektropneumatik 1 Silinder", folder:"", kelompok:"Elektropneumatik", ket:"Kendali silinder kerja ganda dengan solenoid valve." },
+
+  { judul:"Bengkel Aman TOI — K3LH & 5R", folder:"bengkel-aman-toi", kelompok:"K3LH & Budaya Kerja", ket:"Keselamatan kerja dan budaya kerja 5R di bengkel." },
+];
+
+const list = document.getElementById('list');
+const chips = document.getElementById('chips');
+const q = document.getElementById('q');
+const empty = document.getElementById('empty');
+const kelompokList = [...new Set(SIMULASI.map(s => s.kelompok))];
+let aktif = 'Semua';
+
+function esc(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+
+function buatChip(nama){
+  const b=document.createElement('button');
+  b.className='chip'; b.type='button'; b.textContent=nama;
+  b.setAttribute('aria-pressed', nama===aktif);
+  b.onclick=()=>{ aktif=nama; [...chips.children].forEach(c=>c.setAttribute('aria-pressed', c.textContent===aktif)); render(); };
+  chips.appendChild(b);
+}
+['Semua', ...kelompokList].forEach(buatChip);
+
+function render(){
+  const kata = q.value.trim().toLowerCase();
+  let html='', jumlah=0;
+  kelompokList.forEach(k=>{
+    if(aktif!=='Semua' && aktif!==k) return;
+    const isi = SIMULASI.filter(s=>s.kelompok===k && (s.judul+' '+s.ket).toLowerCase().includes(kata));
+    if(!isi.length) return;
+    jumlah += isi.length;
+    html += `<h2>${esc(k)}</h2><div class="grid">`;
+    isi.forEach(s=>{
+      if(s.folder){
+        html += `<a class="card" href="./${encodeURI(s.folder)}/"><span class="tag">${esc(k)}</span><h3>${esc(s.judul)}</h3><p>${esc(s.ket)}</p><span class="go">Buka simulasi →</span></a>`;
+      } else {
+        html += `<div class="card" aria-disabled="true"><span class="tag">${esc(k)}</span><h3>${esc(s.judul)}</h3><p>${esc(s.ket)}</p><span class="go">Segera hadir</span></div>`;
+      }
+    });
+    html += `</div>`;
+  });
+  list.innerHTML = html;
+  empty.style.display = jumlah ? 'none' : 'block';
+}
+q.addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
