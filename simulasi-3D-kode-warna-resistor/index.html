@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi 3D Kode Warna Resistor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f5; --ink:#15202b; --muted:#5b6876; --line:#d8dee6; --card:#fff;
+  --navy:#13283d; --accent:#e8740c; --teal:#0e7c86; --ok:#15804a; --okbg:#e7f6ee;
+  --bad:#c0392b; --badbg:#fdecea; --warnbg:#fff6e5; --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.top{background:var(--navy);color:#fff;padding:14px 22px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.tag{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#f5b47a;font-weight:700}
+h1{margin:3px 0 0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.school{font-size:13px;color:#b9c6d4;font-weight:600;text-align:right;line-height:1.35}
+.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(340px,1fr);gap:18px;padding:18px;max-width:1400px;margin:0 auto;align-items:start}
+.stage{position:sticky;top:12px}
+.viewer{position:relative;height:min(74vh,660px);border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);
+  background:
+    linear-gradient(rgba(19,40,61,.045) 1px,transparent 1px) 0 0/28px 28px,
+    linear-gradient(90deg,rgba(19,40,61,.045) 1px,transparent 1px) 0 0/28px 28px,
+    radial-gradient(120% 90% at 50% 35%,#ffffff 0%,#e4e9ef 55%,#cdd5df 100%)}
+#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none}
+.blbl{position:absolute;left:0;top:0;font-size:12px;font-weight:800;background:var(--navy);color:#fff;border-radius:999px;min-width:22px;height:22px;padding:0 6px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.18);transition:opacity .2s}
+.blbl.sel{background:var(--accent)}
+.blbl::after{content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);border:5px solid transparent;border-bottom:0;border-top-color:inherit}
+.blbl::after{border-top-color:var(--navy)}
+.blbl.sel::after{border-top-color:var(--accent)}
+.hud-top{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.pill{pointer-events:none;background:rgba(255,255,255,.88);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--navy);transition:opacity .25s}
+.hud-btns{display:flex;gap:8px;pointer-events:auto}
+.icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.92);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy)}
+.icon-btn[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.hud-bottom{position:absolute;left:12px;right:12px;bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;pointer-events:none}
+.readout{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;padding:8px 14px;display:flex;align-items:baseline;gap:10px;box-shadow:0 4px 14px rgba(19,40,61,.08)}
+.readout .val{font-size:26px;font-weight:800;letter-spacing:-.01em}
+.readout .tol{font-size:15px;font-weight:700;color:var(--teal)}
+.gesture{font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.75);border-radius:8px;padding:4px 8px;text-align:right}
+.toast{position:absolute;left:50%;top:58px;transform:translate(-50%,-8px);background:var(--navy);color:#fff;font-weight:700;font-size:14px;padding:8px 14px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);text-align:center;padding:20px}
+.panel{min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#dfe5ec;border-radius:12px;padding:4px;margin-bottom:12px}
+.tabs button{border:0;background:transparent;border-radius:9px;padding:10px 4px;font-weight:700;font-size:14px;color:var(--muted);cursor:pointer}
+.tabs button.active{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(19,40,61,.12)}
+.pane{display:none}
+.pane.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+.card h2{font-size:15.5px;margin:0 0 6px;font-weight:800}
+.muted{color:var(--muted);font-size:13.5px;margin:4px 0 0;line-height:1.5}
+.small{font-size:12px}
+.row-between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.seg{display:inline-flex;background:#eef1f5;border-radius:10px;padding:3px;gap:3px}
+.seg.wrap{display:flex;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:7px 13px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--navy);color:#fff}
+.band-row{border:1.5px solid transparent;border-radius:12px;padding:9px 10px;margin:0 -6px 4px;transition:border-color .15s,background .15s;cursor:pointer}
+.band-row.sel{border-color:var(--accent);background:#fff8f1}
+.band-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.bnum{width:22px;height:22px;border-radius:999px;background:var(--navy);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.band-row.sel .bnum{background:var(--accent)}
+.blabel{font-weight:700;font-size:14px}
+.bval{margin-left:auto;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;font-weight:600}
+.dot{width:14px;height:14px;border-radius:4px;background:var(--c);border:1px solid rgba(0,0,0,.2);display:inline-block;flex:none}
+.swatches{display:flex;flex-wrap:wrap;gap:6px}
+.sw{width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.18);background:var(--c);cursor:pointer;padding:0;position:relative}
+.sw.on{outline:3px solid var(--accent);outline-offset:2px}
+.sw[data-c="gold"],.dot[data-c="gold"]{background:linear-gradient(135deg,#f8e19a,#b9862a 55%,#f1cf72)}
+.sw[data-c="silver"],.dot[data-c="silver"]{background:linear-gradient(135deg,#f4f5f7,#9aa0a8 55%,#e5e7ea)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{display:flex;align-items:center;gap:6px;background:#f3f5f8;border:1px solid var(--line);border-radius:9px;padding:5px 9px;font-size:13px}
+.chip b{font-weight:700}
+.chip small{color:var(--muted);font-weight:700;font-size:12.5px}
+.formula{font-size:15px;line-height:1.6}
+.result{font-size:26px;font-weight:800;margin:4px 0 2px;letter-spacing:-.01em}
+.result span{font-size:17px;color:var(--teal)}
+.range{font-size:13.5px;color:var(--muted);margin-top:3px}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:#e6f2f3;color:var(--teal);margin-top:8px}
+.badge.grey{background:#eef1f5;color:var(--muted)}
+.warn{background:var(--warnbg);border:1px solid #f3d7a6;border-radius:10px;padding:8px 10px;font-size:13px;margin-top:10px;line-height:1.45}
+label.lbl{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}
+.inline{display:flex;gap:8px}
+.inline input{flex:1;min-width:0}
+input[type=text],select{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;font-size:15px}
+input[type=text]:focus,select:focus{outline:none;border-color:var(--teal)}
+.btn{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:10px 14px;font-weight:700;font-size:14px;cursor:pointer;color:var(--navy)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.msg{font-size:13px;margin:8px 0 0;color:var(--muted);line-height:1.45}
+.feedback:empty{display:none}
+.feedback{margin-top:14px;border-radius:12px;padding:12px;font-size:14px;line-height:1.5;background:#f3f5f8}
+.feedback.ok{background:var(--okbg)}
+.feedback.bad{background:var(--badbg)}
+.feedback .head{font-weight:800;font-size:15px;margin-bottom:6px}
+.feedback.ok .head{color:var(--ok)}
+.feedback.bad .head{color:var(--bad)}
+.feedback ul{margin:6px 0 0;padding-left:18px}
+.feedback li{margin:3px 0}
+.score{display:grid;grid-template-columns:repeat(3,1fr);text-align:center}
+.score b{display:block;font-size:24px;font-weight:800}
+.score span{font-size:12px;color:var(--muted);font-weight:600}
+.steps{margin:6px 0 0;padding-left:20px;font-size:14px;line-height:1.55}
+.steps li{margin:4px 0}
+.meter{background:linear-gradient(180deg,#f7c21a,#e9a90b);border-color:#c98f05;padding:16px}
+.meter-inner{background:#2a2d31;border-radius:12px;padding:14px}
+.lcd{background:linear-gradient(180deg,#bfcbb3,#a9b89c);border-radius:8px;height:78px;display:flex;align-items:center;justify-content:flex-end;padding:0 16px;gap:10px;box-shadow:inset 0 3px 8px rgba(0,0,0,.35);font-family:'Share Tech Mono',ui-monospace,monospace;color:#1b2418}
+.lcd .v{font-size:48px;letter-spacing:.04em;flex:1;text-align:right}
+.lcd.ol .v{text-align:left}
+.lcd .u{font-size:18px;min-width:34px}
+.lcd.off .v,.lcd.off .u{opacity:0}
+.dial{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center}
+.dial button{border:1px solid #4a4f56;background:#3a3e44;color:#e7e9ec;border-radius:8px;padding:8px 0;width:calc((100% - 36px)/7);min-width:46px;font-weight:700;font-size:13px;cursor:pointer}
+.dial button.on{background:#f7c21a;color:#1b1b1b;border-color:#f7c21a}
+.dial-cap{color:#aeb4bb;font-size:11.5px;text-align:center;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:7px 6px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+td.c{display:flex;align-items:center;gap:8px;font-weight:700}
+.mnemo{margin-top:10px;background:#eef6f7;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.55}
+.mnemo b{color:var(--teal)}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;padding:0;gap:0}
+  .stage{top:0;z-index:20}
+  .viewer{height:40vh;min-height:250px;border-radius:0;border:none;border-bottom:1px solid var(--line)}
+  .panel{padding:12px}
+  .top{padding:10px 14px}
+  h1{font-size:17px}
+  .school{display:none}
+  .tag{font-size:10.5px}
+  .sw{width:27px;height:27px;border-radius:7px}
+  .swatches{gap:5px}
+  .readout .val{font-size:21px}
+  .gesture{display:none}
+  .tabs button{font-size:13px;padding:9px 2px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <div class="tag">Dasar-dasar Elektronika · Fase E</div>
+    <h1>Simulasi 3D Kode Warna Resistor</h1>
+  </div>
+  <div class="school">Teknik Otomasi Industri<br>SMKS 2 Triple J</div>
+</header>
+
+<main class="layout">
+  <section class="stage">
+    <div class="viewer" id="viewer">
+      <canvas id="c" aria-label="Model 3D resistor"></canvas>
+      <div id="labels"></div>
+      <div class="hud-top">
+        <span class="pill" id="dirPill">Arah baca →</span>
+        <div class="hud-btns">
+          <button class="icon-btn" id="btnSpin" aria-pressed="true" title="Putar otomatis">⟳</button>
+          <button class="icon-btn" id="btnReset" title="Reset tampilan">⌂</button>
+        </div>
+      </div>
+      <div class="toast" id="toast"></div>
+      <div class="hud-bottom">
+        <div class="readout"><span class="val" id="roVal">–</span><span class="tol" id="roTol"></span></div>
+        <div class="gesture">Geser untuk memutar · scroll / cubit untuk zoom · ketuk gelang untuk memilih</div>
+      </div>
+      <div class="loading" id="loading">Memuat model 3D…</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <nav class="tabs" id="tabs">
+      <button data-mode="explore" class="active">Eksplorasi</button>
+      <button data-mode="quiz">Latihan</button>
+      <button data-mode="mm">Multimeter</button>
+      <button data-mode="table">Tabel Warna</button>
+    </nav>
+
+    <!-- EKSPLORASI -->
+    <div class="pane active" id="pane-explore">
+      <div class="card">
+        <div class="row-between">
+          <h2>Jumlah gelang</h2>
+          <div class="seg" id="bandCountSeg">
+            <button data-n="4" class="on">4</button><button data-n="5">5</button><button data-n="6">6</button>
+          </div>
+        </div>
+        <p class="muted" id="bandCountNote"></p>
+      </div>
+      <div class="card" id="bandEditor"></div>
+      <div class="card" id="calc"></div>
+      <div class="card">
+        <h2>Cari warna dari nilai</h2>
+        <p class="muted">Ketik nilai resistor, model 3D akan menampilkan susunan warnanya.</p>
+        <div class="inline" style="margin-top:10px">
+          <input type="text" id="findVal" placeholder="mis. 4,7 · 4k7 · 220" autocomplete="off">
+          <select id="findUnit"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select>
+          <button class="btn primary" id="findBtn">Terapkan</button>
+        </div>
+        <p class="msg" id="findMsg"></p>
+      </div>
+    </div>
+
+    <!-- LATIHAN -->
+    <div class="pane" id="pane-quiz">
+      <div class="card">
+        <div class="row-between">
+          <h2>Tingkat</h2>
+          <div class="seg" id="levelSeg">
+            <button data-l="1" class="on">Dasar</button><button data-l="2">Menengah</button><button data-l="3">Mahir</button>
+          </div>
+        </div>
+        <p class="muted" id="levelNote"></p>
+      </div>
+      <div class="card score">
+        <div><b id="qScore">0</b><span>benar</span></div>
+        <div><b id="qTotal">0</b><span>soal</span></div>
+        <div><b id="qStreak">0</b><span>beruntun</span></div>
+      </div>
+      <div class="card">
+        <h2>Berapa nilai resistor ini?</h2>
+        <p class="muted">Amati gelang warna pada model 3D. Resistor bisa saja terpasang terbalik — tentukan dulu arah bacanya.</p>
+        <label class="lbl" for="qVal">Nilai resistansi</label>
+        <div class="inline">
+          <input type="text" id="qVal" placeholder="mis. 4,7 atau 4k7" autocomplete="off">
+          <select id="qUnit"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select>
+        </div>
+        <label class="lbl">Toleransi</label>
+        <div class="seg wrap" id="qTol"></div>
+        <div class="actions">
+          <button class="btn primary" id="qCheck">Periksa</button>
+          <button class="btn" id="qHint">Petunjuk</button>
+          <button class="btn" id="qNext">Soal baru</button>
+        </div>
+        <div class="feedback" id="qFb"></div>
+      </div>
+    </div>
+
+    <!-- MULTIMETER -->
+    <div class="pane" id="pane-mm">
+      <div class="card">
+        <h2>Uji resistor dengan multimeter</h2>
+        <ol class="steps">
+          <li>Baca kode warna, tulis nilai <b>nominal</b>-nya.</li>
+          <li>Putar selektor ke rentang Ω yang <b>paling tepat</b>.</li>
+          <li>Bandingkan hasil ukur dengan batas toleransi, lalu simpulkan kondisi resistor.</li>
+        </ol>
+      </div>
+      <div class="card meter">
+        <div class="meter-inner">
+          <div class="lcd off" id="lcd"><span class="v" id="lcdV">0</span><span class="u" id="lcdU">Ω</span></div>
+          <div class="dial" id="dial"></div>
+          <div class="dial-cap">Selektor Ω · angka "1" di kiri layar = di luar rentang (OL)</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="score" style="margin-bottom:6px">
+          <div><b id="mScore">0</b><span>benar</span></div>
+          <div><b id="mTotal">0</b><span>diuji</span></div>
+          <div><b id="mStreak">0</b><span>beruntun</span></div>
+        </div>
+        <label class="lbl" for="mVal">Nilai nominal (dari kode warna)</label>
+        <div class="inline">
+          <input type="text" id="mVal" placeholder="mis. 4,7 atau 4k7" autocomplete="off">
+          <select id="mUnit"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select>
+        </div>
+        <label class="lbl">Kesimpulan kondisi resistor</label>
+        <div class="seg wrap" id="mVerdict">
+          <button data-v="baik">Baik (dalam toleransi)</button>
+          <button data-v="menyimpang">Menyimpang</button>
+          <button data-v="putus">Putus</button>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="mCheck">Periksa</button>
+          <button class="btn" id="mNext">Resistor lain</button>
+        </div>
+        <div class="feedback" id="mFb"></div>
+      </div>
+    </div>
+
+    <!-- TABEL -->
+    <div class="pane" id="pane-table">
+      <div class="card">
+        <h2>Cara membaca kode warna</h2>
+        <ol class="steps">
+          <li>Letakkan gelang <b>toleransi</b> di sebelah kanan — biasanya emas/perak, atau gelang yang <b>jaraknya lebih renggang</b>.</li>
+          <li>Baca dari kiri: 2 gelang pertama (3 gelang pada resistor 5–6 gelang) adalah <b>angka</b>.</li>
+          <li>Gelang berikutnya adalah <b>pengali</b> (jumlah nol). Emas = ×0,1 · Perak = ×0,01.</li>
+          <li>Gelang toleransi menentukan <b>batas minimum–maksimum</b> nilai yang masih dianggap baik.</li>
+        </ol>
+        <div class="mnemo">Jembatan keledai urutan 0–9:<br><b>Hi</b>tam · <b>Co</b>klat · <b>Me</b>rah · <b>O</b>ranye · <b>Ku</b>ning · <b>Hi</b>jau · <b>Bi</b>ru · <b>U</b>ngu · <b>A</b>bu-abu · <b>Pu</b>tih</div>
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <table id="colorTable"></table>
+        <p class="muted small" style="margin-top:8px">Badan krem umumnya resistor karbon (4 gelang, ±5%). Badan biru umumnya metal film presisi (5–6 gelang, ±1% atau lebih kecil).</p>
+      </div>
+      <div class="card">
+        <h2>Contoh</h2>
+        <div id="example"></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>Media pembelajaran interaktif · Program Keahlian Teknik Elektronika · Konsentrasi Teknik Otomasi Industri<br>Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+
+/* ---------- Data warna ---------- */
+const COLORS = [
+  {id:'black',  nama:'Hitam',   hex:'#1c1c1c', digit:0, mult:0,  tol:null, tc:250},
+  {id:'brown',  nama:'Coklat',  hex:'#6e3b1f', digit:1, mult:1,  tol:1,    tc:100},
+  {id:'red',    nama:'Merah',   hex:'#d32a22', digit:2, mult:2,  tol:2,    tc:50},
+  {id:'orange', nama:'Oranye',  hex:'#f07d15', digit:3, mult:3,  tol:null, tc:15},
+  {id:'yellow', nama:'Kuning',  hex:'#f3d317', digit:4, mult:4,  tol:null, tc:25},
+  {id:'green',  nama:'Hijau',   hex:'#1e9b44', digit:5, mult:5,  tol:0.5,  tc:20},
+  {id:'blue',   nama:'Biru',    hex:'#2160d4', digit:6, mult:6,  tol:0.25, tc:10},
+  {id:'violet', nama:'Ungu',    hex:'#8a3fc4', digit:7, mult:7,  tol:0.1,  tc:5},
+  {id:'grey',   nama:'Abu-abu', hex:'#8c8c8c', digit:8, mult:8,  tol:0.05, tc:1},
+  {id:'white',  nama:'Putih',   hex:'#f5f5f2', digit:9, mult:9,  tol:null, tc:null},
+  {id:'gold',   nama:'Emas',    hex:'#d6a73c', digit:null, mult:-1, tol:5,  tc:null, metal:true},
+  {id:'silver', nama:'Perak',   hex:'#c9ccd1', digit:null, mult:-2, tol:10, tc:null, metal:true}
+];
+const C = Object.fromEntries(COLORS.map(c=>[c.id,c]));
+const ROLES = {4:['d','d','m','t'], 5:['d','d','d','m','t'], 6:['d','d','d','m','t','c']};
+const roleLabel = (r,i) => r==='d' ? `Angka ke-${i}` : r==='m' ? 'Pengali' : r==='t' ? 'Toleransi' : 'Koefisien suhu';
+const roleShort = (r,i) => r==='d' ? String(i) : r==='m' ? '×' : r==='t' ? '±' : 'ppm';
+const optionsFor = r => COLORS.filter(c => r==='d' ? c.digit!==null : r==='m' ? c.mult!==null : r==='t' ? c.tol!==null : c.tc!==null);
+const TOLS = [0.05,0.1,0.25,0.5,1,2,5,10];
+const E12=[10,12,15,18,22,27,33,39,47,56,68,82];
+const E24=[10,11,12,13,15,16,18,20,22,24,27,30,33,36,39,43,47,51,56,62,68,75,82,91];
+const E48=[100,105,110,115,121,127,133,140,147,154,162,169,178,187,196,205,215,226,237,249,261,274,287,301,316,332,348,365,383,402,422,442,464,487,511,536,562,590,619,649,681,715,750,787,825,866,909,953];
+
+/* ---------- Utilitas angka ---------- */
+const clean = x => parseFloat(Number(x).toPrecision(10));
+const nf = (x,max=3) => Number(x).toLocaleString('id-ID',{maximumFractionDigits:max});
+function formatOhm(v){
+  if(!isFinite(v)) return '∞';
+  if(v===0) return '0 Ω';
+  const u=[[1e9,'GΩ'],[1e6,'MΩ'],[1e3,'kΩ'],[1,'Ω']];
+  for(const [d,s] of u) if(v>=d) return nf(clean(v/d),4)+' '+s;
+  return nf(v,4)+' Ω';
+}
+const fmtTol = t => '±'+nf(t,2)+'%';
+const fmtMult = m => '×'+nf(clean(Math.pow(10,m)),2);
+const roleValueText = (r,c) => r==='d' ? String(c.digit) : r==='m' ? fmtMult(c.mult) : r==='t' ? fmtTol(c.tol) : c.tc+' ppm/K';
+const multId = e => e===-1 ? 'gold' : e===-2 ? 'silver' : COLORS[e].id;
+const digitIds = num => String(num).split('').map(d=>COLORS[+d].id);
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+function analyze(ids){
+  const roles=ROLES[ids.length]; let digits='', mult=0, tol=null, tc=null;
+  for(let i=0;i<ids.length;i++){
+    const c=C[ids[i]], r=roles[i];
+    if(r==='d'){ if(c.digit===null) return null; digits+=c.digit; }
+    else if(r==='m'){ if(c.mult===null) return null; mult=c.mult; }
+    else if(r==='t'){ if(c.tol===null) return null; tol=c.tol; }
+    else { if(c.tc===null) return null; tc=c.tc; }
+  }
+  const base=parseInt(digits,10);
+  return {digits, base, mult, value:clean(base*Math.pow(10,mult)), tol, tc};
+}
+
+function valueToBands(v,n){
+  const sig = n===4 ? 2 : 3;
+  if(!(v>0)) return null;
+  let e = Math.floor(Math.log10(v)+1e-9) - (sig-1);
+  let mant = Math.round(v/Math.pow(10,e));
+  if(mant >= Math.pow(10,sig)){ mant=Math.round(mant/10); e++; }
+  if(e < -2){ const s=-2-e; mant=Math.round(mant/Math.pow(10,s)); e=-2; }
+  if(mant===0 || e>9) return null;
+  const value = clean(mant*Math.pow(10,e));
+  return {ids: digitIds(String(mant).padStart(sig,'0')).concat([multId(e)]), value, exact: Math.abs(value-v)/v < 1e-9};
+}
+
+function parseValue(str, unitMult){
+  if(str==null) return null;
+  let s=String(str).trim().replace(/\s+/g,'').replace(/ohms?|Ω/gi,'');
+  if(!s) return null;
+  let m=s.match(/^(\d+)([rRkKmM])(\d+)$/);
+  if(m){ const mul={r:1,k:1e3,m:1e6}[m[2].toLowerCase()]; return clean(parseFloat(m[1]+'.'+m[3])*mul); }
+  let suffix=null; m=s.match(/^(.*?)([rRkKmMgG])$/);
+  if(m){ s=m[1]; suffix={r:1,k:1e3,m:1e6,g:1e9}[m[2].toLowerCase()]; }
+  if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,'');
+  if(!/^\d*\.?\d+$/.test(s)) return null;
+  const v=parseFloat(s); if(!isFinite(v)) return null;
+  return clean(v*(suffix!=null ? suffix : unitMult));
+}
+
+function seriesOf(v){
+  if(!(v>0)) return null;
+  const m3=Math.round(v/Math.pow(10,Math.floor(Math.log10(v)+1e-9)-2));
+  if(E12.some(x=>x*10===m3)) return 'E12';
+  if(E24.some(x=>x*10===m3)) return 'E24';
+  if(E48.includes(m3)) return 'E48';
+  return null;
+}
+
+const chipHTML = (id,r) => `<span class="chip"><span class="dot" data-c="${id}" style="--c:${C[id].hex}"></span><b>${C[id].nama}</b><small>${roleValueText(r,C[id])}</small></span>`;
+function explainHTML(ids){
+  const roles=ROLES[ids.length], a=analyze(ids);
+  const lo=clean(a.value*(1-a.tol/100)), hi=clean(a.value*(1+a.tol/100));
+  return `<div class="chips">${ids.map((id,i)=>chipHTML(id,roles[i])).join('')}</div>
+    <div class="formula">${a.digits} ${fmtMult(a.mult)} = <b>${nf(a.value,4)} Ω</b></div>
+    <div class="result">${formatOhm(a.value)} <span>${fmtTol(a.tol)}</span></div>
+    <div class="range">Batas toleransi: ${formatOhm(lo)} – ${formatOhm(hi)}</div>`
+    + (a.tc!=null ? `<div class="range">Koefisien suhu: ${a.tc} ppm/K</div>` : '');
+}
+
+/* ---------- State ---------- */
+const DEFAULTS = {4:['yellow','violet','red','gold'], 5:['yellow','violet','black','brown','brown'], 6:['yellow','violet','black','brown','brown','brown']};
+const state = {
+  mode:'explore',
+  explore:{n:4, ids:DEFAULTS[4].slice(), sel:0},
+  quiz:{level:1, ids:null, value:0, tol:0, score:0, total:0, streak:0, answered:false, hint:false, tolPick:null},
+  mm:{ids:null, nominal:0, tol:0, actual:0, status:'baik', range:-1, verdict:null, answered:false, score:0, total:0, streak:0}
+};
+const RANGES=[
+  {label:'200',div:1,  unit:'Ω', dec:1},
+  {label:'2k', div:1e3,unit:'kΩ',dec:3},
+  {label:'20k',div:1e3,unit:'kΩ',dec:2},
+  {label:'200k',div:1e3,unit:'kΩ',dec:1},
+  {label:'2M', div:1e6,unit:'MΩ',dec:3},
+  {label:'20M',div:1e6,unit:'MΩ',dec:2}
+];
+
+/* ---------- 3D ---------- */
+const view={yaw:0, zoom:1, auto:true, dragging:false};
+let three=null;
+
+function init3D(){
+  if(typeof THREE==='undefined') throw new Error('three');
+  const viewer=$('#viewer'), canvas=$('#c');
+  const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.toneMapping=THREE.NoToneMapping;
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(32,1,0.1,200);
+  const col = hex => new THREE.Color(hex).convertSRGBToLinear();
+
+  // environment untuk pantulan logam
+  const pmrem=new THREE.PMREMGenerator(renderer);
+  const env=new THREE.Scene();
+  const skyGeo=new THREE.SphereGeometry(50,32,16);
+  const p=skyGeo.attributes.position, cols=[];
+  const cLow=new THREE.Color(0x2c3540), cHigh=new THREE.Color(0xf2f5f8);
+  for(let i=0;i<p.count;i++){ const t=(p.getY(i)/50+1)/2; const c=cLow.clone().lerp(cHigh,Math.pow(t,0.8)); cols.push(c.r,c.g,c.b); }
+  skyGeo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  env.add(new THREE.Mesh(skyGeo,new THREE.MeshBasicMaterial({side:THREE.BackSide,vertexColors:true})));
+  const panelMat=new THREE.MeshBasicMaterial({color:new THREE.Color(3,3,3),side:THREE.DoubleSide});
+  [[0,32,12,40,12],[-34,8,22,14,30],[30,-4,-20,10,24]].forEach(([x,y,z,w,h])=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),panelMat); m.position.set(x,y,z); m.lookAt(0,0,0); env.add(m); });
+  scene.environment=pmrem.fromScene(env,0.03).texture;
+
+  scene.add(new THREE.HemisphereLight(0xffffff,0x7f8a96,0.35));
+  const key=new THREE.DirectionalLight(0xffffff,0.85); key.position.set(4,8,8); scene.add(key);
+  const rim=new THREE.DirectionalLight(0xcfe0ff,0.35); rim.position.set(-6,-2,-6); scene.add(rim);
+
+  const root=new THREE.Group(); scene.add(root);
+  const spin=new THREE.Group(); root.add(spin);
+
+  // tekstur halus badan
+  const nc=document.createElement('canvas'); nc.width=512; nc.height=128;
+  const g=nc.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,512,128);
+  for(let i=0;i<6000;i++){ g.fillStyle=`rgba(70,50,30,${Math.random()*0.08})`; g.fillRect(Math.random()*512,Math.random()*128,1.6,1.6); }
+  const noise=new THREE.CanvasTexture(nc); noise.encoding=THREE.sRGBEncoding;
+
+  const prof=[[0,-3.08],[0.16,-3.07],[0.44,-3.02],[0.72,-2.93],[0.91,-2.78],[0.995,-2.58],[0.99,-2.4],[0.94,-2.24],[0.87,-2.11],[0.842,-2.0],[0.84,-1.9],
+              [0.84,1.9],[0.842,2.0],[0.87,2.11],[0.94,2.24],[0.99,2.4],[0.995,2.58],[0.91,2.78],[0.72,2.93],[0.44,3.02],[0.16,3.07],[0,3.08]];
+  const bodyGeo=new THREE.LatheGeometry(prof.map(q=>new THREE.Vector2(q[0],q[1])),96);
+  bodyGeo.rotateZ(-Math.PI/2);
+  const bodyMat=new THREE.MeshStandardMaterial({color:col('#d9c497'),roughness:0.62,metalness:0,map:noise,envMapIntensity:0.7});
+  spin.add(new THREE.Mesh(bodyGeo,bodyMat));
+
+  const leadMat=new THREE.MeshStandardMaterial({color:col('#c9cdd2'),metalness:0.95,roughness:0.28});
+  [-1,1].forEach(s=>{ const l=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,5,20),leadMat); l.rotation.z=Math.PI/2; l.position.x=s*5.4; spin.add(l); });
+
+  // probe multimeter
+  function makeProbe(hex){
+    const grp=new THREE.Group();
+    const metal=new THREE.MeshStandardMaterial({color:col('#d4d8dc'),metalness:0.95,roughness:0.22});
+    const mat=new THREE.MeshStandardMaterial({color:col(hex),roughness:0.42,envMapIntensity:0.6});
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.45,24),metal); tip.rotation.x=Math.PI; tip.position.y=0.225; grp.add(tip);
+    const pin=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.9,20),metal); pin.position.y=0.9; grp.add(pin);
+    const guard=new THREE.Mesh(new THREE.CylinderGeometry(0.36,0.26,0.25,32),mat); guard.position.y=1.47; grp.add(guard);
+    const handle=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.25,3.0,32),mat); handle.position.y=3.1; grp.add(handle);
+    const boot=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.22,0.6,32),mat); boot.position.y=4.9; grp.add(boot);
+    grp.scale.setScalar(0.8);
+    return grp;
+  }
+  const probes=new THREE.Group();
+  const pr=makeProbe('#d42a24'); pr.position.set(4.6,0.075,0); pr.rotation.set(0.35,0,-0.45); probes.add(pr);
+  const pb=makeProbe('#202226'); pb.position.set(-4.6,0.075,0); pb.rotation.set(0.35,0,0.45); probes.add(pb);
+  probes.visible=false; root.add(probes);
+
+  three={renderer,scene,camera,root,spin,bodyMat,probes,col,bands:[],labels:[],canvas,viewer,dist:14};
+  bindPointer();
+  new ResizeObserver(resize).observe(viewer); resize();
+  $('#loading').style.display='none';
+  requestAnimationFrame(loop);
+}
+
+const BAND_POS={4:[-1.5,-0.85,-0.2,1.4], 5:[-1.6,-1.0,-0.4,0.2,1.45], 6:[-1.65,-1.1,-0.55,0.0,0.85,1.5]};
+
+function setBands(ids){
+  if(!three) return;
+  const {spin,col}=three;
+  three.bands.forEach(m=>{ spin.remove(m); m.geometry.dispose(); m.material.dispose(); });
+  three.bands=[];
+  const n=ids.length, pos=BAND_POS[n], w=n===4?0.36:0.3;
+  ids.forEach((id,i)=>{
+    const c=C[id];
+    const geo=new THREE.CylinderGeometry(0.853,0.853,w,96,1,false); geo.rotateZ(-Math.PI/2);
+    const mat=new THREE.MeshStandardMaterial({color:col(c.hex),roughness:c.metal?0.25:0.5,metalness:c.metal?0.9:0,emissive:new THREE.Color(0xffffff),emissiveIntensity:0,envMapIntensity:c.metal?1.2:0.6});
+    const m=new THREE.Mesh(geo,mat); m.position.x=pos[i]; spin.add(m); three.bands.push(m);
+  });
+  three.bodyMat.color.copy(col(n===4?'#d9c497':'#7eb0de'));
+  // label
+  const L=$('#labels'); L.innerHTML=''; three.labels=[];
+  const roles=ROLES[n]; let d=0;
+  roles.forEach(r=>{ const el=document.createElement('div'); el.className='blbl'; el.textContent=roleShort(r, r==='d'?++d:0); L.appendChild(el); three.labels.push(el); });
+}
+
+function resize(){
+  if(!three) return;
+  const {renderer,camera,viewer}=three;
+  const w=viewer.clientWidth,h=viewer.clientHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+
+function targetDist(){
+  const t=Math.tan(THREE.MathUtils.degToRad(three.camera.fov/2)), a=three.camera.aspect;
+  const mm=state.mode==='mm';
+  const halfW=mm?7.6:4.4, halfH=mm?3.2:1.7;
+  return Math.max(halfW/(t*a), halfH/t)*view.zoom;
+}
+
+function labelsVisible(){
+  if(state.mode==='explore'||state.mode==='table') return true;
+  if(state.mode==='quiz') return state.quiz.answered||state.quiz.hint;
+  return state.mm.answered;
+}
+
+let last=performance.now();
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000); last=t;
+  const {renderer,scene,camera,root,spin}=three;
+  if(view.auto && !view.dragging) spin.rotation.x+=dt*0.55;
+  root.rotation.y+=(view.yaw-root.rotation.y)*Math.min(1,dt*9);
+  three.dist+=(targetDist()-three.dist)*Math.min(1,dt*6);
+  const ty = state.mode==='mm' ? 1.3 : 0;
+  camera.position.set(0, ty+three.dist*0.2, three.dist);
+  camera.lookAt(0,ty,0);
+  // highlight gelang terpilih
+  const sel = state.mode==='explore' ? state.explore.sel : -1;
+  three.bands.forEach((m,i)=>{
+    const on=i===sel; m.material.emissiveIntensity = on ? 0.12+0.12*Math.sin(t/180) : 0;
+    const s = on ? 1.02+0.012*Math.sin(t/180) : 1; m.scale.set(1,s,s);
+  });
+  renderer.render(scene,camera);
+  // label 2D
+  const show=labelsVisible(), w=three.viewer.clientWidth, h=three.viewer.clientHeight, pos=BAND_POS[three.bands.length]||[];
+  const v=new THREE.Vector3();
+  three.labels.forEach((el,i)=>{
+    if(!show){ el.style.opacity=0; return; }
+    v.set(pos[i],1.25,0); root.localToWorld(v); v.project(camera);
+    el.style.opacity=1;
+    el.style.transform=`translate(${(v.x+1)/2*w}px,${(1-v.y)/2*h}px) translate(-50%,-100%)`;
+    el.classList.toggle('sel', i===sel);
+  });
+  const pill=$('#dirPill');
+  pill.textContent = Math.cos(root.rotation.y)>=0 ? 'Arah baca →' : '← Arah baca';
+  pill.style.opacity = show ? 1 : 0;
+  requestAnimationFrame(loop);
+}
+
+function bindPointer(){
+  const {canvas,camera}=three;
+  const pts=new Map(); let start=null, pinch=null, moved=false;
+  canvas.addEventListener('pointerdown',e=>{
+    canvas.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size===1){ start={x:e.clientX,y:e.clientY}; moved=false; view.dragging=true; }
+    if(pts.size===2){ const [a,b]=[...pts.values()]; pinch={d:Math.hypot(a.x-b.x,a.y-b.y), z:view.zoom}; moved=true; }
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!pts.has(e.pointerId)) return;
+    const prev=pts.get(e.pointerId); const cur={x:e.clientX,y:e.clientY}; pts.set(e.pointerId,cur);
+    if(pts.size===1){
+      const dx=cur.x-prev.x, dy=cur.y-prev.y;
+      view.yaw+=dx*0.009; three.spin.rotation.x+=dy*0.012;
+      if(Math.hypot(cur.x-start.x,cur.y-start.y)>6) moved=true;
+    } else if(pts.size===2 && pinch){
+      const [a,b]=[...pts.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y);
+      view.zoom=Math.min(1.8,Math.max(0.4,pinch.z*pinch.d/d));
+    }
+  });
+  const up=e=>{
+    if(!pts.has(e.pointerId)) return;
+    if(pts.size===1 && !moved && e.type==='pointerup') pick(e);
+    pts.delete(e.pointerId);
+    if(pts.size<2) pinch=null;
+    if(pts.size===0) view.dragging=false;
+  };
+  canvas.addEventListener('pointerup',up); canvas.addEventListener('pointercancel',up);
+  canvas.addEventListener('wheel',e=>{ e.preventDefault(); view.zoom=Math.min(1.8,Math.max(0.4,view.zoom*Math.exp(e.deltaY*0.0012))); },{passive:false});
+  const ray=new THREE.Raycaster(), ndc=new THREE.Vector2();
+  function pick(e){
+    const r=canvas.getBoundingClientRect();
+    ndc.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+    ray.setFromCamera(ndc,camera);
+    const hit=ray.intersectObjects(three.bands,false)[0];
+    if(hit) onBandTap(three.bands.indexOf(hit.object));
+  }
+}
+
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1600); }
+
+function onBandTap(i){
+  if(state.mode==='explore'){
+    state.explore.sel=i; renderEditor();
+    const row=document.querySelector(`.band-row[data-row="${i}"]`);
+    if(row) row.scrollIntoView({behavior:'smooth',block:'center'});
+  } else if(state.mode==='table'){
+    const ids=state.explore.ids, r=ROLES[ids.length][i]; let d=0; for(let k=0;k<=i;k++) if(ROLES[ids.length][k]==='d') d++;
+    toast(`${roleLabel(r,d)}: ${C[ids[i]].nama}`);
+  } else {
+    toast(`Gelang ini gelang ke-${i+1} dari kiri model`);
+  }
+}
+
+/* ---------- Mode & readout ---------- */
+function currentIds(){
+  return state.mode==='quiz' ? state.quiz.ids : state.mode==='mm' ? state.mm.ids : state.explore.ids;
+}
+function apply3D(){
+  if(!three) return;
+  setBands(currentIds());
+  three.probes.visible = state.mode==='mm';
+}
+function updateReadout(){
+  const val=$('#roVal'), tol=$('#roTol');
+  let ids=null, reveal=true;
+  if(state.mode==='quiz'){ ids=state.quiz.ids; reveal=state.quiz.answered; }
+  else if(state.mode==='mm'){ ids=state.mm.ids; reveal=state.mm.answered; }
+  else ids=state.explore.ids;
+  const a=analyze(ids);
+  if(!reveal){ val.textContent='? Ω'; tol.textContent='±?%'; return; }
+  val.textContent=formatOhm(a.value); tol.textContent=fmtTol(a.tol);
+}
+function setMode(m){
+  state.mode=m;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+m));
+  if(m==='quiz' && !state.quiz.ids) newQuiz(true);
+  if(m==='mm' && !state.mm.ids) newMM(true);
+  if(m==='explore'||m==='table') view.yaw = 0;
+  apply3D(); updateReadout();
+}
+
+/* ---------- Eksplorasi ---------- */
+const NOTES={4:'Umumnya resistor karbon (badan krem): 2 angka + pengali + toleransi.',5:'Umumnya resistor metal film presisi (badan biru): 3 angka + pengali + toleransi.',6:'Seperti 5 gelang, ditambah gelang koefisien suhu (TCR) dalam ppm/K.'};
+function renderEditor(){
+  const ex=state.explore, roles=ROLES[ex.n]; let d=0;
+  $('#bandEditor').innerHTML = '<h2>Atur warna gelang</h2>' + roles.map((r,i)=>{
+    const idx = r==='d' ? ++d : 0, cur=C[ex.ids[i]];
+    const sw=optionsFor(r).map(c=>`<button class="sw ${c.id===cur.id?'on':''}" data-band="${i}" data-c="${c.id}" style="--c:${c.hex}" title="${c.nama}" aria-label="${c.nama}"></button>`).join('');
+    return `<div class="band-row ${ex.sel===i?'sel':''}" data-row="${i}">
+      <div class="band-head"><span class="bnum">${i+1}</span><span class="blabel">${roleLabel(r,idx)}</span>
+      <span class="bval"><span class="dot" data-c="${cur.id}" style="--c:${cur.hex}"></span>${cur.nama} · ${roleValueText(r,cur)}</span></div>
+      <div class="swatches">${sw}</div></div>`;
+  }).join('');
+  $('#bandCountNote').textContent=NOTES[ex.n];
+  document.querySelectorAll('#bandCountSeg button').forEach(b=>b.classList.toggle('on',+b.dataset.n===ex.n));
+}
+function renderCalc(){
+  const ids=state.explore.ids, a=analyze(ids);
+  let html='<h2>Perhitungan</h2>'+explainHTML(ids);
+  const s=seriesOf(a.value);
+  html += s ? `<span class="badge">Nilai standar deret ${s}</span>` : (a.value>0 ? '<span class="badge grey">Bukan nilai deret E12/E24/E48</span>' : '');
+  if(ids[0]==='black') html+='<div class="warn">Gelang pertama <b>hitam (0)</b> hampir tidak pernah dipakai. Jika menemukan resistor seperti ini, kemungkinan murid membacanya dari arah terbalik.</div>';
+  $('#calc').innerHTML=html;
+}
+function refreshExplore(){ renderEditor(); renderCalc(); if(state.mode==='explore'||state.mode==='table'){ apply3D(); updateReadout(); } }
+
+$('#bandEditor').addEventListener('click',e=>{
+  const sw=e.target.closest('.sw');
+  if(sw){ const i=+sw.dataset.band; state.explore.ids[i]=sw.dataset.c; state.explore.sel=i; refreshExplore(); return; }
+  const row=e.target.closest('.band-row');
+  if(row){ state.explore.sel=+row.dataset.row; renderEditor(); }
+});
+$('#bandCountSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const n=+b.dataset.n, ex=state.explore; if(n===ex.n) return;
+  const a=analyze(ex.ids), tolId=ex.ids[ROLES[ex.n].indexOf('t')];
+  const r=valueToBands(a.value,n); let ids;
+  if(r && r.exact){ ids=r.ids.concat([tolId]); if(n===6) ids.push(ex.n===6?ex.ids[5]:'brown'); }
+  else ids=DEFAULTS[n].slice();
+  ex.n=n; ex.ids=ids; ex.sel=0; $('#findMsg').textContent='';
+  refreshExplore();
+});
+function doFind(){
+  const ex=state.explore, msg=$('#findMsg');
+  const v=parseValue($('#findVal').value, +$('#findUnit').value);
+  if(v==null||v<=0){ msg.textContent='Format nilai belum dikenali. Contoh: 4,7 · 4k7 · 220 · 1M5'; return; }
+  const r=valueToBands(v,ex.n);
+  if(!r){ msg.textContent='Nilai di luar jangkauan kode warna (0,1 Ω – 999 GΩ).'; return; }
+  const roles=ROLES[ex.n], tolId=ex.ids[roles.indexOf('t')], tcId=ex.n===6?ex.ids[5]:null;
+  ex.ids = r.ids.concat([tolId]); if(tcId) ex.ids.push(tcId);
+  ex.sel=0;
+  msg.innerHTML = r.exact ? `Diterapkan: <b>${formatOhm(r.value)}</b>.` : `${formatOhm(v)} tidak bisa ditulis tepat dengan ${ex.n} gelang — dibulatkan menjadi <b>${formatOhm(r.value)}</b>. Coba resistor 5 gelang.`;
+  refreshExplore();
+}
+$('#findBtn').addEventListener('click',doFind);
+$('#findVal').addEventListener('keydown',e=>{ if(e.key==='Enter') doFind(); });
+
+/* ---------- Latihan ---------- */
+const LEVEL_NOTE={1:'4 gelang, nilai deret E12, toleransi emas/perak.',2:'4 gelang, deret E24, termasuk pengali emas (×0,1) dan toleransi coklat/merah.',3:'5–6 gelang presisi, deret E48 — tiga angka penting.'};
+function genResistor(level){
+  if(level===1) return digitIds(rnd(E12)).concat([multId(rnd([0,1,2,3,4,5])), rnd(['gold','gold','gold','silver'])]);
+  if(level===2) return digitIds(rnd(E24)).concat([multId(rnd([-1,0,1,2,3,4,5])), rnd(['gold','gold','silver','brown','red'])]);
+  const ids=digitIds(rnd(E48)).concat([multId(rnd([-1,0,1,2,3,4])), rnd(['brown','brown','red','green','blue','violet'])]);
+  if(Math.random()<0.3) ids.push(rnd(['brown','red','yellow','orange']));
+  return ids;
+}
+function renderTolButtons(){
+  $('#qTol').innerHTML=TOLS.map(t=>`<button data-t="${t}" class="${state.quiz.tolPick===t?'on':''}">${fmtTol(t)}</button>`).join('');
+}
+function renderScore(){
+  const q=state.quiz; $('#qScore').textContent=q.score; $('#qTotal').textContent=q.total; $('#qStreak').textContent=q.streak;
+  const m=state.mm; $('#mScore').textContent=m.score; $('#mTotal').textContent=m.total; $('#mStreak').textContent=m.streak;
+}
+function newQuiz(silent){
+  const q=state.quiz; let ids;
+  do{ ids=genResistor(q.level); } while(q.ids && ids.join()===q.ids.join());
+  const a=analyze(ids);
+  Object.assign(q,{ids,value:a.value,tol:a.tol,answered:false,hint:false,tolPick:null});
+  $('#qVal').value=''; $('#qFb').innerHTML=''; $('#qFb').className='feedback';
+  renderTolButtons(); $('#levelNote').textContent=LEVEL_NOTE[q.level];
+  view.yaw = Math.random()<0.5 ? 0 : Math.PI;
+  if(three) three.spin.rotation.x=Math.random()*6.28;
+  if(!silent){ apply3D(); updateReadout(); }
+}
+function reversedReading(ids){
+  const r=ids.slice().reverse();
+  return analyze(r);
+}
+function checkQuiz(){
+  const q=state.quiz, fb=$('#qFb');
+  const v=parseValue($('#qVal').value, +$('#qUnit').value);
+  if(v==null){ fb.className='feedback'; fb.innerHTML='Isi dulu nilai resistansinya (contoh: <b>4,7</b> kΩ atau <b>4k7</b>).'; return; }
+  if(q.tolPick==null){ fb.className='feedback'; fb.innerHTML='Pilih juga toleransinya.'; return; }
+  const okV=Math.abs(v-q.value)/q.value<1e-6, okT=q.tolPick===q.tol;
+  if(!q.answered){ q.total++; if(okV&&okT){ q.score++; q.streak++; } else q.streak=0; q.answered=true; }
+  const tips=[];
+  if(!okV){
+    const rev=reversedReading(q.ids);
+    if(rev && Math.abs(rev.value-v)/v<1e-6) tips.push('Sepertinya terbaca dari <b>arah terbalik</b>. Gelang toleransi (emas/perak atau yang berjarak renggang) harus di kanan.');
+    else if(Math.abs(v-q.value*10)/q.value<1e-6) tips.push('Jawaban 10× terlalu besar — periksa lagi <b>gelang pengali</b>.');
+    else if(Math.abs(v*10-q.value)/q.value<1e-6) tips.push('Jawaban 10× terlalu kecil — periksa lagi <b>gelang pengali</b>.');
+    else if(Math.abs(v*1000-q.value)/q.value<1e-6 || Math.abs(v-q.value*1000)/q.value<1e-6) tips.push('Angkanya benar, tetapi <b>satuannya</b> keliru (Ω / kΩ / MΩ).');
+    else tips.push(`Jawaban murid: ${formatOhm(v)}. Cocokkan lagi warna tiap gelang dengan tabel.`);
+  }
+  if(!okT) tips.push(`Toleransi yang dipilih ${fmtTol(q.tolPick)}, seharusnya ${fmtTol(q.tol)}.`);
+  const ok=okV&&okT;
+  fb.className='feedback '+(ok?'ok':'bad');
+  fb.innerHTML=`<div class="head">${ok?'Tepat!':'Belum tepat'}</div>${tips.length?'<ul>'+tips.map(t=>'<li>'+t+'</li>').join('')+'</ul>':''}<div style="margin-top:10px">${explainHTML(q.ids)}</div>`;
+  renderScore(); updateReadout();
+}
+$('#qCheck').addEventListener('click',checkQuiz);
+$('#qVal').addEventListener('keydown',e=>{ if(e.key==='Enter') checkQuiz(); });
+$('#qNext').addEventListener('click',()=>newQuiz(false));
+$('#qHint').addEventListener('click',()=>{
+  const q=state.quiz; q.hint=true;
+  const names=q.ids.map(id=>C[id].nama);
+  const flipped=Math.cos(view.yaw)<0;
+  const fb=$('#qFb'); fb.className='feedback';
+  fb.innerHTML=`<div class="head">Petunjuk</div>Urutan warna sesuai arah baca: <b>${names.join(' – ')}</b>.<br>${flipped?'Model sedang terbalik — gelang toleransi ada di kiri layar.':'Gelang toleransi ada di kanan.'} Label angka di atas gelang sudah ditampilkan.`;
+});
+$('#qTol').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.quiz.tolPick=+b.dataset.t; renderTolButtons(); });
+$('#levelSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return; state.quiz.level=+b.dataset.l;
+  document.querySelectorAll('#levelSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  newQuiz(false);
+});
+
+/* ---------- Multimeter ---------- */
+function lcdRead(actual,R){
+  if(!isFinite(actual)) return {ol:true};
+  const counts=Math.round(actual/R.div*Math.pow(10,R.dec));
+  if(counts>1999) return {ol:true};
+  return {ol:false, text:(counts/Math.pow(10,R.dec)).toFixed(R.dec), value:counts/Math.pow(10,R.dec)*R.div};
+}
+function bestRange(actual){ for(let i=0;i<RANGES.length;i++) if(!lcdRead(actual,RANGES[i]).ol) return i; return -1; }
+function renderDial(){
+  const m=state.mm;
+  $('#dial').innerHTML=`<button data-r="-1" class="${m.range<0?'on':''}">OFF</button>`+RANGES.map((R,i)=>`<button data-r="${i}" class="${m.range===i?'on':''}">${R.label}</button>`).join('');
+  const lcd=$('#lcd');
+  if(m.range<0){ lcd.className='lcd off'; return; }
+  const R=RANGES[m.range], r=lcdRead(m.actual,R);
+  lcd.className='lcd'+(r.ol?' ol':'');
+  $('#lcdV').textContent = r.ol ? '1' : r.text;
+  $('#lcdU').textContent = R.unit;
+}
+function newMM(silent){
+  const m=state.mm, r=Math.random(); let ids;
+  if(r<0.6) ids=digitIds(rnd(E12)).concat([multId(rnd([1,2,3,4])),'gold']);
+  else if(r<0.75) ids=digitIds(rnd(E12)).concat([multId(rnd([1,2,3,4])),'silver']);
+  else ids=digitIds(rnd(E48)).concat([multId(rnd([0,1,2,3])),'brown']);
+  const a=analyze(ids), s=Math.random(); let status, actual;
+  if(s<0.6){ status='baik'; actual=a.value*(1+(Math.random()*2-1)*0.75*a.tol/100); }
+  else if(s<0.9){ status='menyimpang'; const sg=Math.random()<0.7?1:-1; actual=a.value*(1+sg*a.tol/100*(1.8+Math.random()*2.5)); }
+  else { status='putus'; actual=Infinity; }
+  Object.assign(m,{ids,nominal:a.value,tol:a.tol,actual,status,range:-1,verdict:null,answered:false});
+  $('#mVal').value=''; $('#mFb').innerHTML=''; $('#mFb').className='feedback';
+  document.querySelectorAll('#mVerdict button').forEach(b=>b.classList.remove('on'));
+  view.yaw = Math.random()<0.5 ? 0 : Math.PI;
+  renderDial();
+  if(!silent){ apply3D(); updateReadout(); }
+}
+$('#dial').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.mm.range=+b.dataset.r; renderDial(); });
+$('#mVerdict').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.mm.verdict=b.dataset.v; document.querySelectorAll('#mVerdict button').forEach(x=>x.classList.toggle('on',x===b)); });
+$('#mNext').addEventListener('click',()=>newMM(false));
+function checkMM(){
+  const m=state.mm, fb=$('#mFb');
+  const v=parseValue($('#mVal').value, +$('#mUnit').value);
+  if(v==null){ fb.className='feedback'; fb.innerHTML='Tulis dulu nilai nominal dari kode warna.'; return; }
+  if(m.range<0){ fb.className='feedback'; fb.innerHTML='Putar selektor multimeter ke salah satu rentang Ω dan lihat layarnya.'; return; }
+  if(!m.verdict){ fb.className='feedback'; fb.innerHTML='Pilih kesimpulan kondisi resistor.'; return; }
+  const okN=Math.abs(v-m.nominal)/m.nominal<1e-6, okV=m.verdict===m.status;
+  const best=bestRange(m.actual), cur=lcdRead(m.actual,RANGES[m.range]);
+  const okR = best<0 ? true : m.range===best;
+  const lo=clean(m.nominal*(1-m.tol/100)), hi=clean(m.nominal*(1+m.tol/100));
+  const items=[];
+  items.push(`${okN?'✅':'❌'} <b>Nominal:</b> ${okN?'tepat':'seharusnya'} ${formatOhm(m.nominal)} ${fmtTol(m.tol)}${okN?'':` (jawaban: ${formatOhm(v)})`}.`);
+  if(best<0) items.push('✅ <b>Rentang:</b> layar menampilkan <b>1</b> di semua rentang — tidak ada arus yang mengalir, rangkaian terbuka.');
+  else if(cur.ol) items.push(`⚠️ <b>Rentang:</b> ${RANGES[m.range].label} terlalu kecil (layar "1" = OL). Rentang paling tepat: <b>${RANGES[best].label}</b>.`);
+  else if(okR) items.push(`✅ <b>Rentang:</b> ${RANGES[m.range].label} tepat — rentang terkecil yang masih terbaca memberi resolusi terbaik.`);
+  else items.push(`⚠️ <b>Rentang:</b> ${RANGES[m.range].label} masih bisa membaca, tetapi <b>${RANGES[best].label}</b> lebih teliti (lebih banyak angka di belakang koma).`);
+  let detail;
+  if(m.status==='putus') detail='Resistor <b>putus</b> (open circuit) — harus diganti.';
+  else {
+    const meas=lcdRead(m.actual,RANGES[best]).value, dev=(meas-m.nominal)/m.nominal*100;
+    detail=`Hasil ukur ${formatOhm(clean(meas))} → selisih ${dev>=0?'+':''}${nf(dev,2)}% dari nominal. Batas toleransi ${fmtTol(m.tol)}: ${formatOhm(lo)} – ${formatOhm(hi)} → resistor <b>${m.status==='baik'?'BAIK':'MENYIMPANG'}</b>${m.status==='baik'?'':' (di luar toleransi, sebaiknya diganti)'}.`;
+  }
+  items.push(`${okV?'✅':'❌'} <b>Kesimpulan:</b> ${detail}`);
+  const ok=okN&&okV;
+  if(!m.answered){ m.total++; if(ok){ m.score++; m.streak++; } else m.streak=0; m.answered=true; }
+  fb.className='feedback '+(ok?'ok':'bad');
+  fb.innerHTML=`<div class="head">${ok?'Pengujian benar!':'Periksa lagi'}</div><ul style="list-style:none;padding-left:0">${items.map(i=>'<li>'+i+'</li>').join('')}</ul><div style="margin-top:10px">${explainHTML(m.ids)}</div>`;
+  renderScore(); updateReadout();
+}
+$('#mCheck').addEventListener('click',checkMM);
+
+/* ---------- Tabel ---------- */
+function renderTable(){
+  const dash='<span style="color:#b5bdc7">–</span>';
+  $('#colorTable').innerHTML='<thead><tr><th>Warna</th><th>Angka</th><th>Pengali</th><th>Toleransi</th><th>TCR</th></tr></thead><tbody>'+
+    COLORS.map(c=>`<tr><td class="c"><span class="dot" data-c="${c.id}" style="--c:${c.hex};width:18px;height:18px"></span>${c.nama}</td>
+      <td>${c.digit!==null?c.digit:dash}</td><td>${fmtMult(c.mult)}</td><td>${c.tol!==null?fmtTol(c.tol):dash}</td><td>${c.tc!==null?c.tc+' ppm/K':dash}</td></tr>`).join('')+'</tbody>';
+  $('#example').innerHTML='<p class="muted" style="margin:0 0 10px">Kuning – Ungu – Merah – Emas</p>'+explainHTML(['yellow','violet','red','gold']);
+}
+
+/* ---------- Tombol HUD & tab ---------- */
+$('#btnSpin').addEventListener('click',e=>{ view.auto=!view.auto; e.currentTarget.setAttribute('aria-pressed',view.auto); });
+$('#btnReset').addEventListener('click',()=>{ view.zoom=1; view.yaw = (state.mode==='explore'||state.mode==='table') ? 0 : (Math.cos(view.yaw)>=0?0:Math.PI); if(three) three.spin.rotation.x=0; });
+$('#tabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) setMode(b.dataset.mode); });
+
+/* ---------- Mulai ---------- */
+renderEditor(); renderCalc(); renderTable(); renderTolButtons(); renderScore(); renderDial();
+$('#levelNote').textContent=LEVEL_NOTE[1];
+try{ init3D(); }catch(err){ $('#loading').textContent='Model 3D tidak dapat dimuat di perangkat ini. Kalkulator dan latihan tetap bisa digunakan.'; console.error(err); }
+apply3D(); updateReadout();
+})();
+</script>
+<script>(function(){var h=document.querySelector('header.bar')||document.querySelector('header.top')||document.querySelector('header');if(!h)return;var i=document.createElement('img');i.alt='Logo Teknik Otomasi Industri';i.src='data:image/webp;base64,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';var t=h.firstElementChild;if(t&&t.tagName==='DIV'&&(h.classList.contains('bar')||h.classList.contains('top'))){i.style.cssText='width:42px;height:42px;flex:none';var w=document.createElement('div');w.style.cssText='display:flex;align-items:center;gap:10px;min-width:0';h.insertBefore(w,t);w.appendChild(i);w.appendChild(t);}else{i.style.cssText='width:34px;height:34px;flex:none';h.insertBefore(i,h.firstChild);}})();</script>
+</body>
+</html>
