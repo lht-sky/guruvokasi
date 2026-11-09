@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi 3D Hukum Ohm &amp; Rangkaian Seri–Paralel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e3e8ec; --ink:#14202b; --muted:#56636e; --line:#d2dae0; --soft:#eef2f5;
+  --accent:#0a62a8; --yellow:#f3b52f; --ok:#24834b; --okbg:#eef8f1; --bad:#bb3a2c; --badbg:#fdf0ee; --warn:#b8650f; --warnbg:#fff5e6;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+header.top{background:#171f28;color:#e6ebf0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #2d3946}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand img{width:44px;height:44px;flex:none}
+.eyebrow2{font:600 12px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+h1{margin:2px 0 0;font:700 24px/1.1 var(--f-display);letter-spacing:.01em}
+.meta{display:grid;justify-items:end;gap:4px;text-align:right;flex:none}
+.dims{font:500 12px var(--f-mono);color:var(--yellow);border:1px solid #4a3d18;border-radius:4px;padding:3px 7px;white-space:nowrap}
+.guru{font-size:12.5px;color:#c3ccd5}
+.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(380px,1fr);gap:16px;padding:16px;max-width:1440px;margin:0 auto;align-items:start}
+.stage{position:sticky;top:12px}
+.viewer{position:relative;height:min(76vh,680px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(#eef2f5,#c9d2da)}
+#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;font:600 12px/1.25 var(--f-body);background:rgba(20,32,43,.88);color:#fff;border-radius:7px;padding:3px 7px;white-space:nowrap;text-align:center}
+.lbl small{display:block;font:500 11px var(--f-mono);color:#f3d36a}
+.lbl.hot{background:#b8321f}
+.lbl.burnt{background:#3b3b3b;color:#ffb3a8}
+.hud{position:absolute;top:10px;right:10px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.tool{border:1px solid var(--line);background:rgba(251,252,253,.94);padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.tool[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.psuchip{position:absolute;left:10px;bottom:10px;background:#1b2026;border-radius:8px;padding:6px 10px;display:flex;gap:12px;align-items:baseline;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.psuchip .v{font:26px/1 "Share Tech Mono",monospace;color:#ff5348}
+.psuchip .a{font:26px/1 "Share Tech Mono",monospace;color:#56e07a}
+.psuchip small{font:600 11px var(--f-mono);color:#93a0aa}
+.psuchip .cc{font:700 11px var(--f-mono);background:#ff5348;color:#fff;border-radius:3px;padding:1px 4px;display:none}
+.psuchip .cc.on{display:inline}
+#toast{position:absolute;right:10px;top:52px;z-index:5;width:min(calc(100% - 20px),380px);display:grid;gap:6px;pointer-events:none}
+.tst{background:var(--ink);color:#fff;padding:9px 13px;border-radius:8px;font-size:13.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.22);border-left:4px solid #4aa3e0;animation:tin .25s ease-out}
+.tst b{display:block}.tst.bad{border-left-color:#ff5a45}.tst.ok{border-left-color:#4cc47e}.tst.warn{border-left-color:#f3b52f}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#dfe5ea;color:var(--muted);font-weight:600;text-align:center;padding:20px}
+.panel{min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#d6dde4;border-radius:10px;padding:4px;margin-bottom:12px}
+.tabs button{border:0;background:transparent;border-radius:7px;padding:9px 2px;font-weight:600;font-size:13.5px;color:var(--muted);cursor:pointer}
+.tabs button.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,32,43,.12)}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.card h2{font:700 21px/1.1 var(--f-display);letter-spacing:.02em;margin:0 0 6px}
+.muted{color:var(--muted);font-size:13.5px;margin:4px 0 0;line-height:1.5}
+.goal{background:var(--soft);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;font-size:14px;margin:6px 0 4px}
+.seg{display:flex;flex-wrap:wrap;background:var(--soft);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:7px 8px;border-radius:6px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--ink);color:#fff}
+.lbl2{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+.slider{display:flex;align-items:center;gap:10px}
+.slider input{flex:1;accent-color:var(--accent);height:28px}
+.slider output{font:600 15px var(--f-mono);min-width:66px;text-align:right;color:var(--accent)}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.rsel{background:var(--soft);border-radius:8px;padding:7px 9px}
+.rsel label{display:block;font-size:12px;font-weight:600;color:var(--muted)}
+.rsel select{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px;background:#fff;font:600 14px var(--f-mono)}
+.rsel .mini{display:flex;gap:4px;margin-top:5px}
+.rsel .mini button{flex:1;border:1px solid var(--line);background:#fff;border-radius:5px;font-size:11.5px;font-weight:600;padding:3px 2px;cursor:pointer}
+.rsel .mini button.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.schem{background:#fbfcfd;border:1px solid var(--line);border-radius:8px;margin-top:10px;padding:4px}
+.schem svg{display:block;width:100%;height:auto}
+table.tb{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+.tb th,.tb td{padding:6px 5px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.tb th:first-child,.tb td:first-child{text-align:left}
+.tb th{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.tb td{font-family:var(--f-mono);font-size:13px}
+.tb td.hot{color:var(--bad);font-weight:600}
+.tb tr.tot td{font-weight:600;background:var(--soft)}
+.formula{background:#f6f8fa;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font:500 14px/1.65 var(--f-mono);margin-top:10px}
+.formula b{color:var(--accent)}
+.chk{list-style:none;margin:8px 0 0;padding:0;font-size:14px}
+.chk li{padding:5px 0 5px 26px;position:relative;border-top:1px dashed var(--line)}
+.chk li:first-child{border-top:0}
+.chk li::before{content:"✓";position:absolute;left:4px;top:5px;color:var(--ok);font-weight:700}
+.chk li.x::before{content:"!";color:var(--warn)}
+.meter{background:linear-gradient(180deg,#f7c21a,#e9a90b);border-color:#c98f05;padding:12px}
+.meter-inner{background:#2a2d31;border-radius:10px;padding:10px 12px}
+.lcd{background:linear-gradient(180deg,#bfcbb3,#a9b89c);border-radius:7px;height:62px;display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:0 14px;box-shadow:inset 0 3px 8px rgba(0,0,0,.35);font-family:'Share Tech Mono',ui-monospace,monospace;color:#1b2418}
+.lcd .v{font-size:42px;line-height:1}
+.lcd .u{font-size:18px;min-width:30px}
+.mrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.mrow .seg{flex:1;background:#3a3e44}
+.mrow .seg button{color:#cfd4d9;font-size:12.5px;padding:6px 6px}
+.mrow .seg button.on{background:#f3b52f;color:#1b1b1b}
+.mcap{color:#aeb4bb;font-size:12px;margin-top:6px}
+.fb{border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5;background:var(--soft);margin-top:10px}
+.fb:empty{display:none}.fb.ok{background:var(--okbg)}.fb.bad{background:var(--badbg)}.fb.warn{background:var(--warnbg)}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 13px;font-weight:600;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{border-color:#e4a59c;color:var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+#vi{display:block;width:100%;height:auto;aspect-ratio:16/10;background:#fbfcfd;border:1px solid var(--line);border-radius:8px;margin-top:10px}
+.ans{display:flex;gap:8px;margin-top:10px}
+.ans input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:8px;padding:9px 12px;font:600 16px var(--f-mono)}
+.ans span{align-self:center;font:600 15px var(--f-mono);color:var(--muted)}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:4px 0 8px}
+.stat b{display:block;font:700 24px/1.1 var(--f-display)}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+.q{font-weight:600;font-size:15px;margin-top:6px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px;line-height:1.6}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:0;gap:0}
+  .stage{top:0;z-index:20}
+  .viewer{height:40vh;min-height:250px;border-radius:0;border:none;border-bottom:1px solid var(--line)}
+  .panel{padding:12px}
+  header.top{padding:8px 12px}
+  .brand img{width:36px;height:36px}
+  h1{font-size:18px}.eyebrow2{font-size:10.5px}
+  .meta .guru,.dims .full{display:none}
+  .tabs button{font-size:12.5px}
+  .psuchip .v,.psuchip .a{font-size:20px}
+  .hud .tool{padding:5px 7px;font-size:12px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <img src="data:image/webp;base64,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" alt="Logo Teknik Otomasi Industri">
+    <div>
+      <div class="eyebrow2">SMK 2 Triple J · Teknik Otomasi Industri</div>
+      <h1>Simulasi 3D Hukum Ohm &amp; Rangkaian Seri–Paralel</h1>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="dims"><span class="full">DK2 · Konsep Dasar Kelistrikan · </span>Fase E</span>
+    <span class="guru">Guru pengampu: Ade Irma Suryani, S.T., Gr.</span>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="stage">
+    <div class="viewer" id="viewer">
+      <canvas id="c" aria-label="Model 3D breadboard, power supply, dan komponen"></canvas>
+      <div id="labels"></div>
+      <div class="hud">
+        <button class="tool" id="bFlow" aria-pressed="true">Aliran arus</button>
+        <button class="tool" id="bStrip" aria-pressed="false">Jalur breadboard</button>
+        <button class="tool" id="bVal" aria-pressed="true">Nilai</button>
+        <button class="tool" id="bReset">⌂</button>
+      </div>
+      <div id="toast"></div>
+      <div class="psuchip"><div><span class="v" id="pV">12.00</span> <small>V</small></div><div><span class="a" id="pA">0.000</span> <small>A</small></div><span class="cc" id="pCC">CC</span></div>
+      <div id="loading">Memuat model 3D…</div>
+    </div>
+  </section>
+  <section class="panel">
+    <nav class="tabs" id="tabs">
+      <button data-m="ohm" class="active">Hukum Ohm</button>
+      <button data-m="seri">Seri</button>
+      <button data-m="par">Paralel</button>
+      <button data-m="mix">Campuran</button>
+      <button data-m="lat">Latihan</button>
+    </nav>
+    <div id="pane"></div>
+  </section>
+</main>
+<footer>Media pembelajaran interaktif · Program Keahlian Teknik Elektronika · Konsentrasi Teknik Otomasi Industri · SMKS 2 Triple J<br>Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const nf=(x,d=2)=>Number(x).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+
+/* ================= DATA ================= */
+const RVALS=[10,22,47,100,220,330,470,1000,2200,4700,10000];
+const BANDS={10:['brown','black','black'],22:['red','red','black'],47:['yellow','violet','black'],100:['brown','black','brown'],220:['red','red','brown'],330:['orange','orange','brown'],470:['yellow','violet','brown'],1000:['brown','black','red'],2200:['red','red','red'],4700:['yellow','violet','red'],10000:['brown','black','orange']};
+const BANDHEX={black:'#1c1c1c',brown:'#6e3b1f',red:'#d32a22',orange:'#f07d15',yellow:'#f3d317',green:'#1e9b44',violet:'#8a3fc4',gold:'#d6a73c'};
+const fR=r=>!isFinite(r)?'∞':r>=1000?nf(r/1000,r%1000?1:0)+' kΩ':nf(r,r%1?1:0)+' Ω';
+const fV=v=>nf(v,2)+' V';
+const fI=i=>Math.abs(i)<1?nf(i*1000,i*1000<10?2:1)+' mA':nf(i,3)+' A';
+const fP=p=>p<1?nf(p*1000,0)+' mW':nf(p,2)+' W';
+const LAMP_R=120, PRATE=0.25, ILIM=1.0;
+
+const S={mode:'ohm',V:6,type:'res',R:{ohm:[220],seri:[100,220,470],par:[220,470,1000],mix:[100,220,470]},n:{seri:3,par:3},
+  open:[false,false,false],burnt:[false,false,false],heat:[0,0,0],
+  mm:{q:'V',at:0},flow:true,strip:false,val:true,pts:[],lat:null,score:{ok:0,tot:0},sol:null};
+
+/* ================= LISTRIK ================= */
+function comps(){
+  const m=S.mode==='lat'?S.lat.mode:S.mode;
+  const R=S.mode==='lat'?S.lat.R:S.R[m];
+  const n=m==='ohm'?1:m==='mix'?3:(S.mode==='lat'?S.lat.R.length:S.n[m]);
+  const type=S.mode==='lat'?'res':S.type;
+  return {m,n,type,R:R.slice(0,n).map(r=>type==='lamp'?LAMP_R:r)};
+}
+function solve(){
+  const {m,n,R,type}=comps(), V=S.mode==='lat'?S.lat.V:S.V;
+  const Re=R.map((r,i)=>(S.mode!=='lat'&&(S.open[i]||S.burnt[i]))?Infinity:r);
+  const par=a=>{const g=a.reduce((s,r)=>s+(isFinite(r)?1/r:0),0);return g>0?1/g:Infinity;};
+  let Rt;
+  if(m==='ohm') Rt=Re[0]; else if(m==='seri') Rt=Re.reduce((s,r)=>s+r,0); else if(m==='par') Rt=par(Re); else Rt=Re[0]+par([Re[1],Re[2]]);
+  let Vs=V, It=isFinite(Rt)?V/Rt:0, cc=false;
+  if(It>ILIM){It=ILIM;Vs=ILIM*Rt;cc=true;}
+  const c=Re.map(()=>({V:0,I:0,P:0}));
+  if(m==='ohm'){c[0].I=It;c[0].V=Vs;}
+  else if(m==='seri'){Re.forEach((r,i)=>{c[i].I=It;c[i].V=isFinite(Rt)?It*r:(isFinite(r)?0:Vs);});
+    if(!isFinite(Rt)){const k=Re.findIndex(r=>!isFinite(r)); Re.forEach((r,i)=>{c[i].V=i===k?Vs:0;});}}
+  else if(m==='par'){Re.forEach((r,i)=>{c[i].V=Vs;c[i].I=isFinite(r)?Vs/r:0;});}
+  else {const Rp=par([Re[1],Re[2]]);
+    if(isFinite(Rt)){c[0].I=It;c[0].V=It*Re[0];const Vp=It*Rp;[1,2].forEach(i=>{c[i].V=Vp;c[i].I=isFinite(Re[i])?Vp/Re[i]:0;});}
+    else if(!isFinite(Re[0])){c[0].V=Vs;}
+    else {[1,2].forEach(i=>c[i].V=Vs);}
+  }
+  c.forEach((x,i)=>{x.P=x.V*x.I;x.R=R[i];x.Re=Re[i];});
+  return {m,n,type,Vs,Vset:V,It,Rt,cc,c};
+}
+
+/* ================= TATA LETAK BREADBOARD ================= */
+const ROWZ={'T+':-3.0,'T-':-2.6,a:-1.9,b:-1.5,c:-1.1,d:-0.7,e:-0.3,f:0.5,g:0.9,h:1.3,i:1.7,j:2.1,'B-':2.8,'B+':3.2};
+const hx=c=>(c-15.5)*0.5, BY=0.8;
+const H=(c,r)=>({c,r,x:hx(c),z:ROWZ[r]});
+// elemen: w=jumper, s=jalur internal, k=komponen(idx), src=terminal PSU; br=cabang arus
+function layout(){
+  const {m,n}=comps(), L=[];
+  const W=(a,b,col,br)=>L.push({t:'w',a,b,col,br}), Sx=(a,b,br)=>L.push({t:'s',a,b,br}), K=(i,a,b,br)=>L.push({t:'k',i,a,b,br});
+  L.push({t:'src',a:H(1,'T+'),b:H(1,'T-')});
+  if(m==='ohm'){
+    Sx(H(1,'T+'),H(6,'T+'),'t'); W(H(6,'T+'),H(6,'a'),'red','t'); Sx(H(6,'a'),H(6,'b'),'t'); K(0,H(6,'b'),H(12,'b'),'t'); Sx(H(12,'b'),H(12,'a'),'t'); W(H(12,'a'),H(12,'T-'),'black','t'); Sx(H(12,'T-'),H(1,'T-'),'t');
+  } else if(m==='seri'){
+    const col=[4,9,14,19];
+    Sx(H(1,'T+'),H(4,'T+'),'t'); W(H(4,'T+'),H(4,'a'),'red','t'); Sx(H(4,'a'),H(4,'b'),'t');
+    const rows=['b','c','d'];
+    for(let i=0;i<n;i++){ if(i>0) Sx(H(col[i],rows[i-1]),H(col[i],rows[i]),'t'); K(i,H(col[i],rows[i]),H(col[i+1],rows[i]),'t'); }
+    const end=col[n], lr=rows[n-1]; Sx(H(end,lr),H(end,'a'),'t'); W(H(end,'a'),H(end,'T-'),'black','t'); Sx(H(end,'T-'),H(1,'T-'),'t');
+  } else if(m==='par'){
+    const cols=[6,12,18].slice(0,n);
+    cols.forEach((c,i)=>{const br='b'+i, pv=i===0?1:cols[i-1], pb=i===0?2:cols[i-1];
+      Sx(H(pv,'T+'),H(c,'T+'),'f'+i); W(H(c,'T+'),H(c,'a'),'red',br); Sx(H(c,'a'),H(c,'d'),br); K(i,H(c,'d'),H(c,'g'),br); Sx(H(c,'g'),H(c,'j'),br); W(H(c,'j'),H(c,'B-'),'black',br); Sx(H(c,'B-'),H(pb,'B-'),'r'+i);});
+    L.push({t:'w',a:H(2,'B-'),b:H(2,'T-'),col:'black',br:'r',edge:true});
+    Sx(H(2,'T-'),H(1,'T-'),'r');
+  } else {
+    Sx(H(1,'T+'),H(4,'T+'),'t'); W(H(4,'T+'),H(4,'a'),'red','t'); Sx(H(4,'a'),H(4,'b'),'t'); K(0,H(4,'b'),H(10,'b'),'t');
+    Sx(H(10,'b'),H(10,'d'),'b0'); K(1,H(10,'d'),H(10,'g'),'b0'); Sx(H(10,'g'),H(10,'j'),'b0'); W(H(10,'j'),H(10,'B-'),'black','b0');
+    Sx(H(10,'b'),H(10,'a'),'b1'); W(H(10,'a'),H(17,'a'),'yellow','b1'); Sx(H(17,'a'),H(17,'d'),'b1'); K(2,H(17,'d'),H(17,'g'),'b1'); Sx(H(17,'g'),H(17,'j'),'b1'); W(H(17,'j'),H(17,'B-'),'black','b1');
+    Sx(H(17,'B-'),H(10,'B-'),'b1'); Sx(H(10,'B-'),H(2,'B-'),'t');
+    L.push({t:'w',a:H(2,'B-'),b:H(2,'T-'),col:'black',br:'t',edge:true}); Sx(H(2,'T-'),H(1,'T-'),'t');
+  }
+  return L;
+}
+function branchI(br,sol){
+  const {m,c}=sol;
+  if(m==='ohm'||m==='seri') return sol.It;
+  if(m==='par'){ if(br==='r'||br==='t') return sol.It;
+    const k=+br.slice(1); if(br[0]==='b') return c[k].I;
+    if(br[0]==='f'){let s=0;for(let i=k;i<sol.n;i++)s+=c[i].I;return s;}
+    if(br[0]==='r'){let s=0;for(let i=k;i<sol.n;i++)s+=c[i].I;return s;} }
+  if(br==='t') return sol.It; if(br==='b0') return c[1].I; if(br==='b1') return c[2].I;
+  return 0;
+}
+
+/* ================= 3D ================= */
+let T=null;
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+const M=(h,o)=>new THREE.MeshStandardMaterial(Object.assign({color:col(h),roughness:.55,metalness:0},o||{}));
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;t.userData={c,g,draw};return t;}
+function redraw(t){const {c,g,draw}=t.userData;g.clearRect(0,0,c.width,c.height);draw(g,c.width,c.height);t.needsUpdate=true;}
+function glowSprite(rgb){const t=canvasTex(128,128,g=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,`rgba(${rgb},.95)`);gr.addColorStop(.35,`rgba(${rgb},.45)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,128,128);});const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));return s;}
+function shadowAll(o){o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});}
+function disposeGroup(g){while(g.children.length){const c=g.children.pop();c.traverse(m=>{if(m.isMesh||m.isSprite){m.geometry&&m.geometry.dispose();if(m.material.map)m.material.map.dispose();m.material.dispose();}});}}
+const WCOL={red:'#d0302a',black:'#22252a',yellow:'#e8b21a',green:'#2f9e4f',blue:'#2b62c9'};
+
+function init3D(){
+  if(typeof THREE==='undefined') throw new Error('three');
+  const canvas=$('#c'), viewer=$('#viewer');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(34,1,0.1,300);
+  const pmrem=new THREE.PMREMGenerator(renderer), env=new THREE.Scene();
+  const sky=new THREE.SphereGeometry(50,32,16),pa=sky.attributes.position,cols=[];const lo=new THREE.Color(0x2c3540),hi=new THREE.Color(0xf2f5f8);
+  for(let i=0;i<pa.count;i++){const t=(pa.getY(i)/50+1)/2;const c=lo.clone().lerp(hi,Math.pow(t,.8));cols.push(c.r,c.g,c.b);}
+  sky.setAttribute('color',new THREE.Float32BufferAttribute(cols,3)); env.add(new THREE.Mesh(sky,new THREE.MeshBasicMaterial({side:THREE.BackSide,vertexColors:true})));
+  const pm=new THREE.MeshBasicMaterial({color:new THREE.Color(3,3,3),side:THREE.DoubleSide});
+  [[0,32,12,40,12],[-34,8,22,14,30],[30,-4,-20,10,24]].forEach(([x,y,z,w,h])=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),pm);m.position.set(x,y,z);m.lookAt(0,0,0);env.add(m);});
+  scene.environment=pmrem.fromScene(env,0.03).texture;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x7a8590,0.35));
+  const key=new THREE.DirectionalLight(0xffffff,0.8);key.position.set(5,16,10);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-16,right:16,top:12,bottom:-12,near:1,far:50});key.shadow.bias=-0.0006;scene.add(key);
+  const fill=new THREE.DirectionalLight(0xd6e4ff,0.3);fill.position.set(-10,6,-6);scene.add(fill);
+  const bench=new THREE.Mesh(new THREE.BoxGeometry(48,0.6,26),M('#5f7c70',{roughness:.85}));bench.position.y=-0.3;bench.receiveShadow=true;scene.add(bench);
+  // breadboard
+  const bb=new THREE.Mesh(new THREE.BoxGeometry(15.8,0.8,7.4),M('#f1f1ec',{roughness:.6}));bb.position.y=0.4;bb.castShadow=bb.receiveShadow=true;scene.add(bb);
+  const bbTex=canvasTex(1580,740,drawBoard);
+  const top=new THREE.Mesh(new THREE.PlaneGeometry(15.8,7.4),new THREE.MeshStandardMaterial({map:bbTex,roughness:.6}));top.rotation.x=-Math.PI/2;top.position.y=BY+0.002;top.receiveShadow=true;scene.add(top);
+  // PSU
+  const psu=new THREE.Group();psu.position.set(-5.2,0,-7.0);
+  const pb=new THREE.Mesh(new THREE.BoxGeometry(5.4,3.6,4.4),M('#dde2e6',{roughness:.5}));pb.position.y=1.8;psu.add(pb);
+  const pf=new THREE.Mesh(new THREE.BoxGeometry(5.0,3.2,0.1),M('#2a2f35'));pf.position.set(0,1.85,2.22);psu.add(pf);
+  const dispTex=canvasTex(512,220,drawPSU);
+  const disp=new THREE.Mesh(new THREE.PlaneGeometry(4.2,1.8),new THREE.MeshBasicMaterial({map:dispTex,toneMapped:false}));disp.position.set(0,2.45,2.28);psu.add(disp);
+  const knob=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.46,0.4,32),M('#3a3f45'));knob.rotation.x=Math.PI/2;knob.position.set(-1.4,0.9,2.45);psu.add(knob);
+  const kp=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.36,0.05),M('#ffffff'));kp.position.set(0,0.2,0.22);knob.add(kp);
+  [[0.9,'#d0302a'],[1.9,'#22252a']].forEach(([x,c])=>{const t=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.35,20),M(c));t.rotation.x=Math.PI/2;t.position.set(x,0.85,2.42);psu.add(t);});
+  shadowAll(psu);scene.add(psu);
+  const circ=new THREE.Group();scene.add(circ);
+  const stripG=new THREE.Group();scene.add(stripG);
+  // titik arus
+  const dotGeo=new THREE.SphereGeometry(0.075,10,6), dotMat=new THREE.MeshBasicMaterial({color:0xffd21a,toneMapped:false});
+  const dots=new THREE.InstancedMesh(dotGeo,dotMat,900);dots.count=0;dots.frustumCulled=false;scene.add(dots);
+  // probe voltmeter
+  const mk=(h)=>{const g=new THREE.Group();const metal=M('#d4d8dc',{metalness:.95,roughness:.22}),mat=M(h,{roughness:.42});
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.35,16),metal);tip.rotation.x=Math.PI;tip.position.y=0.17;g.add(tip);
+    const pin=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.6,12),metal);pin.position.y=0.62;g.add(pin);
+    const gd=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.19,0.18,20),mat);gd.position.y=1.0;g.add(gd);
+    const hd=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.18,2.1,20),mat);hd.position.y=2.15;g.add(hd);shadowAll(g);return g;};
+  const pr=mk('#d42a24'),pk=mk('#202226');scene.add(pr,pk);
+  const smoke=[];for(let i=0;i<3;i++){const s=glowSprite('120,120,120');s.material.blending=THREE.NormalBlending;scene.add(s);smoke.push({s,parts:[]});}
+  T={renderer,scene,camera,canvas,viewer,circ,stripG,dots,dispTex,knob,pr,pk,paths:[],compObj:[],probeT:{r:null,k:null},
+     cam:{yaw:0,pitch:0.82,zoom:1,t:V3(0,0.6,-1.0),d:26},smoke};
+  bind(); new ResizeObserver(resize).observe(viewer); resize();
+  build3D();
+  $('#loading').style.display='none';
+  requestAnimationFrame(loop);
+}
+function drawBoard(g,w,h){
+  const s=100, X=x=>w/2+x*s, Z=z=>h/2+z*s;
+  g.fillStyle='#f1f1ec';g.fillRect(0,0,w,h);
+  g.fillStyle='#e2e2da';g.fillRect(0,Z(-0.05),w,Z(0.25)-Z(-0.05));
+  g.lineWidth=3;
+  [['T+','#d0302a',-0.22],['T-','#2b62c9',0.22],['B-','#2b62c9',-0.22],['B+','#d0302a',0.22]].forEach(([r,c,o])=>{g.strokeStyle=c;g.beginPath();g.moveTo(X(-7.6),Z(ROWZ[r]+o));g.lineTo(X(7.6),Z(ROWZ[r]+o));g.stroke();});
+  g.fillStyle='#d0302a';g.font='bold 22px Arial';g.textAlign='center';g.textBaseline='middle';
+  g.fillText('+',X(-7.65),Z(-3.0));g.fillText('+',X(-7.65),Z(3.2));g.fillStyle='#2b62c9';g.fillText('−',X(-7.65),Z(-2.6));g.fillText('−',X(-7.65),Z(2.8));
+  g.fillStyle='#3a3d40';
+  for(let c=1;c<=30;c++){
+    Object.entries(ROWZ).forEach(([r,z])=>{ if(r.length>1&&c%6===0) return; g.fillRect(X(hx(c))-6,Z(z)-6,12,12);});
+    if(c===1||c%5===0){g.fillStyle='#8a8d90';g.font='600 16px "IBM Plex Mono",monospace';g.fillText(c,X(hx(c)),Z(-2.25));g.fillText(c,X(hx(c)),Z(2.45));g.fillStyle='#3a3d40';}
+  }
+  g.fillStyle='#8a8d90';g.font='600 16px "IBM Plex Mono",monospace';
+  'abcdefghij'.split('').forEach(r=>{g.fillText(r,X(-7.6),Z(ROWZ[r]));g.fillText(r,X(7.6),Z(ROWZ[r]));});
+}
+function drawPSU(g,w,h){
+  const sol=S.sol||{Vs:0,It:0,cc:false};
+  g.fillStyle='#101418';g.fillRect(0,0,w,h);
+  g.font='86px "Share Tech Mono",monospace';g.textBaseline='middle';g.textAlign='right';
+  const lat=S.mode==='lat';
+  g.fillStyle='#ff5348';g.fillText(sol.Vs.toFixed(2),w*0.47,h*0.45);
+  g.fillStyle='#56e07a';g.fillText(lat?'?.???':sol.It.toFixed(3),w*0.95,h*0.45);
+  g.font='600 26px "IBM Plex Mono",monospace';g.fillStyle='#93a0aa';g.textAlign='center';
+  g.fillText('VOLT',w*0.27,h*0.85);g.fillText('AMPERE',w*0.75,h*0.85);
+  g.fillStyle=sol.cc?'#ff5348':'#2c3238';g.fillRect(w*0.03,h*0.05,64,30);g.fillStyle='#fff';g.font='700 20px Arial';g.fillText('CC',w*0.03+32,h*0.05+16);
+  g.fillStyle=!sol.cc?'#2fbf6a':'#2c3238';g.fillRect(w*0.03+72,h*0.05,64,30);g.fillStyle='#fff';g.fillText('CV',w*0.03+104,h*0.05+16);
+}
+function wireCurve(a,b,edge){
+  const A=V3(a.x,BY,a.z),B=V3(b.x,BY,b.z),len=A.distanceTo(B),hgt=0.35+Math.min(1.0,len*0.12);
+  if(edge){const xo=a.x-0.9;return [A,V3(a.x,BY+0.5,a.z),V3(xo,BY+0.5,a.z-0.4),V3(xo,BY+0.5,b.z+0.4),V3(b.x,BY+0.5,b.z),B];}
+  return [A,V3(a.x,BY+hgt,a.z),V3((a.x+b.x)/2,BY+hgt+0.1,(a.z+b.z)/2),V3(b.x,BY+hgt,b.z),B];
+}
+function build3D(){
+  if(!T) return;
+  disposeGroup(T.circ); disposeGroup(T.stripG); T.paths=[]; T.compObj=[];
+  const L=layout(), sol=S.sol, g=T.circ;
+  const metal=M('#c9cdd2',{metalness:.95,roughness:.28});
+  // kabel PSU ke rel
+  const pT=V3(-4.3,0.85,-4.4), nT=V3(-3.3,0.85,-4.4);
+  const mkTube=(pts,r,c,tens)=>{const cu=new THREE.CatmullRomCurve3(pts,false,'centripetal');const m=new THREE.Mesh(new THREE.TubeGeometry(cu,Math.max(24,pts.length*14),r,8,false),M(c,{roughness:.5}));m.castShadow=true;g.add(m);return cu;};
+  const src=L[0];
+  const cr=mkTube([pT,V3(-4.4,0.3,-3.95),V3(-6.6,0.3,-4.05),V3(-7.9,0.6,-3.9),V3(-7.6,1.25,-3.3),V3(src.a.x,1.0,src.a.z),V3(src.a.x,BY,src.a.z)],0.08,WCOL.red);
+  const ck=mkTube([nT,V3(-3.4,0.3,-3.85),V3(-5.0,0.3,-3.9),V3(-6.4,1.0,-3.6),V3(src.b.x+0.5,1.1,src.b.z-0.3),V3(src.b.x,0.95,src.b.z),V3(src.b.x,BY,src.b.z)],0.08,WCOL.black);
+  T.paths.push({pts:cr.getSpacedPoints(40),br:'t'});
+  T.paths.push({pts:ck.getSpacedPoints(40).reverse(),br:'t'});
+  const used=new Set();
+  L.slice(1).forEach(e=>{
+    if(e.t==='w'){const pts=wireCurve(e.a,e.b,e.edge);const cu=mkTube(pts,0.06,WCOL[e.col]);
+      [e.a,e.b].forEach(h=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.3,8),metal);p.position.set(h.x,BY+0.05,h.z);g.add(p);});
+      T.paths.push({pts:cu.getSpacedPoints(Math.max(12,Math.round(cu.getLength()*8))),br:e.br});}
+    else if(e.t==='s'){T.paths.push({pts:[V3(e.a.x,BY+0.04,e.a.z),V3(e.b.x,BY+0.04,e.b.z)],br:e.br,strip:true});used.add(stripKey(e.a));used.add(stripKey(e.b));}
+    else if(e.t==='k'){const o=buildComp(e);T.compObj[e.i]=o;T.paths.push({pts:o.path,br:e.br,comp:e.i});used.add(stripKey(e.a));used.add(stripKey(e.b));}
+  });
+  // sorotan jalur internal
+  used.forEach(k=>{const [kind,a,b]=k.split('|');let m;
+    if(kind==='rail'){m=new THREE.Mesh(new THREE.BoxGeometry(15.2,0.02,0.22),new THREE.MeshBasicMaterial({color:a==='T+'||a==='B+'?0xff4a3d:0x3d7dff,transparent:true,opacity:.35,depthWrite:false}));m.position.set(0,BY+0.012,ROWZ[a]);}
+    else {const z0=b==='top'?ROWZ.a:ROWZ.f,z1=b==='top'?ROWZ.e:ROWZ.j;m=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.02,z1-z0+0.24),new THREE.MeshBasicMaterial({color:0x22c55e,transparent:true,opacity:.4,depthWrite:false}));m.position.set(hx(+a),BY+0.012,(z0+z1)/2);}
+    T.stripG.add(m);});
+  T.stripG.visible=S.strip;
+  shadowAll(g);
+  // titik arus
+  T.paths.forEach(p=>{let L2=0;const seg=[0];for(let i=1;i<p.pts.length;i++){L2+=p.pts[i].distanceTo(p.pts[i-1]);seg.push(L2);}p.len=L2;p.cum=seg;p.n=Math.max(1,Math.round(L2/0.38));p.u=Math.random();});
+  setPins(); applyVisual();
+}
+function stripKey(h){ if(h.r.length>1) return 'rail|'+h.r; return 'strip|'+h.c+'|'+('abcde'.includes(h.r)?'top':'bot'); }
+function buildComp(e){
+  const g=T.circ, {type,R}=comps(), r=R[e.i];
+  const A=V3(e.a.x,BY,e.a.z),B=V3(e.b.x,BY,e.b.z), mid=A.clone().lerp(B,0.5), dir=B.clone().sub(A), len=dir.length(); dir.normalize();
+  const ang=-Math.atan2(dir.z,dir.x), lead=M('#c9cdd2',{metalness:.95,roughness:.28}), o={i:e.i};
+  const grp=new THREE.Group(); grp.position.copy(mid); grp.rotation.y=ang; g.add(grp);
+  const hy=type==='lamp'?0.55:0.42;
+  [[-len/2],[len/2]].forEach(([x])=>{const v=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,hy,8),lead);v.position.set(x,hy/2,0);grp.add(v);});
+  if(type==='res'){
+    const hl=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,len,8),lead);hl.rotation.z=Math.PI/2;hl.position.y=hy;grp.add(hl);
+    const prof=[[0,-0.55],[0.13,-0.54],[0.18,-0.46],[0.18,-0.34],[0.15,-0.27],[0.15,0.27],[0.18,0.34],[0.18,0.46],[0.13,0.54],[0,0.55]];
+    const bg=new THREE.LatheGeometry(prof.map(q=>new THREE.Vector2(q[0],q[1])),32);bg.rotateZ(-Math.PI/2);
+    const bm=M('#d9c497',{roughness:.6,emissive:new THREE.Color(0xff3010),emissiveIntensity:0});
+    const body=new THREE.Mesh(bg,bm);body.position.y=hy;grp.add(body);
+    const bd=(BANDS[r]||['brown','black','brown']).concat(['gold']);
+    const bms=[];[-0.34,-0.18,-0.03,0.34].forEach((x,k)=>{const m=M(BANDHEX[bd[k]],bd[k]==='gold'?{metalness:.9,roughness:.25}:{});bms.push(m);const b=new THREE.Mesh(new THREE.CylinderGeometry(0.155,0.155,0.07,24),m);b.rotation.z=Math.PI/2;b.position.set(x,hy,0);grp.add(b);});
+    o.bm=bm;o.bms=bms;
+  } else {
+    const sock=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.25,0.35,20),M('#22262a'));sock.position.y=hy+0.17;grp.add(sock);
+    [-1,1].forEach(s=>{const l=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,len/2,8),lead);l.rotation.z=Math.PI/2;l.position.set(s*len/4,hy,0);grp.add(l);});
+    const gm=new THREE.MeshStandardMaterial({color:col('#fff6dc'),roughness:.1,transparent:true,opacity:.5,emissive:new THREE.Color(0xffc561),emissiveIntensity:0});
+    const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.44,24,16),gm);bulb.position.y=hy+0.62;grp.add(bulb);
+    const gs=glowSprite('255,200,110');gs.position.y=hy+0.62;grp.add(gs);
+    o.gm=gm;o.gs=gs;
+  }
+  o.grp=grp;
+  const up=V3(0,hy,0);
+  o.path=[A,A.clone().add(up),B.clone().add(up),B];
+  o.top=[A.clone().add(V3(0,hy,0)),B.clone().add(V3(0,hy,0))];
+  o.labelPos=mid.clone().add(V3(0,type==='lamp'?1.7:1.0,0));
+  return o;
+}
+function applyVisual(){
+  if(!T||!S.sol) return;
+  const sol=S.sol;
+  T.compObj.forEach((o,i)=>{if(!o)return;const c=sol.c[i];
+    if(o.bm){const burnt=S.mode!=='lat'&&S.burnt[i];const h=burnt?0:Math.max(0,Math.min(1,(c.P/PRATE-1)/2));o.bm.emissiveIntensity=h*1.2;o.bm.color.copy(col(burnt?'#3a2a1c':'#d9c497'));if(burnt)o.bms.forEach(m=>m.color.copy(col('#1c1c1c')));}
+    if(o.gm){const b=Math.max(0,Math.min(1,c.P/1.2));o.gm.emissiveIntensity=b*2.6;o.gm.opacity=.5+b*.45;o.gs.material.opacity=Math.min(1,b*1.2);o.gs.scale.setScalar(0.5+3.2*b);}
+  });
+  // probe
+  const mm=S.mm; let tr=null,tk=null;
+  if(S.mode!=='lat'&&mm.q==='V'){ if(mm.at===0){tr=V3(hx(2),BY,ROWZ['T+']);tk=V3(hx(2),BY,ROWZ['T-']);} else {const o=T.compObj[mm.at-1]; if(o){tr=o.top[0];tk=o.top[1];}} }
+  T.probeT={r:tr,k:tk};
+  redraw(T.dispTex);
+  T.knob.rotation.z=-(sol.Vset/12)*4.5+2.25;
+}
+function setPins(){
+  const L=$('#labels');L.innerHTML='';T.pins=[];
+  if(!S.val) return;
+  const sol=S.sol, lat=S.mode==='lat';
+  T.compObj.forEach((o,i)=>{if(!o)return;const c=sol.c[i];const el=document.createElement('div');
+    const burnt=!lat&&S.burnt[i], hot=!lat&&c.P>PRATE&&sol.type==='res';
+    el.className='lbl'+(burnt?' burnt':hot?' hot':'');
+    const nm=sol.type==='lamp'?'L'+(i+1):'R'+(i+1);
+    el.innerHTML=lat?`${nm} = ${fR(c.R)}`:`${nm} ${sol.type==='lamp'?'12 V':fR(c.R)}${burnt?'<small>TERBAKAR</small>':(!lat&&S.open[i]?'<small>putus</small>':`<small>${fV(c.V)} · ${fI(c.I)}</small>`)}`;
+    L.appendChild(el);T.pins.push({el,p:o.labelPos.clone().add(V3(0,sol.m==='seri'&&i%2?0.7:0,0))});});
+  if(!lat){const el=document.createElement('div');el.className='lbl';el.innerHTML=`Arus total<small>${fI(sol.It)}</small>`;L.appendChild(el);T.pins.push({el,p:V3(hx(1)-0.3,BY+1.7,ROWZ['T+'])});}
+}
+function bind(){
+  const cv=T.canvas,pts=new Map();let start=null,pinch=null,moved=false;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===1){start={x:e.clientX,y:e.clientY};moved=false;}if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:T.cam.zoom};}});
+  cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const pr=pts.get(e.pointerId),cu={x:e.clientX,y:e.clientY};pts.set(e.pointerId,cu);
+    if(pts.size===1){T.cam.yaw=Math.max(-1.2,Math.min(1.2,T.cam.yaw-(cu.x-pr.x)*0.006));T.cam.pitch=Math.max(0.2,Math.min(1.45,T.cam.pitch+(cu.y-pr.y)*0.005));}
+    else if(pts.size===2&&pinch){const [a,b]=[...pts.values()];T.cam.zoom=Math.min(1.8,Math.max(0.35,pinch.z*pinch.d/Math.hypot(a.x-b.x,a.y-b.y)));}});
+  const up=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{e.preventDefault();T.cam.zoom=Math.min(1.8,Math.max(0.35,T.cam.zoom*Math.exp(e.deltaY*0.0012)));},{passive:false});
+  $('#bReset').addEventListener('click',()=>{T.cam.yaw=0;T.cam.pitch=0.82;T.cam.zoom=1;});
+}
+function resize(){if(!T)return;const w=T.viewer.clientWidth,h=T.viewer.clientHeight;T.renderer.setSize(w,h,false);T.camera.aspect=w/h;T.camera.updateProjectionMatrix();}
+const UP=V3(0,1,0), REST={r:V3(6.6,0.15,4.6),k:V3(7.4,0.15,5.2)};
+let last=performance.now();
+const mtx=new THREE.Matrix4(), tmp=V3(0,0,0);
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000);last=t;
+  const c=T.cam,tt=Math.tan(THREE.MathUtils.degToRad(T.camera.fov/2)),a=T.camera.aspect;
+  const gd=Math.max(8.8/(tt*a),6.4/tt)*c.zoom;c.d+=(gd-c.d)*(1-Math.exp(-dt*5));
+  T.camera.position.set(c.t.x+c.d*Math.cos(c.pitch)*Math.sin(c.yaw),c.t.y+c.d*Math.sin(c.pitch),c.t.z+c.d*Math.cos(c.pitch)*Math.cos(c.yaw));T.camera.lookAt(c.t);
+  // titik arus
+  let k=0; const sol=S.sol;
+  if(S.flow&&sol){T.paths.forEach(p=>{const I=Math.abs(branchI(p.br,sol));if(I<1e-6)return;
+    const sp=0.25+0.9*Math.log10(1+I*1000);p.u=(p.u+dt*sp/Math.max(0.3,p.len)*1.6)%1;
+    for(let j=0;j<p.n&&k<900;j++){const u=((p.u+j/p.n)%1)*p.len;let s=1;while(s<p.cum.length-1&&p.cum[s]<u)s++;const f=(u-p.cum[s-1])/Math.max(1e-6,p.cum[s]-p.cum[s-1]);
+      tmp.copy(p.pts[s-1]).lerp(p.pts[s],Math.min(1,f));if(p.strip)tmp.y=BY+0.06;mtx.makeTranslation(tmp.x,tmp.y,tmp.z);T.dots.setMatrixAt(k++,mtx);}});}
+  T.dots.count=k;T.dots.instanceMatrix.needsUpdate=true;
+  // probe
+  [['r',T.pr],['k',T.pk]].forEach(([id,m])=>{const tg=T.probeT[id];const p=tg?tg.clone():REST[id];const n=tg?V3(id==='r'?-0.35:0.35,1,0.55).normalize():V3(-1,0.08,-0.3).normalize();
+    m.position.lerp(p,1-Math.exp(-dt*7));const q=new THREE.Quaternion().setFromUnitVectors(UP,n);m.quaternion.slerp(q,1-Math.exp(-dt*7));});
+  // asap
+  T.smoke.forEach((sm,i)=>{const o=T.compObj[i];const on=o&&o.bm&&S.mode!=='lat'&&S.heat[i]>1&&!S.burnt[i];
+    if(on&&Math.random()<dt*8)sm.parts.push({p:o.top[0].clone().lerp(o.top[1],0.5),a:1});
+    sm.parts=sm.parts.filter(q=>(q.a-=dt*0.7)>0);
+    const q=sm.parts[sm.parts.length-1];
+    if(q){q.p.y+=dt*0.8;sm.s.position.copy(q.p);sm.s.material.opacity=q.a*0.7;sm.s.scale.setScalar(0.5+(1-q.a)*1.5);sm.s.visible=true;}else sm.s.visible=false;
+    sm.parts.forEach(q=>q.p.y+=dt*0.8);});
+  T.renderer.render(T.scene,T.camera);
+  const w=T.viewer.clientWidth,h=T.viewer.clientHeight,v=V3(0,0,0);
+  (T.pins||[]).forEach(p=>{v.copy(p.p).project(T.camera);if(v.z>1){p.el.style.opacity=0;return;}p.el.style.opacity=1;p.el.style.transform=`translate(${(v.x+1)/2*w}px,${(1-v.y)/2*h}px) translate(-50%,-100%)`;});
+  requestAnimationFrame(loop);
+}
+
+/* ================= PANAS / TERBAKAR ================= */
+setInterval(()=>{
+  if(S.mode==='lat'||!S.sol||S.sol.type!=='res') {S.heat=[0,0,0];return;}
+  let changed=false;
+  S.sol.c.forEach((c,i)=>{
+    if(S.burnt[i]) return;
+    const r=c.P/PRATE;
+    if(r>1){S.heat[i]+=0.1*(r-1)*0.6; if(S.heat[i]>1&&!S.warned){S.warned=true;toast('warn','Resistor panas!',`<br>R${i+1} menyerap ${fP(c.P)}, melebihi rating 0,25 W. Turunkan tegangan atau ganti nilai R.`);}}
+    else S.heat[i]=Math.max(0,S.heat[i]-0.08);
+    if(S.heat[i]>3.5){S.burnt[i]=true;S.heat[i]=0;changed=true;toast('bad',`R${i+1} TERBAKAR`,`<br>Daya ${fP(c.P)} jauh di atas 0,25 W. Resistor putus dan harus diganti. P = V × I = I² × R.`);}
+  });
+  if(changed){S.warned=false;update(true);}
+},100);
+
+/* ================= SKEMA (SVG) ================= */
+function zig(x1,y1,x2,y2){const n=6,dx=(x2-x1),dy=(y2-y1),L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,px=-uy,py=ux,lead=(L-36)/2;let d=`M${x1},${y1} L${x1+ux*lead},${y1+uy*lead}`;for(let i=0;i<n;i++){const t=lead+(i+0.5)*36/n,s=i%2?-1:1;d+=` L${x1+ux*t+px*7*s},${y1+uy*t+py*7*s}`;}d+=` L${x2-ux*lead},${y2-uy*lead} L${x2},${y2}`;return `<path d="${d}" fill="none" stroke="#14202b" stroke-width="2"/>`;}
+function lampSym(x1,y1,x2,y2){const cx=(x1+x2)/2,cy=(y1+y2)/2,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L;return `<line x1="${x1}" y1="${y1}" x2="${cx-ux*13}" y2="${cy-uy*13}" stroke="#14202b" stroke-width="2"/><line x1="${cx+ux*13}" y1="${cy+uy*13}" x2="${x2}" y2="${y2}" stroke="#14202b" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="13" fill="#fff" stroke="#14202b" stroke-width="2"/><path d="M${cx-9},${cy-9} L${cx+9},${cy+9} M${cx+9},${cy-9} L${cx-9},${cy+9}" stroke="#14202b" stroke-width="1.6"/>`;}
+function schematic(sol){
+  const {m,n,type}=sol, el=(i,x1,y1,x2,y2,lx,ly)=>{const lat=S.mode==='lat';const open=!lat&&(S.open[i]||S.burnt[i]);const nm=(type==='lamp'?'L':'R')+(i+1);
+    return (type==='lamp'?lampSym(x1,y1,x2,y2):zig(x1,y1,x2,y2))+(open?`<text x="${(x1+x2)/2}" y="${(y1+y2)/2+4}" text-anchor="middle" font-size="16" font-weight="700" fill="#bb3a2c">✕</text>`:'')+(x1===x2?`<text x="${lx}" y="${ly-6}" font-size="12.5" font-family="IBM Plex Mono,monospace" fill="#0a62a8" font-weight="600">${nm}</text>`+(type==='lamp'?'':`<text x="${lx}" y="${ly+10}" font-size="11.5" font-family="IBM Plex Mono,monospace" fill="#0a62a8">${fR(sol.c[i].R)}</text>`):`<text x="${lx}" y="${ly}" font-size="12.5" font-family="IBM Plex Mono,monospace" fill="#0a62a8" font-weight="600">${nm}${type==='lamp'?'':' '+fR(sol.c[i].R)}</text>`);};
+  const W=(pts)=>`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#14202b" stroke-width="2"/>`;
+  const bat=`<line x1="20" y1="70" x2="44" y2="70" stroke="#14202b" stroke-width="2.5"/><line x1="26" y1="80" x2="38" y2="80" stroke="#14202b" stroke-width="4"/><text x="50" y="80" font-size="12.5" font-family="IBM Plex Mono,monospace" fill="#bb3a2c" font-weight="600">${S.mode==='lat'?nf(sol.Vset,0):nf(sol.Vs,1)} V</text><text x="10" y="66" font-size="13" fill="#bb3a2c" font-weight="700">+</text>`;
+  let s='';
+  if(m==='ohm'){s=bat+W([[32,70],[32,20],[150,20]])+el(0,150,20,250,20,170,44)+W([[250,20],[330,20],[330,130],[32,130],[32,80]]);}
+  else if(m==='seri'){const xs=n===3?[90,170,250]:[110,220];s=bat+W([[32,70],[32,20],[xs[0]-30,20]]);
+    xs.forEach((x,i)=>{s+=el(i,x-30,20,x+30,20,x-30,44);if(i<n-1)s+=W([[x+30,20],[xs[i+1]-30,20]]);});
+    s+=W([[xs[n-1]+30,20],[330,20],[330,130],[32,130],[32,80]]);}
+  else if(m==='par'){const xs=n===3?[120,200,280]:[140,250];s=bat+W([[32,70],[32,20],[xs[n-1],20]])+W([[32,80],[32,130],[xs[n-1],130]]);
+    xs.forEach((x,i)=>{s+=`<circle cx="${x}" cy="20" r="3" fill="#14202b"/><circle cx="${x}" cy="130" r="3" fill="#14202b"/>`+el(i,x,20,x,130,x+8,82);});}
+  else {s=bat+W([[32,70],[32,20],[80,20]])+el(0,80,20,160,20,95,44)+W([[160,20],[290,20]])+W([[32,80],[32,130],[290,130]]);
+    [[200,1],[290,2]].forEach(([x,i])=>{s+=`<circle cx="${x}" cy="20" r="3" fill="#14202b"/>`+el(i,x,20,x,130,x+8,82);});}
+  return `<svg viewBox="0 0 360 150" role="img" aria-label="Diagram skema rangkaian">${s}</svg>`;
+}
+
+/* ================= PANEL ================= */
+function toast(sev,t,m){const box=$('#toast');const d=document.createElement('div');d.className='tst '+(sev||'');d.innerHTML=`<b>${t}</b>${m||''}`;box.appendChild(d);while(box.children.length>2)box.removeChild(box.firstChild);setTimeout(()=>d.remove(),5500);}
+function vSlider(){return `<span class="lbl2">Tegangan sumber (power supply)</span><div class="slider"><input type="range" id="sV" min="0" max="12" step="0.1" value="${S.V}"><output id="oV">${nf(S.V,1)} V</output></div>`;}
+function typeSeg(){return `<span class="lbl2">Jenis beban</span><div class="seg" id="sType"><button data-v="res" class="${S.type==='res'?'on':''}">Resistor</button><button data-v="lamp" class="${S.type==='lamp'?'on':''}">Lampu 12 V 1,2 W</button></div>`;}
+function rSelects(m,n){
+  const sol=S.sol;
+  return `<span class="lbl2">${S.type==='lamp'?'Lampu (semua 12 V · 120 Ω)':'Nilai resistor'}</span><div class="rgrid">`+Array.from({length:n},(_,i)=>`<div class="rsel"><label>${S.type==='lamp'?'L':'R'}${i+1}</label>${S.type==='lamp'?'<div style="font:600 14px var(--f-mono);padding:6px 0">120 Ω</div>':`<select data-i="${i}">${RVALS.map(v=>`<option value="${v}" ${v===S.R[m][i]?'selected':''}>${fR(v)}</option>`).join('')}</select>`}
+    ${m!=='ohm'?`<div class="mini">${S.burnt[i]?`<button data-rep="${i}" class="on">Ganti baru</button>`:`<button data-open="${i}" class="${S.open[i]?'on':''}">${S.open[i]?'Sambung':'Putuskan'}</button>`}</div>`:(S.burnt[i]?`<div class="mini"><button data-rep="${i}" class="on">Ganti baru</button></div>`:'')}</div>`).join('')+'</div>';
+}
+function countSeg(m){return `<span class="lbl2">Jumlah ${S.type==='lamp'?'lampu':'resistor'}</span><div class="seg" id="sN"><button data-v="2" class="${S.n[m]===2?'on':''}">2</button><button data-v="3" class="${S.n[m]===3?'on':''}">3</button></div>`;}
+function meterCard(sol){
+  const n=sol.n, mm=S.mm; if(mm.at>n) mm.at=0;
+  let val,u; if(mm.q==='V'){val=mm.at===0?sol.Vs:sol.c[mm.at-1].V;u='V';} else {val=mm.at===0?sol.It:sol.c[mm.at-1].I;u='mA';val*=1000;}
+  const txt=mm.q==='V'?val.toFixed(2):(val<100?val.toFixed(2):val.toFixed(1));
+  const nm=S.type==='lamp'?'L':'R';
+  return `<div class="card meter"><div class="meter-inner"><div class="lcd"><span class="v">${txt}</span><span class="u">${u}</span></div>
+    <div class="mrow"><div class="seg" id="mQ"><button data-v="V" class="${mm.q==='V'?'on':''}">Tegangan</button><button data-v="I" class="${mm.q==='I'?'on':''}">Arus</button></div></div>
+    <div class="mrow"><div class="seg" id="mAt"><button data-v="0" class="${mm.at===0?'on':''}">${mm.q==='V'?'Sumber':'Total'}</button>${Array.from({length:n},(_,i)=>`<button data-v="${i+1}" class="${mm.at===i+1?'on':''}">${nm}${i+1}</button>`).join('')}</div></div>
+    <div class="mcap">${mm.q==='V'?'Voltmeter dipasang paralel — probe menempel pada kedua kaki komponen.':'Amperemeter dipasang seri — dibaca dari arus yang melewati komponen.'}</div></div></div>`;
+}
+function compTable(sol){
+  const nm=sol.type==='lamp'?'L':'R';
+  return `<table class="tb"><tr><th>Komp.</th><th>R</th><th>V</th><th>I</th><th>P</th></tr>`+sol.c.map((c,i)=>`<tr><td>${nm}${i+1}</td><td>${fR(c.Re)}</td><td>${fV(c.V)}</td><td>${fI(c.I)}</td><td class="${sol.type==='res'&&c.P>PRATE?'hot':''}">${fP(c.P)}</td></tr>`).join('')+
+    `<tr class="tot"><td>Total</td><td>${fR(sol.Rt)}</td><td>${fV(sol.Vs)}</td><td>${fI(sol.It)}</td><td>${fP(sol.Vs*sol.It)}</td></tr></table>`;
+}
+function insights(sol){
+  const c=sol.c, nm=sol.type==='lamp'?'L':'R', li=[], open=c.some(x=>!isFinite(x.Re));
+  if(sol.cc) li.push(['x',`Power supply masuk mode <b>CC</b> (batas arus 1 A). Tegangan keluaran turun menjadi ${fV(sol.Vs)}.`]);
+  if(sol.m==='seri'){
+    if(open) li.push(['x',`Satu ${sol.type==='lamp'?'lampu':'resistor'} putus → rangkaian seri <b>terbuka</b>, semua padam, arus 0. Seluruh tegangan sumber muncul di titik yang putus.`]);
+    else {li.push(['',`Arus sama di semua komponen: ${c.map((x,i)=>nm+(i+1)).join(' = ')} = <b>${fI(sol.It)}</b>`]);
+      li.push(['',`Hukum Kirchhoff tegangan: ${c.map(x=>nf(x.V,2)).join(' + ')} = <b>${fV(c.reduce((s,x)=>s+x.V,0))}</b> = V sumber`]);
+      li.push(['',`R total = ${c.map(x=>fR(x.R)).join(' + ')} = <b>${fR(sol.Rt)}</b> (lebih besar dari setiap R)`]);
+      if(sol.type==='res'){const mx=c.reduce((a,b)=>a.R>b.R?a:b);li.push(['',`Tegangan terbesar ada di resistor terbesar (${fR(mx.R)}) — pembagi tegangan.`]);}
+      else li.push(['','Lampu seri menyala lebih redup karena tegangan 12 V dibagi ke semua lampu.']);}
+  } else if(sol.m==='par'){
+    li.push(['',`Tegangan sama di semua cabang: <b>${fV(sol.Vs)}</b>`]);
+    li.push(['',`Hukum Kirchhoff arus: ${c.map(x=>fI(x.I)).join(' + ')} = <b>${fI(sol.It)}</b> = arus total`]);
+    if(!open) li.push(['',`1/Rt = ${c.map(x=>'1/'+fR(x.R).replace(' ','')).join(' + ')} → Rt = <b>${fR(sol.Rt)}</b> (lebih kecil dari R terkecil)`]);
+    if(open) li.push(['x',`Satu cabang putus → cabang lain <b>tetap menyala</b>. Inilah alasan instalasi rumah dan panel memakai rangkaian paralel.`]);
+    if(sol.type==='lamp'&&!open) li.push(['','Setiap lampu mendapat 12 V penuh, jadi menyala terang.']);
+  } else if(sol.m==='mix'){
+    const Rp=sol.Rt-c[0].Re;
+    if(!open){li.push(['',`Langkah 1 — paralel dulu: R2 ∥ R3 = (${fR(c[1].R)} × ${fR(c[2].R)}) / (${fR(c[1].R)} + ${fR(c[2].R)}) = <b>${fR(Rp)}</b>`]);
+      li.push(['',`Langkah 2 — seri: Rt = R1 + Rp = ${fR(c[0].R)} + ${fR(Rp)} = <b>${fR(sol.Rt)}</b>`]);
+      li.push(['',`Langkah 3 — I total = V / Rt = ${fV(sol.Vs)} / ${fR(sol.Rt)} = <b>${fI(sol.It)}</b> (melewati R1)`]);
+      li.push(['',`Langkah 4 — V paralel = I × Rp = <b>${fV(c[1].V)}</b>, lalu I2 = ${fI(c[1].I)}, I3 = ${fI(c[2].I)}, I2 + I3 = I total`]);}
+    else li.push(['x','Ada komponen putus. Coba hitung ulang: R1 putus → semua mati; R2 atau R3 putus → menjadi rangkaian seri biasa.']);
+  }
+  const hot=c.filter(x=>sol.type==='res'&&x.P>PRATE);
+  if(hot.length) li.push(['x',`Daya melebihi rating 0,25 W (${hot.map(x=>fP(x.P)).join(', ')}). Resistor akan panas lalu terbakar!`]);
+  return `<ul class="chk">${li.map(([c,t])=>`<li class="${c}">${t}</li>`).join('')}</ul>`;
+}
+function drawVI(){
+  const cv=$('#vi'); if(!cv) return; const g=cv.getContext('2d'), w=cv.width, h=cv.height, pad={l:62,r:16,t:16,b:44};
+  g.clearRect(0,0,w,h); const pts=S.pts, sol=S.sol;
+  const Imax=Math.max(10,...pts.map(p=>p.I*1000),sol.It*1000)*1.15, Vmax=12;
+  const X=v=>pad.l+v/Vmax*(w-pad.l-pad.r), Y=i=>h-pad.b-i/Imax*(h-pad.t-pad.b);
+  g.strokeStyle='#e3e8ec';g.lineWidth=1;g.font='500 20px "IBM Plex Mono",monospace';g.fillStyle='#56636e';g.textAlign='center';
+  for(let v=0;v<=12;v+=2){g.beginPath();g.moveTo(X(v),pad.t);g.lineTo(X(v),h-pad.b);g.stroke();g.fillText(v,X(v),h-pad.b+24);}
+  const step=Math.pow(10,Math.floor(Math.log10(Imax/4)));const st=Imax/step>8?step*2:step;g.textAlign='right';
+  for(let i=0;i<=Imax;i+=st){g.beginPath();g.moveTo(pad.l,Y(i));g.lineTo(w-pad.r,Y(i));g.stroke();g.fillText(i>=10?Math.round(i):nf(i,1),pad.l-8,Y(i)+7);}
+  g.fillStyle='#14202b';g.textAlign='center';g.font='600 20px "IBM Plex Sans",Arial';g.fillText('Tegangan V (volt)',(pad.l+w-pad.r)/2,h-6);
+  g.save();g.translate(18,(pad.t+h-pad.b)/2);g.rotate(-Math.PI/2);g.fillText('Arus I (mA)',0,0);g.restore();
+  const R=S.R.ohm[0]; g.strokeStyle='rgba(10,98,168,.45)';g.lineWidth=2.5;g.setLineDash([8,6]);g.beginPath();g.moveTo(X(0),Y(0));const ve=Math.min(12,Imax/1000*R);g.lineTo(X(ve),Y(ve/R*1000));g.stroke();g.setLineDash([]);
+  const pal=['#0a62a8','#bb3a2c','#24834b','#b8650f','#8a3fc4'];const rs=[...new Set(pts.map(p=>p.R))];
+  pts.forEach(p=>{g.fillStyle=pal[rs.indexOf(p.R)%pal.length];g.beginPath();g.arc(X(p.V),Y(p.I*1000),7,0,7);g.fill();});
+  g.fillStyle='#f3b52f';g.strokeStyle='#14202b';g.lineWidth=2;g.beginPath();g.arc(X(sol.Vs),Y(sol.It*1000),8,0,7);g.fill();g.stroke();
+  g.textAlign='left';g.font='600 18px "IBM Plex Mono",monospace';rs.forEach((r,i)=>{g.fillStyle=pal[i%pal.length];g.fillText('● '+fR(r),pad.l+12+i*120,pad.t+20);});
+}
+function render(){
+  const sol=S.sol, m=S.mode; let h='';
+  if(m==='ohm'){
+    const R=S.R.ohm[0];
+    h=`<div class="card"><h2>Hukum Ohm: V = I × R</h2><div class="goal">Ubah tegangan sumber dan nilai resistor. Amati arus yang mengalir, lalu catat datanya untuk membuat grafik V–I.</div>
+      ${vSlider()}${rSelects('ohm',1)}
+      <div class="formula">I = V / R = ${fV(sol.Vs)} / ${fR(sol.c[0].Re)} = <b>${fI(sol.It)}</b><br>P = V × I = <b>${fP(sol.c[0].P)}</b> ${sol.c[0].P>PRATE?'<span style="color:var(--bad)">⚠ &gt; 0,25 W</span>':''}</div>
+      <div class="schem">${schematic(sol)}</div></div>
+      ${meterCard(sol)}
+      <div class="card"><h2>Grafik V–I</h2><p class="muted">Tekan <b>Catat titik</b> pada beberapa tegangan. Titik-titiknya membentuk garis lurus dari nol — tanda bahwa arus <b>sebanding</b> dengan tegangan. Ganti R lalu catat lagi: R besar → garis lebih landai.</p>
+      <canvas id="vi" width="900" height="560"></canvas>
+      <div class="row"><button class="btn primary" id="bRec">Catat titik</button><button class="btn" id="bClr">Hapus data</button></div>
+      ${S.pts.length?`<table class="tb"><tr><th>No</th><th>R</th><th>V</th><th>I</th><th>V / I</th></tr>${S.pts.map((p,i)=>`<tr><td>${i+1}</td><td>${fR(p.R)}</td><td>${fV(p.V)}</td><td>${fI(p.I)}</td><td>${p.I>0?fR(p.V/p.I):'–'}</td></tr>`).join('')}</table><p class="muted">Kolom V / I selalu sama dengan nilai R — itulah isi Hukum Ohm.</p>`:''}
+      </div>`;
+  } else if(m==='seri'||m==='par'||m==='mix'){
+    const title={seri:'Rangkaian seri',par:'Rangkaian paralel',mix:'Rangkaian campuran'}[m];
+    const goal={seri:'Komponen disusun berderet dalam satu jalur. Buktikan: arus sama di semua komponen dan jumlah tegangan = tegangan sumber.',
+      par:'Setiap komponen punya cabang sendiri dari + ke −. Buktikan: tegangan sama di semua cabang dan jumlah arus cabang = arus total.',
+      mix:'R1 diseri dengan gabungan paralel R2 ∥ R3. Selesaikan bertahap: paralel dulu, lalu seri.'}[m];
+    const tip={seri:'Di breadboard: setiap resistor mengisi lajur (kolom) yang berbeda, dan kaki-kakinya bertemu di kolom yang sama. Nyalakan <b>Jalur breadboard</b> untuk melihat lajur yang terhubung.',
+      par:'Di breadboard: setiap resistor menyeberangi celah tengah. Kabel merah dari rel (+) atas, kabel hitam ke rel (−) bawah. Rel (−) atas dan bawah disambung kabel di sisi kiri.',
+      mix:'Di breadboard: R1 berakhir di kolom 10. Dari kolom itu arus bercabang ke R2 (kolom 10) dan lewat kabel kuning ke R3 (kolom 17).'}[m];
+    h=`<div class="card"><h2>${title}</h2><div class="goal">${goal}</div>
+      ${vSlider()}${m!=='mix'?typeSeg():''}${m!=='mix'?countSeg(m):''}${rSelects(m,sol.n)}
+      <div class="schem">${schematic(sol)}</div><p class="muted">${tip}</p></div>
+      ${meterCard(sol)}
+      <div class="card"><h2>Hasil pengukuran</h2>${compTable(sol)}${insights(sol)}</div>`;
+  } else {
+    const L=S.lat, sc=S.score;
+    h=`<div class="card"><h2>Latihan menghitung</h2><div class="stat"><div><b>${sc.ok}</b><span>benar</span></div><div><b>${sc.tot}</b><span>soal</span></div><div><b>${sc.tot?Math.round(sc.ok/sc.tot*100):0}%</b><span>skor</span></div></div>
+      <div class="goal">Rangkaian di model 3D diberi nilai acak. Amati susunannya di breadboard, hitung dengan Hukum Ohm, lalu masukkan jawaban (toleransi ±2%).</div>
+      <div class="schem">${schematic(sol)}</div>
+      <div class="q">${L.qText}</div>
+      <div class="ans"><input id="aIn" inputmode="decimal" placeholder="jawaban" autocomplete="off" ${L.done?'disabled':''}><span>${L.unit}</span></div>
+      <div class="row"><button class="btn primary" id="bChk" ${L.done?'disabled':''}>Periksa</button><button class="btn" id="bNext">Soal baru</button></div>
+      <div class="fb ${L.fbc||''}" id="aFb">${L.fb||''}</div></div>`;
+  }
+  $('#pane').innerHTML=h;
+  if(m==='ohm') drawVI();
+}
+function newLat(){
+  const m=rnd(['seri','seri','par','par','mix','ohm']), V=rnd([6,9,12]);
+  const pool=[100,220,330,470,1000,2200];
+  const n=m==='ohm'?1:m==='mix'?3:rnd([2,3]);
+  const R=Array.from({length:n},()=>rnd(pool));
+  S.lat={mode:m,V,R,done:false,fb:'',fbc:''};
+  const sol=solve(); S.sol=sol;
+  const qs=[];
+  if(m==='ohm') qs.push(['I','Hitung arus yang mengalir pada resistor.','mA',sol.It*1000]);
+  else {
+    qs.push(['Rt','Hitung hambatan total (Rt) rangkaian.','Ω',sol.Rt]);
+    qs.push(['It','Hitung arus total yang keluar dari power supply.','mA',sol.It*1000]);
+    const k=Math.floor(Math.random()*n); qs.push(['V',`Hitung tegangan pada R${k+1}.`,'V',sol.c[k].V,k]);
+    if(m!=='seri'){const k2=m==='mix'?1+Math.floor(Math.random()*2):k; qs.push(['I',`Hitung arus yang melewati R${k2+1}.`,'mA',sol.c[k2].I*1000,k2]);}
+  }
+  const q=rnd(qs); Object.assign(S.lat,{qText:`Sumber ${V} V. ${q[1]}`,unit:q[2],ans:q[3],qk:q[0],qi:q[4]});
+}
+function latExplain(){
+  const sol=S.sol,L=S.lat,c=sol.c; let s='';
+  const rlist=c.map((x,i)=>`R${i+1} = ${fR(x.R)}`).join(', ');
+  if(sol.m==='ohm') s=`I = V / R = ${L.V} / ${c[0].R} = ${fI(sol.It)}`;
+  else if(sol.m==='seri') s=`Seri: Rt = ${c.map(x=>x.R).join(' + ')} = ${fR(sol.Rt)} → I = ${L.V} / ${nf(sol.Rt,0)} = ${fI(sol.It)} → V tiap R = I × R: ${c.map((x,i)=>`V${i+1} = ${fV(x.V)}`).join(', ')}`;
+  else if(sol.m==='par') s=`Paralel: 1/Rt = ${c.map(x=>'1/'+x.R).join(' + ')} → Rt = ${fR(sol.Rt)}. Tegangan setiap cabang = ${L.V} V. I cabang = V / R: ${c.map((x,i)=>`I${i+1} = ${fI(x.I)}`).join(', ')}. I total = ${fI(sol.It)}`;
+  else {const Rp=sol.Rt-c[0].R; s=`Rp = R2∥R3 = ${fR(Rp)} → Rt = ${c[0].R} + ${nf(Rp,1)} = ${fR(sol.Rt)} → I total = ${fI(sol.It)} → V1 = ${fV(c[0].V)}, V2 = V3 = ${fV(c[1].V)} → I2 = ${fI(c[1].I)}, I3 = ${fI(c[2].I)}`;}
+  return `<br><span style="font-family:var(--f-mono);font-size:13px">${rlist}<br>${s}</span>`;
+}
+
+/* ================= UPDATE ================= */
+function update(rebuild){
+  S.sol=solve();
+  if(T){ if(rebuild) build3D(); else {applyVisual(); setPins();} }
+  const sol=S.sol;
+  $('#pV').textContent=sol.Vs.toFixed(2); $('#pA').textContent=S.mode==='lat'?'?.???':sol.It.toFixed(3); $('#pCC').classList.toggle('on',sol.cc);
+}
+function full(rebuild){update(rebuild);render();}
+function setMode(m){
+  S.mode=m; S.open=[false,false,false]; S.heat=[0,0,0]; S.burnt=[false,false,false];
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.m===m));
+  if(m==='lat'&&!S.lat) newLat();
+  if(m==='lat') S.lat.done=S.lat.done;
+  if(m==='mix'||m==='ohm') S.type='res';
+  full(true);
+}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.m);});
+$('#pane').addEventListener('input',e=>{
+  if(e.target.id==='sV'){S.V=+e.target.value;$('#oV').textContent=nf(S.V,1)+' V';update(false);
+    const lcd=document.querySelector('.meter');if(lcd){const tmp=document.createElement('div');tmp.innerHTML=meterCard(S.sol);lcd.replaceWith(tmp.firstElementChild);}
+    const f=document.querySelector('#pane .formula');
+    if(S.mode==='ohm'){if(f)f.innerHTML=`I = V / R = ${fV(S.sol.Vs)} / ${fR(S.sol.c[0].Re)} = <b>${fI(S.sol.It)}</b><br>P = V × I = <b>${fP(S.sol.c[0].P)}</b> ${S.sol.c[0].P>PRATE?'<span style="color:var(--bad)">⚠ &gt; 0,25 W</span>':''}`;drawVI();const sc0=document.querySelector('.schem');if(sc0)sc0.innerHTML=schematic(S.sol);}
+    else {const cards=document.querySelectorAll('#pane .card');const last=cards[cards.length-1];if(last)last.innerHTML=`<h2>Hasil pengukuran</h2>${compTable(S.sol)}${insights(S.sol)}`;const sc=document.querySelector('.schem');if(sc)sc.innerHTML=schematic(S.sol);}
+  }
+});
+$('#pane').addEventListener('change',e=>{
+  if(e.target.matches('select[data-i]')){const i=+e.target.dataset.i;S.R[S.mode][i]=+e.target.value;S.heat[i]=0;full(true);}
+});
+$('#pane').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return; const p=b.parentElement&&b.parentElement.id;
+  if(p==='sType'){S.type=b.dataset.v;S.burnt=[false,false,false];full(true);return;}
+  if(p==='sN'){S.n[S.mode]=+b.dataset.v;S.open=[false,false,false];full(true);return;}
+  if(p==='mQ'){S.mm.q=b.dataset.v;full(false);return;}
+  if(p==='mAt'){S.mm.at=+b.dataset.v;full(false);return;}
+  if(b.dataset.open!=null){const i=+b.dataset.open;S.open[i]=!S.open[i];full(false);return;}
+  if(b.dataset.rep!=null){const i=+b.dataset.rep;S.burnt[i]=false;S.heat[i]=0;toast('ok','Resistor diganti','<br>Pilih nilai R yang lebih besar atau turunkan tegangan agar tidak terbakar lagi.');full(true);return;}
+  if(b.id==='bRec'){S.pts.push({V:S.sol.Vs,I:S.sol.It,R:S.sol.c[0].R});if(S.pts.length>14)S.pts.shift();render();return;}
+  if(b.id==='bClr'){S.pts=[];render();return;}
+  if(b.id==='bNext'){newLat();full(true);setTimeout(()=>{const i=$('#aIn');if(i)i.focus();},50);return;}
+  if(b.id==='bChk'){checkLat();return;}
+});
+$('#pane').addEventListener('keydown',e=>{if(e.target.id==='aIn'&&e.key==='Enter')checkLat();});
+function checkLat(){
+  const L=S.lat, raw=($('#aIn').value||'').replace(/\s/g,'').replace(',','.'); let v=parseFloat(raw);
+  if(!isFinite(v)){L.fb='Masukkan angka dulu (contoh: 12,5).';L.fbc='warn';render();return;}
+  if(L.unit==='Ω'&&/k$/i.test(raw)) v*=1000;
+  const ok=Math.abs(v-L.ans)/Math.max(1e-9,Math.abs(L.ans))<=0.02;
+  L.done=true; S.score.tot++; if(ok) S.score.ok++;
+  const show=L.unit==='mA'?nf(L.ans,2)+' mA':L.unit==='V'?nf(L.ans,2)+' V':fR(L.ans);
+  L.fb=(ok?'<b>Tepat!</b> ':`<b>Belum tepat.</b> Jawaban benar: <b>${show}</b>. `)+latExplain(); L.fbc=ok?'ok':'bad';
+  S.lat.reveal=true; render(); if(T) setPinsReveal();
+}
+function setPinsReveal(){ // tampilkan V & I sesudah dijawab
+  const sol=S.sol; T.compObj.forEach((o,i)=>{const el=T.pins[i]&&T.pins[i].el; if(el) el.innerHTML=`R${i+1} = ${fR(sol.c[i].R)}<small>${fV(sol.c[i].V)} · ${fI(sol.c[i].I)}</small>`;});
+}
+$('#bFlow').addEventListener('click',e=>{S.flow=!S.flow;e.currentTarget.setAttribute('aria-pressed',S.flow);});
+$('#bStrip').addEventListener('click',e=>{S.strip=!S.strip;e.currentTarget.setAttribute('aria-pressed',S.strip);if(T)T.stripG.visible=S.strip;});
+$('#bVal').addEventListener('click',e=>{S.val=!S.val;e.currentTarget.setAttribute('aria-pressed',S.val);if(T)setPins();});
+
+/* ================= MULAI ================= */
+S.sol=solve();
+try{init3D();}catch(err){$('#loading').textContent='Model 3D tidak dapat dimuat di perangkat ini. Panel latihan tetap bisa digunakan.';console.error(err);}
+full(true);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(T){T.scene.traverse(()=>{});applyVisual();}});
+})();
+</script>
+</body>
+</html>
