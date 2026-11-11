@@ -1,6 +1,6 @@
-# Guru Vokasi — Simulasi 3D Teknik Otomasi Industri
+# Guru Vokasi — Simulasi 3D Pendidikan Vokasi
 
-Kumpulan simulasi 3D interaktif untuk pembelajaran **Teknik Otomasi Industri (TOI)** di SMK 2 Triple J Citeureup, Kabupaten Bogor.
+Kumpulan simulasi 3D interaktif untuk pembelajaran **Teknik Otomasi Industri (TOI)** dan **Teknik Mesin** di SMK 2 Triple J Citeureup, Kabupaten Bogor.
 Simulasi dapat dibuka langsung di browser (laptop maupun HP) tanpa instalasi.
 
 🌐 **Halaman utama:** https://lht-sky.github.io/guruvokasi/
