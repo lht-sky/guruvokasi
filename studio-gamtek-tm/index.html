@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Studio Gamtek 3D — Pemantapan Gambar Teknik Dasar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e1318;--panel:#151c23;--panel2:#1b242d;--line:#2a3742;--ink:#e9eef2;--mute:#97a6b3;--y:#ffc727;--g:#2fd27a;--r:#ff5a5a;--b:#3d8bfd;--o:#ff8a1f}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+#c{position:fixed;inset:0;width:100vw;height:100vh;touch-action:none;display:block;outline:none}
+h1,h2,h3,.disp{font-family:'Chakra Petch',sans-serif;letter-spacing:.02em}
+button{font:inherit;color:inherit;cursor:pointer}
+.stripe{height:8px;background:repeating-linear-gradient(-45deg,var(--b) 0 12px,#0b2a55 12px 24px)}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:12px;padding:10px 14px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:6px;transition:transform .12s,background .2s}
+.btn:active{transform:scale(.96)}
+.btn.pri{background:var(--y);color:#151515;border-color:var(--y)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:7px 10px;font-size:13px;border-radius:10px}
+#top{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top));background:linear-gradient(#0e1318f2 60%,#0e131800);transform:translateY(-130%);transition:transform .35s}
+#top.show{transform:none}
+#top .ttl{flex:1;min-width:0}
+#top .ttl b{display:block;font-family:'Chakra Petch';font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#top .ttl small{color:var(--mute);font-size:12px;font-weight:600}
+.score{font-weight:800;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;white-space:nowrap}
+#sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:640px;z-index:6;background:var(--panel);border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));max-height:58vh;overflow:auto;transform:translateY(110%);transition:transform .35s cubic-bezier(.2,.9,.3,1);box-shadow:0 -10px 40px #0008}
+#sheet.show{transform:none}
+#sheet .grab{width:42px;height:5px;border-radius:5px;background:#3a4955;margin:0 auto 10px}
+@media (min-width:900px){#sheet{left:auto;right:16px;bottom:16px;width:430px;border-radius:18px;border:1px solid var(--line);max-height:calc(100vh - 100px)}#sheet .grab{display:none}}
+.kick{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--y)}
+#sheet h3{margin:4px 0 6px;font-size:19px;line-height:1.25}
+#sheet p{margin:6px 0;color:#c9d3db;font-size:14.5px;line-height:1.5}
+.opts{display:grid;gap:8px;margin:10px 0 4px}
+.opt{text-align:left;border:1.5px solid var(--line);background:var(--panel2);border-radius:12px;padding:11px 12px;font-size:14px;font-weight:600;line-height:1.35;display:flex;gap:10px;align-items:center;transition:all .15s}
+.opt:active{transform:scale(.98)}
+.opt .ic{font-size:20px;flex:none;display:flex;align-items:center}
+.opt.ok{border-color:var(--g);background:#11331f}
+.opt.bad{border-color:var(--r);background:#3a1515;animation:shake .35s}
+.opt[disabled]{opacity:.55;cursor:default}
+.opt.ok[disabled],.opt.bad[disabled]{opacity:1}
+.vopts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}
+.vopt{background:#fbfaf5;border:3px solid var(--line);border-radius:12px;padding:6px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;color:#1b242d;font-weight:800;font-size:13px;min-height:110px}
+.vopt svg{width:100%;max-height:150px;height:auto;display:block}
+.vopt.ok{border-color:var(--g);box-shadow:0 0 0 3px #2fd27a55}
+.vopt.bad{border-color:var(--r);animation:shake .35s;opacity:.5}
+.vopt[disabled]{cursor:default}
+.paper{background:#fbfaf5;border-radius:12px;padding:6px;margin:8px 0;border:1px solid #d9d3bf}
+.paper svg{width:100%;height:auto;display:block;max-height:34vh}
+.hl{animation:hlp 1s infinite}
+.hl,.hl *{stroke:#ff7a00!important}
+.hl.vis,.hl.vis *{stroke-width:4!important}
+.hl.thin,.hl.thin *,.hl.cen,.hl.cen *,.hl.hid,.hl.hid *{stroke-width:2.4!important}
+.hl .arr{fill:#ff7a00!important;stroke:none!important}
+.hl text{fill:#ff7a00!important;stroke:none!important}
+@keyframes hlp{50%{opacity:.3}}
+.dim{cursor:pointer}
+.dim.found *{stroke:#e53935!important}
+.dim.found .arr,.dim.found text{fill:#e53935!important;stroke:none!important}
+.dim.good *{stroke:#1e9e57!important}
+.dim.good .arr,.dim.good text{fill:#1e9e57!important;stroke:none!important}
+.fb{border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14px;line-height:1.5}
+.fb.ok{background:#11331f;border:1px solid #1f6b40}
+.fb.bad{background:#3a1515;border:1px solid #7a2a2a}
+.fb.info{background:#14283d;border:1px solid #24496e}
+.fb b{color:#fff}
+.fb ul{margin:4px 0 0;padding-left:18px}.fb li{margin:3px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.steps{display:flex;gap:5px;margin:8px 0 2px}
+.steps span{flex:1;height:6px;border-radius:6px;background:#2a3742}
+.steps span.done{background:var(--g)}.steps span.now{background:var(--y)}
+.know{background:linear-gradient(135deg,#2b2410,#1b242d);border:1px solid #6b5a1c;border-radius:12px;padding:10px 12px;margin:8px 0;font-size:13.5px;line-height:1.5}
+.know b{color:var(--y)}
+.know ul{margin:4px 0 0;padding-left:18px}
+.sw{background:linear-gradient(135deg,#0f2747,#1b242d);border:1px solid #2c5a94;border-radius:12px;padding:10px 12px;margin:8px 0;font-size:13.5px;line-height:1.5}
+.sw b{color:#8fc1ff}
+#toast{position:fixed;left:50%;top:76px;transform:translate(-50%,-20px);opacity:0;z-index:9;background:#0b1015ee;border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;transition:all .25s;pointer-events:none;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.ok{border-color:var(--g)}#toast.bad{border-color:var(--r)}
+#hub{position:fixed;inset:0;z-index:7;overflow:auto;background:linear-gradient(180deg,#0e1318d0 0,#0e1318a8 30%,#0e1318ee 62%);transition:opacity .4s}
+#hub.hide{opacity:0;pointer-events:none}
+.hubin{max-width:980px;margin:0 auto;padding:18px 16px calc(30px + env(safe-area-inset-bottom))}
+.brand{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:12px;font-weight:700;letter-spacing:.04em}
+.brand .dot{width:44px;height:44px;border-radius:10px;background:var(--y);display:grid;place-items:center;color:#111;font-family:'Chakra Petch';font-weight:700;font-size:18px;flex:none}
+.hero{margin:26px 0 14px}
+.hero h1{font-size:clamp(30px,7vw,54px);line-height:1;margin:0}
+.hero h1 em{font-style:normal;color:var(--y)}
+.hero p{color:#c3cdd5;max-width:640px;font-size:15px;line-height:1.55;margin:12px 0 0}
+.who{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 6px}
+.who input{flex:1;min-width:150px;background:#0b1015cc;border:1.5px solid var(--line);color:var(--ink);border-radius:12px;padding:11px 12px;font:inherit;font-size:15px;-webkit-user-select:text;user-select:text}
+.who input:focus{outline:none;border-color:var(--y)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:16px}
+.card{position:relative;text-align:left;background:#151c23ee;border:1px solid var(--line);border-radius:16px;padding:14px;min-height:150px;display:flex;flex-direction:column;gap:6px;transition:transform .15s,border-color .2s;overflow:hidden}
+.card:hover{border-color:#4a5b69;transform:translateY(-2px)}
+.card .no{font-family:'Chakra Petch';font-size:12px;color:var(--y);letter-spacing:.1em}
+.card .ic{font-size:30px}
+.card b{font-size:16px;line-height:1.25}
+.card small{color:var(--mute);font-size:12.5px;line-height:1.4}
+.card .st{margin-top:auto;font-size:15px;letter-spacing:2px}
+.card .tp{position:absolute;top:12px;right:12px;font-size:11px;font-weight:800;background:#0e1318;border:1px solid var(--line);border-radius:7px;padding:3px 7px;color:#b8c4ce}
+.foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;align-items:center}
+.total{margin-left:auto;color:var(--mute);font-weight:700;font-size:14px}
+#modal{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:16px;background:#05080bb8;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#modal.show{display:flex}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:560px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 30px 80px #000a;animation:pop .3s cubic-bezier(.2,1.2,.4,1)}
+.mbox .stripe{border-radius:20px 20px 0 0}
+.mbody{padding:18px 18px 20px}
+.mbody h2{margin:0 0 8px;font-size:23px}
+.mbody p,.mbody li{color:#c9d3db;font-size:14.5px;line-height:1.55}
+.mbody ul{padding-left:20px}
+.stars{font-size:38px;letter-spacing:6px;text-align:center;margin:6px 0}
+.cert{background:#f3f6fb;color:#1c1c1c;border-radius:14px;padding:18px;border:6px double #2c5a94;text-align:center;margin:10px 0}
+.cert h3{font-family:'Chakra Petch';margin:4px 0;font-size:22px;color:#123a6b}
+.cert .nm{font-size:24px;font-weight:800;border-bottom:2px solid #2c5a94;display:inline-block;padding:0 14px 2px;margin:8px 0}
+.cert table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;text-align:left}
+.cert td{padding:4px 6px;border-bottom:1px solid #cfd9e6}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+.tbl td,.tbl th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+.tbl th{color:var(--y);font-size:12px}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:11;overflow:hidden}
+#confetti i{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes pop{from{transform:scale(.9);opacity:0}}
+#loading{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:var(--bg);font-family:'Chakra Petch';font-size:18px;color:var(--y);transition:opacity .5s}
+#loading.hide{opacity:0;pointer-events:none}
+#err{display:none;position:fixed;inset:0;z-index:30;place-items:center;padding:24px;text-align:center;background:var(--bg)}
+</style>
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "zasgkur533");
+</script>
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas>
+
+<div id="top">
+  <button class="btn sm" id="backBtn">← Peta</button>
+  <div class="ttl"><b id="tTitle">Misi</b><small id="tProg"></small></div>
+  <button class="btn sm ghost" id="muteBtn" title="Suara">🔊</button>
+  <div class="score" id="tScore">⭐ 0</div>
+</div>
+
+<div id="sheet"></div>
+<div id="toast"></div>
+
+<div id="hub">
+  <div class="stripe"></div>
+  <div class="hubin">
+    <div class="brand"><div class="dot">TM</div><div>SMKS 2 TRIPLE "J" CITEUREUP · TEKNIK MESIN · KELAS XI · PEMANTAPAN SEBELUM CAD</div></div>
+    <div class="hero">
+      <h1 class="disp">STUDIO <em>GAMTEK</em><br>3D</h1>
+      <p>Sebelum memodelkan di SolidWorks, seorang drafter harus bisa <b>membaca bentuk 3D dari gambar 2D</b>. Selesaikan 6 misi gambar teknik dasar, mulai dari jenis garis sampai gambar potongan, untuk mendapatkan <b>Lisensi Drafter Muda</b>.</p>
+    </div>
+    <div class="who">
+      <input id="inName" placeholder="Nama murid" maxlength="40" autocomplete="off">
+      <input id="inKelas" placeholder="Kelas (mis. XI TM 1)" maxlength="20" autocomplete="off" style="max-width:200px">
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="foot">
+      <button class="btn pri" id="certBtn">🏅 Lisensi Saya</button>
+      <button class="btn" id="guruBtn">📘 Panduan Guru</button>
+      <button class="btn ghost" id="resetBtn">↺ Reset</button>
+      <div class="total" id="totalStars"></div>
+    </div>
+    <p style="margin:18px 0 6px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;line-height:1.45;color:var(--mute);text-align:center;overflow-wrap:anywhere">Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</p>
+  </div>
+</div>
+
+<div id="modal"><div class="mbox"><div class="stripe"></div><div class="mbody" id="mbody"></div></div></div>
+<div id="confetti"></div>
+<div id="loading">MENYIAPKAN MEJA GAMBAR…</div>
+<div id="err"><div><h2 class="disp" style="color:var(--y)">3D tidak dapat dimuat</h2><p style="color:#c9d3db">Perangkat atau browser ini tidak mendukung WebGL, atau pustaka 3D gagal dimuat. Coba buka di Chrome terbaru atau periksa koneksi internet.</p></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+if(!window.THREE){document.getElementById('err').style.display='grid';return;}
+const $=s=>document.querySelector(s);
+const rand=(a,b)=>a+Math.random()*(b-a);
+const lerp=(a,b,t)=>a+(b-a)*t;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ================= RENDERER ================= */
+const canvas=$('#c');
+let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:true});}catch(e){$('#err').style.display='grid';return;}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x1c2530);
+scene.fog=new THREE.Fog(0x1c2530,22,46);
+const camera=new THREE.PerspectiveCamera(46,1,.05,120);
+scene.add(new THREE.HemisphereLight(0xeef4fa,0x3a3f44,.8));
+const sun=new THREE.DirectionalLight(0xffffff,.8);sun.position.set(5,11,8);sun.castShadow=true;
+sun.shadow.mapSize.set(1536,1536);Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:.5,far:40});sun.shadow.bias=-.0006;scene.add(sun);
+scene.add(new THREE.AmbientLight(0xffffff,.2));
+
+/* ================= HELPERS ================= */
+function mat(c,o){const m=new THREE.MeshStandardMaterial(Object.assign({roughness:.7,metalness:.05},o||{}));m.color=new THREE.Color(c).convertSRGBToLinear();if(o&&o.emissive!==undefined)m.emissive=new THREE.Color(o.emissive).convertSRGBToLinear();return m;}
+function mesh(g,m){const x=new THREE.Mesh(g,m);x.castShadow=true;x.receiveShadow=true;return x;}
+function box(w,h,d,c,o){return mesh(new THREE.BoxGeometry(w,h,d),mat(c,o));}
+function cyl(rt,rb,h,c,o,s){return mesh(new THREE.CylinderGeometry(rt,rb,h,s||20),mat(c,o));}
+function at(m,x,y,z){m.position.set(x,y,z);return m;}
+function grp(...a){const g=new THREE.Group();a.forEach(x=>g.add(x));return g;}
+function cnv(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function tex(c){const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const FONT='"Plus Jakarta Sans",sans-serif';
+function textSprite(text,o){o=Object.assign({fg:'#fff',bg:'rgba(14,19,24,.9)',h:.2,border:'#ffc727',weight:800},o||{});
+  const fs=60,pad=26;let c=cnv(8,8),ctx=c.getContext('2d');ctx.font=`${o.weight} ${fs}px ${FONT}`;
+  const tw=ctx.measureText(text).width;c.width=Math.ceil(tw+pad*2);c.height=Math.ceil(fs+pad*1.3);ctx=c.getContext('2d');
+  ctx.font=`${o.weight} ${fs}px ${FONT}`;rr(ctx,4,4,c.width-8,c.height-8,22);ctx.fillStyle=o.bg;ctx.fill();
+  if(o.border){ctx.lineWidth=6;ctx.strokeStyle=o.border;ctx.stroke();}
+  ctx.fillStyle=o.fg;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,c.width/2,c.height/2+3);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex(c),depthTest:false,transparent:true}));
+  s.scale.set(o.h*c.width/c.height,o.h,1);s.renderOrder=20;return s;}
+function labelPlane(lines,w,h,o){o=Object.assign({bg:'#ffffff',fg:'#111',fs:64,weight:800,border:null},o||{});
+  const ppm=256,c=cnv(Math.round(w*ppm),Math.round(h*ppm)),ctx=c.getContext('2d');
+  ctx.fillStyle=o.bg;ctx.fillRect(0,0,c.width,c.height);
+  if(o.border){ctx.lineWidth=12;ctx.strokeStyle=o.border;ctx.strokeRect(6,6,c.width-12,c.height-12);}
+  ctx.fillStyle=o.fg;ctx.textAlign='center';ctx.textBaseline='middle';const L=[].concat(lines);let fs=o.fs;
+  ctx.font=`${o.weight} ${fs}px ${FONT}`;const mw=Math.max(...L.map(t=>ctx.measureText(t).width));if(mw>c.width*.9)fs=fs*c.width*.9/mw;if(fs*1.15*L.length>c.height*.92)fs=c.height*.92/(1.15*L.length);ctx.font=`${o.weight} ${fs}px ${FONT}`;
+  L.forEach((t,i)=>ctx.fillText(t,c.width/2,c.height/2+(i-(L.length-1)/2)*fs*1.15));
+  return new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex(c)}));}
+function lines(arr,col,o){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));
+  const m=o&&o.dash?new THREE.LineDashedMaterial({color:col,dashSize:o.dash,gapSize:o.gap||o.dash*.6,transparent:true,opacity:o.op!=null?o.op:1}):new THREE.LineBasicMaterial({color:col,transparent:!!(o&&o.op!=null),opacity:o&&o.op!=null?o.op:1});
+  const l=new THREE.LineSegments(g,m);if(o&&o.dash)l.computeLineDistances();return l;}
+
+/* ================= CAMERA RIG ================= */
+const rig={target:new THREE.Vector3(0,1,-2),r:12,theta:.5,phi:1.05,minR:2,maxR:16,minPhi:.3,maxPhi:1.5,minT:-1.3,maxT:1.35,auto:false};
+function portraitK(){const a=camera.aspect;return a<1?Math.pow(1/a,.62):1;}
+function applyRig(){const r=rig.r*portraitK(),sp=Math.sin(rig.phi);
+  camera.position.set(rig.target.x+r*sp*Math.sin(rig.theta),rig.target.y+r*Math.cos(rig.phi),rig.target.z+r*sp*Math.cos(rig.theta));camera.lookAt(rig.target);}
+function view(o,dur){if(o.minR)rig.minR=o.minR;if(o.maxR)rig.maxR=o.maxR;
+  const f={x:rig.target.x,y:rig.target.y,z:rig.target.z,r:rig.r,th:rig.theta,ph:rig.phi};
+  const t={x:o.t[0],y:o.t[1],z:o.t[2],r:o.r,th:o.theta,ph:o.phi};
+  if(dur===0){rig.target.set(t.x,t.y,t.z);rig.r=t.r;rig.theta=t.th;rig.phi=t.ph;return;}
+  anim(dur||1.2,k=>{const e=ease(k);rig.target.set(lerp(f.x,t.x,e),lerp(f.y,t.y,e),lerp(f.z,t.z,e));rig.r=lerp(f.r,t.r,e);rig.theta=lerp(f.th,t.th,e);rig.phi=lerp(f.ph,t.ph,e);},null,true);}
+
+/* ================= LOOP / ANIM ================= */
+let anims=[];const missionUpd=new Set();const pulsers=[];
+function anim(dur,fn,done,keep){anims.push({t:0,dur,fn,done,keep});}
+const clock=new THREE.Clock();let T=0;
+const off={x:0,y:0};
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();
+function sheetOffsetTarget(){const s=$('#sheet');const topH=56;
+  if(!s.classList.contains('show'))return{x:0,y:0};
+  if(innerWidth>=900)return{x:(s.offsetWidth+16)/2,y:-topH/2};
+  return{x:0,y:(Math.min(s.offsetHeight,innerHeight*.58)-topH)/2};}
+function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);T+=dt;
+  for(let i=anims.length-1;i>=0;i--){const a=anims[i];a.t+=dt;const k=Math.min(a.t/a.dur,1);a.fn(k);if(k>=1){anims.splice(i,1);a.done&&a.done();}}
+  missionUpd.forEach(f=>f(dt,T));
+  for(const p of pulsers){const s=p.userData.base*(1+.13*Math.sin(T*4.5+p.userData.ph));p.scale.set(s,s,1);}
+  if(rig.auto){rig.theta=.45+Math.sin(T*.12)*.55;}
+  const ot=sheetOffsetTarget();off.x=lerp(off.x,ot.x,.12);off.y=lerp(off.y,ot.y,.12);
+  const w=innerWidth,h=innerHeight;camera.setViewOffset(w,h,off.x,off.y,w,h);
+  applyRig();renderer.render(scene,camera);}
+
+/* ================= INPUT (orbit) ================= */
+const ptr=new Map();let down=null,moved=false,pinch=0;
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===1){down={x:e.clientX,y:e.clientY};moved=false;}
+  if(ptr.size===2){const p=[...ptr.values()];pinch=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);moved=true;}
+  rig.auto=false;});
+canvas.addEventListener('pointermove',e=>{
+  if(!ptr.has(e.pointerId)){canvas.style.cursor='grab';return;}
+  const pv=ptr.get(e.pointerId),dx=e.clientX-pv.x,dy=e.clientY-pv.y;ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===1){if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)moved=true;
+    if(moved){rig.theta=clamp(rig.theta-dx*.006,rig.minT,rig.maxT);rig.phi=clamp(rig.phi-dy*.005,rig.minPhi,rig.maxPhi);}}
+  else if(ptr.size===2){const p=[...ptr.values()];const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(d>0){rig.r=clamp(rig.r*pinch/d,rig.minR,rig.maxR);pinch=d;}}});
+canvas.addEventListener('pointerup',e=>ptr.delete(e.pointerId));canvas.addEventListener('pointercancel',e=>ptr.delete(e.pointerId));
+canvas.addEventListener('wheel',e=>{e.preventDefault();rig.r=clamp(rig.r*(1+Math.sign(e.deltaY)*.09),rig.minR,rig.maxR);},{passive:false});
+
+/* ================= AUDIO ================= */
+let actx=null,muted=false;
+function initAudio(){if(actx)return;try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+function tone(f,d,type,vol,when,slide){if(!actx||muted)return;try{const t0=actx.currentTime+(when||0);const o=actx.createOscillator(),g=actx.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t0);if(slide)o.frequency.linearRampToValueAtTime(slide,t0+d);
+  g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol||.15,t0+.01);g.gain.exponentialRampToValueAtTime(.001,t0+d);o.connect(g);g.connect(actx.destination);o.start(t0);o.stop(t0+d+.05);}catch(e){}}
+function sfx(k){initAudio();if(!actx)return;if(actx.state==='suspended')actx.resume();
+  if(k==='ok'){tone(660,.12,'triangle',.18);tone(990,.2,'triangle',.18,.1);}
+  else if(k==='bad'){tone(160,.28,'sawtooth',.12);}
+  else if(k==='tap'){tone(520,.06,'square',.06);}
+  else if(k==='win'){[523,659,784,1046].forEach((f,i)=>tone(f,.25,'triangle',.17,i*.12));}
+  else if(k==='whoosh'){tone(300,.25,'sine',.08,0,900);}
+  else if(k==='cut'){tone(900,.18,'sawtooth',.05,0,300);}}
+$('#muteBtn').onclick=()=>{muted=!muted;$('#muteBtn').textContent=muted?'🔇':'🔊';};
+
+/* ================= UI ================= */
+let toastT;
+function toast(m,k){const t=$('#toast');t.textContent=m;t.className='show '+(k||'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',2400);}
+function sheet(build){const s=$('#sheet');s.innerHTML='<div class="grab"></div>';const body=document.createElement('div');s.appendChild(body);build(body);s.classList.add('show');s.scrollTop=0;}
+function hideSheet(){$('#sheet').classList.remove('show');}
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function head(b,kick,title,text){if(kick)b.appendChild(el('div','kick',kick));if(title)b.appendChild(el('h3','',title));if(text)b.appendChild(el('p','',text));}
+function actions(b,list){const r=el('div','row');list.forEach(a=>{const x=el('button','btn '+(a.cls||''),a.label);x.onclick=()=>{initAudio();a.fn();};r.appendChild(x);});b.appendChild(r);return r;}
+function modal(html,btns){const m=$('#mbody');m.innerHTML=html;if(btns){const r=el('div','row');btns.forEach(a=>{const x=el('button','btn '+(a.cls||''),a.label);x.onclick=()=>{initAudio();if(!a.keep)closeModal();a.fn&&a.fn();};r.appendChild(x);});m.appendChild(r);}$('#modal').classList.add('show');$('#mbody').parentElement.scrollTop=0;}
+function closeModal(){$('#modal').classList.remove('show');}
+function confetti(){const c=$('#confetti');const cols=['#ffc727','#2fd27a','#3d8bfd','#ff5a5a','#fff'];for(let i=0;i<70;i++){const d=el('i');d.style.left=rand(0,100)+'vw';d.style.background=cols[i%5];d.style.animationDuration=rand(1.8,3.4)+'s';d.style.animationDelay=rand(0,.6)+'s';c.appendChild(d);}setTimeout(()=>c.innerHTML='',4200);}
+function setTop(title,prog){$('#tTitle').textContent=title;if(prog!=null)$('#tProg').textContent=prog;}
+function setProg(p){$('#tProg').textContent=p;}
+function setScore(){$('#tScore').textContent='⭐ '+(cur?cur.ok:0);}
+function scrollEnd(){const s=$('#sheet');setTimeout(()=>{s.scrollTop=s.scrollHeight;},30);}
+let runId=0;
+function later(fn,ms){const id=runId;setTimeout(()=>{if(id===runId)fn();},ms);}
+
+/* Question engine: q={kick,title,text,html,opts:[{label,ic,svg,ok,hint}],why,know,grid,onShow,onOk,next} */
+function askQ(q,done){cur.total++;let first=true;if(q.onShow)q.onShow();
+  sheet(b=>{head(b,q.kick,q.title,q.text);if(q.html)b.appendChild(el('div','paper',q.html));
+    const L=q.keep?q.opts:shuffle(q.opts);const w=el('div',q.grid?'vopts':'opts');const btns=[];
+    L.forEach((o,i)=>{const lab=q.grid&&!o.label?String.fromCharCode(65+i):o.label;
+      const x=el('button',q.grid?'vopt':'opt',q.grid?`${o.svg}<span>${lab}</span>`:(o.ic?`<span class="ic">${o.ic}</span>`:'')+`<span>${o.label}</span>`);
+      x.onclick=()=>{initAudio();if(x.disabled)return;
+        if(o.ok){x.classList.add('ok');btns.forEach(y=>y.disabled=true);sfx('ok');if(first)cur.ok++;setScore();
+          b.appendChild(el('div','fb ok',`<b>${first?'✅ Tepat!':'✅ Benar.'}</b> ${q.why}`));
+          if(q.know)b.appendChild(el('div','know',q.know));
+          if(q.onOk)q.onOk();
+          actions(b,[{label:q.next||'Lanjut →',cls:'pri',fn:done}]);scrollEnd();}
+        else{x.classList.add('bad');x.disabled=true;first=false;sfx('bad');toast(o.hint||q.hint||'Belum tepat, coba lagi 🙂','bad');}};
+      w.appendChild(x);btns.push(x);});
+    b.appendChild(w);});}
+function chain(qs,end,label){let i=0;const nxt=()=>{if(i>=qs.length)return end();const q=qs[i++];setProg(`${label||'Soal'} ${i}/${qs.length}`);askQ(q,nxt);};nxt();}
+
+/* ================= SAVE ================= */
+const KEY='studioGamtekTM_v1';
+let save={name:'',kelas:'',res:{}};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.res)save=s;}catch(e){}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(save));}catch(e){}}
+
+/* ================= SVG DRAWING KIT ================= */
+const SVGCSS='.vis{stroke:#111;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}.hid{stroke:#111;stroke-width:1.3;fill:none;stroke-dasharray:6 4}.cen{stroke:#111;stroke-width:.9;fill:none;stroke-dasharray:16 3 2 3}.thin{stroke:#111;stroke-width:.9;fill:none}.arr{fill:#111;stroke:none}.dt{font:700 13px sans-serif;fill:#111;stroke:none}.lb{font:700 9px sans-serif;fill:#6b7782;stroke:none}.qm{font:800 26px sans-serif;fill:#ff7a00;stroke:none}.ali{stroke:#a9c2d6;stroke-width:.8;fill:none;stroke-dasharray:3 3}';
+function svgWrap(vb,inner){return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}"><style>${SVGCSS}</style>${inner}</svg>`;}
+function svgTex(svg,w,h,bg){const c=cnv(w,h),x=c.getContext('2d');x.fillStyle=bg||'#fbfaf5';x.fillRect(0,0,w,h);const t=tex(c);const img=new Image();
+  img.onload=()=>{x.drawImage(img,0,0,w,h);t.needsUpdate=true;};img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);return t;}
+function lineIc(cls){return `<svg viewBox="0 0 44 12" width="44" height="12"><line x1="2" y1="6" x2="42" y2="6" class="${cls}" style="stroke:#e9eef2;${cls==='vis'?'stroke-width:3.4':cls==='thin'?'stroke-width:1.4':'stroke-width:1.6'}"/></svg>`;}
+const aH=(x,y,d)=>`<path class="arr" d="M${x},${y} l${-9*d},-3 v6z"/>`;
+const aV=(x,y,d)=>`<path class="arr" d="M${x},${y} l-3,${-9*d} h6z"/>`;
+function dimH(x1,x2,y,txt,ext){let s='';(ext||[]).forEach(([x,a,b])=>s+=`<line class="thin" x1="${x}" y1="${a}" x2="${x}" y2="${b}"/>`);
+  return s+`<line class="thin" x1="${x1}" y1="${y}" x2="${x2}" y2="${y}"/>${aH(x1,y,-1)}${aH(x2,y,1)}<text class="dt" x="${(x1+x2)/2}" y="${y-4}" text-anchor="middle">${txt}</text>`;}
+function dimV(y1,y2,x,txt,ext,rot){let s='';(ext||[]).forEach(([y,a,b])=>s+=`<line class="thin" x1="${a}" y1="${y}" x2="${b}" y2="${y}"/>`);const r=rot||-90;const tx=r===-90?x-4:x+4;
+  return s+`<line class="thin" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>${aV(x,y1,-1)}${aV(x,y2,1)}<text class="dt" transform="translate(${tx},${(y1+y2)/2}) rotate(${r})" text-anchor="middle">${txt}</text>`;}
+
+/* ================= VOXEL ENGINE (benda bertingkat) ================= */
+function mkObj(H){const nz=H.length,nx=H[0].length;let ny=0;H.forEach(r=>r.forEach(h=>ny=Math.max(ny,h)));return{H,nx,nz,ny};}
+function occW(o,x,y,z){return x>=0&&x<o.nx&&z>=0&&z<o.nz&&y>=0&&y<o.H[z][x];}
+const VIEWS={
+  front:{dims:o=>[o.nx,o.ny,o.nz],map:(o,u,v,w)=>[u,v,w]},
+  back:{dims:o=>[o.nx,o.ny,o.nz],map:(o,u,v,w)=>[o.nx-1-u,v,o.nz-1-w]},
+  top:{dims:o=>[o.nx,o.nz,o.ny],map:(o,u,v,w)=>[u,w,o.nz-1-v]},
+  topflip:{dims:o=>[o.nx,o.nz,o.ny],map:(o,u,v,w)=>[u,w,v]},
+  left:{dims:o=>[o.nz,o.ny,o.nx],map:(o,u,v,w)=>[o.nx-1-w,v,u]},
+  right:{dims:o=>[o.nz,o.ny,o.nx],map:(o,u,v,w)=>[w,v,o.nz-1-u]}};
+const isE=(a,b,c,d)=>{const n=a+b+c+d;return n===1||n===3||(n===2&&a===d);};
+function viewOf(o,name){const V=VIEWS[name];const [nu,nv,nw]=V.dims(o);
+  const oc=(u,v,w)=>{if(u<0||v<0||w<0||u>=nu||v>=nv||w>=nw)return 0;const p=V.map(o,u,v,w);return occW(o,p[0],p[1],p[2])?1:0;};
+  const cov=(u,v,w0)=>{for(let k=Math.max(0,w0);k<nw;k++)if(oc(u,v,k))return true;return false;};
+  const Hm=new Map(),Vm=new Map();const setS=(m,k,s)=>m.set(k,Math.max(m.get(k)||0,s));
+  for(let u=0;u<nu;u++)for(let v=0;v<=nv;v++)for(let w=0;w<=nw;w++){
+    if(!isE(oc(u,v-1,w-1),oc(u,v,w-1),oc(u,v-1,w),oc(u,v,w)))continue;
+    setS(Hm,u+','+v,(cov(u,v,w)&&cov(u,v-1,w))?1:2);}
+  for(let v=0;v<nv;v++)for(let u=0;u<=nu;u++)for(let w=0;w<=nw;w++){
+    if(!isE(oc(u-1,v,w-1),oc(u,v,w-1),oc(u-1,v,w),oc(u,v,w)))continue;
+    setS(Vm,u+','+v,(cov(u,v,w)&&cov(u-1,v,w))?1:2);}
+  const segs=[];
+  for(let v=0;v<=nv;v++){let s=null;for(let u=0;u<=nu;u++){const st=u<nu?(Hm.get(u+','+v)||0):0;
+    if(s&&st===s.st){s.b=u+1;continue;}if(s){segs.push([s.a,v,s.b,v,s.st]);s=null;}if(st)s={a:u,b:u+1,st};}}
+  for(let u=0;u<=nu;u++){let s=null;for(let v=0;v<=nv;v++){const st=v<nv?(Vm.get(u+','+v)||0):0;
+    if(s&&st===s.st){s.b=v+1;continue;}if(s){segs.push([u,s.a,u,s.b,s.st]);s=null;}if(st)s={a:v,b:v+1,st};}}
+  return{nu,nv,segs,key:nu+'x'+nv+':'+segs.map(s=>s.join(',')).sort().join('|')};}
+function segsSVG(vw,ox,oy,s){let a='',b='';vw.segs.forEach(([u0,v0,u1,v1,st])=>{const l=`<line x1="${ox+u0*s}" y1="${oy+(vw.nv-v0)*s}" x2="${ox+u1*s}" y2="${oy+(vw.nv-v1)*s}"/>`;if(st===2)b+=l;else a+=l;});return `<g class="hid">${a}</g><g class="vis">${b}</g>`;}
+function viewSVG(vw,o){o=Object.assign({s:30,bu:vw.nu,bv:vw.nv,pad:10},o||{});const W=o.bu*o.s+2*o.pad,Hh=o.bv*o.s+2*o.pad;
+  return svgWrap(`0 0 ${W} ${Hh}`,segsSVG(vw,o.pad+(o.bu-vw.nu)*o.s/2,o.pad+(o.bv-vw.nv)*o.s/2,o.s));}
+/* susunan proyeksi Eropa: depan kiri-atas, atas di bawahnya, samping kiri di kanannya */
+function layoutSVG(o,ask){const s=24,g=1.7,pad=16;const W=(o.nx+g+o.nz)*s+2*pad,Hh=(o.ny+g+o.nz)*s+2*pad;
+  const P={front:[pad,pad,o.nx,o.ny,'DEPAN'],left:[pad+(o.nx+g)*s,pad,o.nz,o.ny,'SAMPING KIRI'],top:[pad,pad+(o.ny+g)*s,o.nx,o.nz,'ATAS']};
+  let out='';
+  const fx=P.front[0],fy=P.front[1];
+  out+=`<line class="ali" x1="${fx+o.nx*s}" y1="${fy}" x2="${P.left[0]}" y2="${fy}"/><line class="ali" x1="${fx+o.nx*s}" y1="${fy+o.ny*s}" x2="${P.left[0]}" y2="${fy+o.ny*s}"/>`;
+  out+=`<line class="ali" x1="${fx}" y1="${fy+o.ny*s}" x2="${fx}" y2="${P.top[1]}"/><line class="ali" x1="${fx+o.nx*s}" y1="${fy+o.ny*s}" x2="${fx+o.nx*s}" y2="${P.top[1]}"/>`;
+  ['front','left','top'].forEach(n=>{const [x,y,w,h,lab]=P[n];out+=`<text class="lb" x="${x}" y="${y-5}">${lab}</text>`;
+    if(n===ask){out+=`<rect x="${x}" y="${y}" width="${w*s}" height="${h*s}" fill="#fff3e0" stroke="#ff7a00" stroke-width="1.5" stroke-dasharray="5 4" rx="4"/><text class="qm" x="${x+w*s/2}" y="${y+h*s/2+9}" text-anchor="middle">?</text>`;}
+    else out+=segsSVG(viewOf(o,n),x,y,s);});
+  return svgWrap(`0 0 ${W} ${Hh}`,out);}
+function voxelGroup(o,un,col,ghost){const pos=[];const ox=-o.nx*un/2,oz=-o.nz*un/2;const oc=(x,y,z)=>occW(o,x,y,z)?1:0;
+  const DIRS=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+  for(let z=0;z<o.nz;z++)for(let x=0;x<o.nx;x++)for(let y=0;y<o.H[z][x];y++){
+    for(const d of DIRS){if(oc(x+d[0],y+d[1],z+d[2]))continue;const a=d[0]?0:d[1]?1:2,sg=d[a],b=(a+1)%3,c=(a+2)%3;
+      const cs=[[0,0],[1,0],[1,1],[0,1]].map(([pb,pc])=>{const p=[0,0,0];p[a]=sg>0?1:0;p[b]=pb;p[c]=pc;return p;});
+      const q=sg>0?cs:[cs[0],cs[3],cs[2],cs[1]];const Wp=p=>[(x+p[0])*un+ox,(y+p[1])*un,(z+p[2])*un+oz];
+      [q[0],q[1],q[2],q[0],q[2],q[3]].forEach(p=>pos.push(...Wp(p)));}}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.computeVertexNormals();
+  const m=ghost?new THREE.MeshStandardMaterial({color:new THREE.Color(col).convertSRGBToLinear(),transparent:true,opacity:.22,depthWrite:false,roughness:.4}):mat(col,{roughness:.5,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+  const ms=new THREE.Mesh(geo,m);ms.castShadow=!ghost;ms.receiveShadow=!ghost;
+  const ep=[];const E=(p,q)=>ep.push(p[0]*un+ox,p[1]*un,p[2]*un+oz,q[0]*un+ox,q[1]*un,q[2]*un+oz);
+  for(let x=0;x<o.nx;x++)for(let y=0;y<=o.ny;y++)for(let z=0;z<=o.nz;z++)if(isE(oc(x,y-1,z-1),oc(x,y,z-1),oc(x,y-1,z),oc(x,y,z)))E([x,y,z],[x+1,y,z]);
+  for(let y=0;y<o.ny;y++)for(let x=0;x<=o.nx;x++)for(let z=0;z<=o.nz;z++)if(isE(oc(x-1,y,z-1),oc(x,y,z-1),oc(x-1,y,z),oc(x,y,z)))E([x,y,z],[x,y+1,z]);
+  for(let z=0;z<o.nz;z++)for(let x=0;x<=o.nx;x++)for(let y=0;y<=o.ny;y++)if(isE(oc(x-1,y-1,z),oc(x,y-1,z),oc(x-1,y,z),oc(x,y,z)))E([x,y,z],[x,y,z+1]);
+  const g=new THREE.Group();g.add(ms);g.add(lines(ep,ghost?0x7fb6ff:0x1a1a1a));g.userData.mesh=ms;return g;}
+function viewCanvas(o,name,w,h,un,label){const ppu=256,c=cnv(Math.round(w*ppu),Math.round(h*ppu)),x=c.getContext('2d');
+  x.fillStyle='rgba(255,255,255,.9)';x.fillRect(0,0,c.width,c.height);x.strokeStyle='#3d8bfd';x.lineWidth=6;x.strokeRect(3,3,c.width-6,c.height-6);
+  const vw=viewOf(o,name),hu=vw.nu*un/2,hv=vw.nv*un/2;const px=u=>(w/2+(u*un-hu))*ppu,py=v=>(h/2-(v*un-hv))*ppu;
+  [1,2].forEach(st=>{x.strokeStyle='#111';x.lineCap='round';x.lineWidth=st===2?7:3.5;x.setLineDash(st===2?[]:[16,10]);
+    vw.segs.filter(s=>s[4]===st).forEach(([u0,v0,u1,v1])=>{x.beginPath();x.moveTo(px(u0),py(v0));x.lineTo(px(u1),py(v1));x.stroke();});});
+  x.setLineDash([]);x.fillStyle='#1d4f91';x.font='800 30px '+FONT;x.fillText(label,18,42);return c;}
+
+/* ================= WORLD: ROOM ================= */
+function floorTex(){const c=cnv(1024,768),x=c.getContext('2d');x.fillStyle='#8d959c';x.fillRect(0,0,1024,768);
+  for(let i=0;i<4000;i++){x.fillStyle=`rgba(${Math.random()<.5?255:0},${Math.random()<.5?255:0},${Math.random()<.5?255:0},.025)`;x.fillRect(rand(0,1024),rand(0,768),2,2);}
+  x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=2;for(let i=0;i<=8;i++){x.beginPath();x.moveTo(i*128,0);x.lineTo(i*128,768);x.stroke();}for(let j=0;j<=6;j++){x.beginPath();x.moveTo(0,j*128);x.lineTo(1024,j*128);x.stroke();}
+  return tex(c);}
+function boardTex(){const c=cnv(1024,512),x=c.getContext('2d');x.fillStyle='#fdfdfb';x.fillRect(0,0,1024,512);
+  x.fillStyle='#1d4f91';x.font='800 46px '+FONT;x.fillText('JENIS GARIS  ·  ISO 128',40,70);
+  const R=[['Garis gambar (tebal kontinu)','tepi yang terlihat',[],9],['Garis gores (putus-putus)','tepi tersembunyi',[28,16],4],['Garis sumbu (titik-garis)','sumbu & pusat lubang',[60,12,6,12],3],['Garis ukur & bantu (tipis)','ukuran',[],3]];
+  R.forEach((r,i)=>{const y=150+i*90;x.strokeStyle='#111';x.lineWidth=r[3];x.setLineDash(r[2]);x.beginPath();x.moveTo(40,y);x.lineTo(330,y);x.stroke();x.setLineDash([]);
+    x.fillStyle='#111';x.font='800 32px '+FONT;x.fillText(r[0],370,y+4);x.fillStyle='#5a6672';x.font='600 26px '+FONT;x.fillText(r[1],370,y+38);});
+  return tex(c);}
+function posterTex(){const c=cnv(512,640),x=c.getContext('2d');x.fillStyle='#123a6b';x.fillRect(0,0,512,640);
+  x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=2;for(let i=0;i<512;i+=32){x.beginPath();x.moveTo(i,0);x.lineTo(i,640);x.stroke();}for(let j=0;j<640;j+=32){x.beginPath();x.moveTo(0,j);x.lineTo(512,j);x.stroke();}
+  x.fillStyle='#ffc727';x.font='800 50px '+FONT;x.textAlign='center';x.fillText('PROYEKSI',256,90);x.fillText('EROPA',256,148);
+  x.strokeStyle='#fff';x.lineWidth=7;x.beginPath();x.moveTo(90,300);x.lineTo(250,250);x.lineTo(250,410);x.lineTo(90,360);x.closePath();x.stroke();
+  x.beginPath();x.arc(380,330,80,0,7);x.stroke();x.beginPath();x.arc(380,330,30,0,7);x.stroke();
+  x.lineWidth=2;x.setLineDash([24,8,4,8]);x.beginPath();x.moveTo(60,330);x.lineTo(480,330);x.stroke();x.beginPath();x.moveTo(380,230);x.lineTo(380,430);x.stroke();x.setLineDash([]);
+  x.fillStyle='#e9eef2';x.font='700 30px '+FONT;x.fillText('ISO-E · First angle',256,510);x.font='600 24px '+FONT;x.fillStyle='#9fc0e8';x.fillText('Atas → bawah · Kiri → kanan',256,560);
+  return tex(c);}
+function buildRoom(){const g=new THREE.Group();
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(16,12),new THREE.MeshStandardMaterial({map:floorTex(),roughness:.85}));fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;g.add(fl);
+  const wallM=new THREE.MeshStandardMaterial({color:0xd6dde3,roughness:.9});
+  const bw=new THREE.Mesh(new THREE.PlaneGeometry(16,4.4),wallM);at(bw,0,2.2,-6);bw.receiveShadow=true;g.add(bw);
+  const lw=new THREE.Mesh(new THREE.PlaneGeometry(12,4.4),wallM);lw.rotation.y=Math.PI/2;at(lw,-8,2.2,0);lw.receiveShadow=true;g.add(lw);
+  g.add(at(box(16,1.1,.04,'#2c4a6b'),0,.55,-5.98));g.add(at(box(.04,1.1,12,'#2c4a6b'),-7.98,.55,0));
+  g.add(at(box(16,.05,.05,'#ffc727'),0,1.12,-5.95));g.add(at(box(.05,.05,12,'#ffc727'),-7.95,1.12,0));
+  [-5.2,5.2].forEach(x=>{const w=new THREE.Mesh(new THREE.PlaneGeometry(2.2,.9),new THREE.MeshBasicMaterial({color:0xbfe3ff}));at(w,x,3.05,-5.97);g.add(w);g.add(at(box(2.3,.06,.06,'#3b4752'),x,2.58,-5.96));g.add(at(box(.05,.9,.05,'#3b4752'),x,3.05,-5.96));});
+  const ban=labelPlane('STUDIO GAMBAR TEKNIK · TEKNIK MESIN',5.2,.42,{bg:'#123a6b',fg:'#ffc727',fs:62});at(ban,0,3.85,-5.965);g.add(ban);
+  const wb=new THREE.Mesh(new THREE.PlaneGeometry(2.8,1.4),new THREE.MeshBasicMaterial({map:boardTex()}));at(wb,1.6,2.4,-5.955);g.add(wb);g.add(at(box(2.9,1.5,.03,'#9aa5ae',{metalness:.5}),1.6,2.4,-5.975));
+  const ps=new THREE.Mesh(new THREE.PlaneGeometry(.95,1.19),new THREE.MeshBasicMaterial({map:posterTex()}));at(ps,-1.9,2.45,-5.955);g.add(ps);
+  g.add(at(box(.1,2.3,1.25,'#2b3640'),-7.95,1.15,1.1));g.add(at(box(.06,2.12,1.02,'#6f8796'),-7.9,1.08,1.1));g.add(at(box(.06,.06,.25,'#c9d1d8',{metalness:.6}),-7.85,1.05,.75));
+  return g;}
+scene.add(buildRoom());
+const mg=new THREE.Group();scene.add(mg);
+
+/* ================= PROPS ================= */
+function workbench(w,d,top){w=w||2.4;d=d||.9;const g=new THREE.Group();
+  g.add(at(box(w,.06,d,top||'#d8c6a0'),0,.9,0));
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>g.add(at(box(.06,.87,.06,'#3c4650',{metalness:.4}),a*(w/2-.06),.435,b*(d/2-.06))));
+  g.add(at(box(w-.1,.04,d-.1,'#5a6672'),0,.22,0));g.add(at(box(w-.1,.05,.04,'#3c4650'),0,.75,-d/2+.06));
+  g.userData.top=.93;return g;}
+function turntable(){const g=new THREE.Group();g.add(at(cyl(.32,.36,.05,'#2b3640',{metalness:.4}),0,.025,0));const top=new THREE.Group();top.position.y=.05;top.add(at(cyl(.3,.3,.02,'#cfd6dc',{metalness:.3}),0,.01,0));g.add(top);g.userData.spin=top;return g;}
+function pencil(){const g=new THREE.Group();g.add(cyl(.012,.012,.26,'#ffc727',{},6));const t=mesh(new THREE.ConeGeometry(.012,.04,6),mat('#e8d2a8'));t.position.y=.15;g.add(t);const p=mesh(new THREE.ConeGeometry(.004,.012,6),mat('#222'));p.position.y=.172;g.add(p);return g;}
+function triangle(w,h,col){const s=new THREE.Shape();s.moveTo(0,0);s.lineTo(w,0);s.lineTo(0,h);s.lineTo(0,0);const hole=new THREE.Path();hole.moveTo(w*.2,h*.2);hole.lineTo(w*.55,h*.2);hole.lineTo(w*.2,h*.55);hole.lineTo(w*.2,h*.2);s.holes.push(hole);
+  const m=new THREE.MeshStandardMaterial({color:new THREE.Color(col).convertSRGBToLinear(),transparent:true,opacity:.55,roughness:.2});return new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:.006,bevelEnabled:false}),m);}
+function draftTable(){const g=new THREE.Group();
+  [[-.7,-.4],[.7,-.4],[-.7,.4],[.7,.4]].forEach(([x,z])=>g.add(at(box(.05,.95,.05,'#3c4650',{metalness:.4}),x,.475,z)));
+  g.add(at(box(1.45,.04,.04,'#3c4650'),0,.3,.4));g.add(at(box(1.45,.04,.04,'#3c4650'),0,.3,-.4));
+  const b=new THREE.Group();b.position.set(0,1.0,0);b.rotation.x=.42;g.add(b);
+  b.add(at(box(1.6,.04,1.0,'#efe9da'),0,0,0));
+  const paper=new THREE.Mesh(new THREE.PlaneGeometry(1.2,.82),new THREE.MeshBasicMaterial({map:svgTex(svgWrap('0 0 320 220',`<rect x="6" y="6" width="308" height="208" class="thin"/><rect x="200" y="176" width="110" height="34" class="thin"/><text class="lb" x="206" y="190">STUDIO GAMTEK</text><text class="lb" x="206" y="204">SKALA 1:2 · A4</text>`+M1BODY),1024,704)}));
+  paper.rotation.x=-Math.PI/2;paper.position.y=.022;b.add(paper);
+  const ts=grp(at(box(1.5,.012,.07,'#2b2b2b'),0,0,0),at(box(.06,.03,.36,'#2b2b2b'),-.78,-.01,0));ts.position.set(0,.03,.3);b.add(ts);
+  const tr=triangle(.36,.36,'#5ad1a0');tr.rotation.x=-Math.PI/2;tr.position.set(.3,.03,.1);b.add(tr);
+  const pc=pencil();pc.rotation.z=Math.PI/2;pc.rotation.y=.4;pc.position.set(-.3,.04,-.2);b.add(pc);
+  return g;}
+function cadTex(){const c=cnv(640,400),x=c.getContext('2d');x.fillStyle='#e7ecf1';x.fillRect(0,0,640,400);x.fillStyle='#2c4a6b';x.fillRect(0,0,640,34);
+  x.fillStyle='#fff';x.font='700 18px '+FONT;x.fillText('CAD · Part1',12,23);x.fillStyle='#d1d9e1';x.fillRect(0,34,140,366);
+  x.fillStyle='#2c4a6b';x.font='600 15px '+FONT;['▸ Front Plane','▸ Top Plane','▸ Right Plane','■ Boss-Extrude1','■ Cut-Extrude1','■ Cut-Extrude2'].forEach((t,i)=>x.fillText(t,10,64+i*26));
+  const P=(a,b)=>[390+a*60-b*0,0];const iso=(X,Y,Z)=>[390+(X-Z)*52,250-(X+Z)*30-Y*60];
+  const face=(pts,col)=>{x.fillStyle=col;x.beginPath();pts.forEach((p,i)=>{const q=iso(...p);i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]);});x.closePath();x.fill();x.strokeStyle='#222';x.lineWidth=2;x.stroke();};
+  face([[0,2,0],[2,2,0],[2,2,2],[0,2,2]],'#ffb066');face([[0,0,2],[2,0,2],[2,2,2],[0,2,2]],'#ff8a1f');face([[2,0,0],[2,0,2],[2,2,2],[2,2,0]],'#d96d0c');
+  face([[2,1,0],[4,1,0],[4,1,2],[2,1,2]],'#ffb066');face([[2,0,2],[4,0,2],[4,1,2],[2,1,2]],'#ff8a1f');face([[4,0,0],[4,0,2],[4,1,2],[4,1,0]],'#d96d0c');
+  return tex(c);}
+function cadDesk(){const g=workbench(1.8,.8,'#cfd6dc');
+  g.add(at(box(.08,.3,.08,'#222'),0,1.08,-.2));g.add(at(box(.3,.02,.2,'#222'),0,.94,-.2));
+  g.add(at(box(.95,.6,.04,'#1a1a1a'),0,1.45,-.22));const sc=new THREE.Mesh(new THREE.PlaneGeometry(.88,.54),new THREE.MeshBasicMaterial({map:cadTex()}));at(sc,0,1.45,-.197);g.add(sc);
+  g.add(at(box(.5,.02,.16,'#2a2a2a'),-.05,.94,.15));g.add(at(box(.07,.025,.11,'#2a2a2a'),.38,.94,.15));return g;}
+function printer3D(){const g=new THREE.Group();const f='#2b3640';
+  [[-.25,-.25],[.25,-.25],[-.25,.25],[.25,.25]].forEach(([x,z])=>g.add(at(box(.03,.6,.03,f,{metalness:.5}),x,.3,z)));
+  g.add(at(box(.56,.03,.56,f),0,.6,0));g.add(at(box(.56,.04,.56,f),0,.02,0));g.add(at(box(.44,.015,.44,'#111'),0,.12,0));
+  g.add(at(box(.5,.03,.04,'#9aa5ae',{metalness:.7}),0,.42,0));g.add(at(box(.08,.08,.08,'#ff8a1f'),.06,.4,0));
+  const p=voxelGroup(mkObj([[2,1],[1,1]]),.06,'#ff8a1f');p.position.set(0,.128,0);g.add(p);return g;}
+function shelf(w,d,h,col){const g=new THREE.Group();col=col||'#2d5f8f';
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>g.add(at(box(.04,h,.04,col,{metalness:.4}),a*w/2,h/2,b*d/2)));
+  const ys=[.12,.62,1.12,1.62].filter(y=>y<h);ys.forEach(y=>g.add(at(box(w,.03,d,'#8f99a3',{metalness:.3}),0,y,0)));g.userData.ys=ys;return g;}
+function crate(){const g=new THREE.Group();g.add(box(.42,.42,.42,'#b98b55'));const q=labelPlane('?',.3,.3,{bg:'#b98b55',fg:'#3b2a14',fs:200});q.position.z=.212;g.add(q);const q2=q.clone();q2.rotation.y=Math.PI/2;q2.position.set(.212,0,0);g.add(q2);const q3=q.clone();q3.rotation.x=-Math.PI/2;q3.position.set(0,.212,0);g.add(q3);return g;}
+/* benda braket (mm) dengan lubang tegak */
+function bracket(p){const k=.01,W=(p.w1+p.w2)*k,g=new THREE.Group();
+  const m=mat('#ff8a1f',{roughness:.5,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});const lm=new THREE.LineBasicMaterial({color:0x1a1a1a});
+  const tg=new THREE.BoxGeometry(p.w1*k,p.h1*k,p.d*k);const tall=mesh(tg,m);tall.position.set(-W/2+p.w1*k/2,p.h1*k/2,0);tall.add(new THREE.LineSegments(new THREE.EdgesGeometry(tg),lm));g.add(tall);
+  const s=new THREE.Shape(),hw=p.w2*k/2,hd=p.d*k/2;s.moveTo(-hw,-hd);s.lineTo(hw,-hd);s.lineTo(hw,hd);s.lineTo(-hw,hd);s.lineTo(-hw,-hd);
+  const hp=new THREE.Path();hp.absarc((p.hx-p.w1-p.w2/2)*k,0,p.hr*k,0,Math.PI*2,false);s.holes.push(hp);
+  const lg=new THREE.ExtrudeGeometry(s,{depth:p.h2*k,bevelEnabled:false,curveSegments:32});lg.rotateX(-Math.PI/2);
+  const low=mesh(lg,m);low.position.set(-W/2+(p.w1+p.w2/2)*k,0,0);low.add(new THREE.LineSegments(new THREE.EdgesGeometry(lg,25),lm));g.add(low);
+  const hx=-W/2+p.hx*k;const ax=lines([hx,-.18,0,hx,p.h2*k+.22,0],0xd62828,{dash:.06,gap:.025});ax.visible=false;g.add(ax);
+  g.userData.xray=on=>{m.transparent=on;m.opacity=on?.25:1;m.depthWrite=!on;m.needsUpdate=true;lm.depthTest=!on;lm.needsUpdate=true;};
+  g.userData.axis=ax;return g;}
+
+/* ================= MISSIONS ================= */
+const MIS=[
+ {id:'garis',no:1,ic:'✏️',title:'Garis, Kertas & Skala',sub:'Kenali jenis garis ISO 128, ukuran kertas, dan skala gambar.',tp:'Pert. 1',
+  sw:'Jenis garis ini diatur di <b>Document Properties → Line Font</b>. Ukuran kertas dan skala dipilih lewat <b>Sheet Properties</b> saat membuat Drawing.'},
+ {id:'fitur',no:2,ic:'🧊',title:'Berpikir Fitur',sub:'Bangun benda dari balok dasar: potong tangga, alur, dan coakan.',tp:'Pert. 2',
+  sw:'Urutan yang sama dipakai di Part: <b>Extruded Boss/Base</b> untuk balok dasar, lalu <b>Extruded Cut</b> untuk tangga, alur, dan coakan.'},
+ {id:'proyeksi',no:3,ic:'📦',title:'Kotak Kaca Proyeksi',sub:'Buka kotak kaca dan susun pandangan proyeksi Eropa.',tp:'Pert. 3',
+  sw:'Di Drawing, <b>Standard 3 View</b> menyusun pandangan otomatis. Pastikan <b>Sheet Properties → Type of projection: First angle</b>.'},
+ {id:'hilang',no:4,ic:'🧩',title:'Pandangan yang Hilang',sub:'Dua pandangan diketahui, temukan pandangan ketiga.',tp:'Pert. 4',
+  sw:'Kemampuan ini dipakai saat memilih <b>bidang sketsa</b> (Front, Top, Right Plane) dan membaca gambar kerja sebelum mulai memodelkan.'},
+ {id:'ukuran',no:5,ic:'📏',title:'Detektif Ukuran',sub:'Temukan kesalahan pemberian ukuran pada gambar kerja.',tp:'Pert. 5',
+  sw:'<b>Smart Dimension</b> mengikuti aturan yang sama. Ukuran ganda membuat sketch <b>Over Defined</b>, sedangkan sketch yang lengkap menjadi <b>Fully Defined</b> (garis hitam).'},
+ {id:'potongan',no:6,ic:'🔪',title:'Gambar Potongan',sub:'Belah benda berlubang dan arsir bidang potongnya.',tp:'Pert. 6',
+  sw:'Gunakan <b>Section View</b> di Drawing. Arsiran dibuat otomatis dan polanya bisa diubah lewat <b>Area Hatch/Fill</b>.'}];
+let cur=null;
+function disposeObj(o){o.traverse(m=>{if(m.geometry)m.geometry.dispose();if(m.material)[].concat(m.material).forEach(x=>{if(x.map)x.map.dispose();x.dispose();});});}
+function clearMission(){runId++;while(mg.children.length){const c=mg.children[0];mg.remove(c);disposeObj(c);}missionUpd.clear();pulsers.length=0;anims=anims.filter(a=>a.keep);hideSheet();}
+function startMission(id){closeModal();$('#hub').classList.add('hide');$('#top').classList.add('show');clearMission();rig.auto=false;
+  const m=MIS.find(x=>x.id===id);cur={id,ok:0,total:0,m};setTop(`Misi ${m.no} · ${m.title}`,'');setScore();BUILD[id]();}
+function intro(ic,kick,title,html,start){modal(`<div class="stars">${ic}</div><div class="kick">${kick}</div><h2 class="disp">${title}</h2>${html}`,[{label:'Mulai misi →',cls:'pri',fn:start}]);}
+function finish(points,refl){const r={ok:cur.ok,total:cur.total};const q=r.total?r.ok/r.total:0;r.stars=q>=.85?3:q>=.6?2:1;
+  const prev=save.res[cur.id];if(!prev||r.stars>prev.stars||(r.stars===prev.stars&&r.ok>=prev.ok))save.res[cur.id]=r;persist();
+  confetti();sfx('win');hideSheet();const id=cur.id,idx=MIS.findIndex(m=>m.id===id),nx=MIS[idx+1];
+  modal(`<div class="stars">${'⭐'.repeat(r.stars)}<span style="opacity:.2">${'⭐'.repeat(3-r.stars)}</span></div><h2 class="disp" style="text-align:center">Misi ${cur.m.no} selesai!</h2>
+    <p style="text-align:center">Benar pada percobaan pertama: <b>${r.ok}/${r.total}</b></p>
+    <div class="know"><b>Rangkuman</b><ul>${points.map(p=>`<li>${p}</li>`).join('')}</ul></div>
+    <div class="sw">🖥️ <b>Jembatan ke SolidWorks:</b> ${cur.m.sw}</div>
+    <div class="fb info"><b>💭 Refleksi:</b> ${refl}</div>`,
+    [{label:'↺ Ulangi',fn:()=>startMission(id)},{label:'🗺️ Peta misi',fn:goHub}].concat(nx?[{label:`Misi ${nx.no} →`,cls:'pri',fn:()=>startMission(nx.id)}]:[]));}
+
+/* ---------- MISI 1: GARIS, KERTAS & SKALA ---------- */
+const M1BODY='<g id="m1o" class="vis"><polyline points="40,160 40,40 120,40 120,110 260,110 260,160 40,160"/></g>'+
+ '<g id="m1h" class="hid"><line x1="180" y1="110" x2="180" y2="160"/><line x1="220" y1="110" x2="220" y2="160"/></g>'+
+ '<g id="m1c" class="cen"><line x1="200" y1="97" x2="200" y2="173"/></g>'+
+ '<g id="m1d" class="thin">'+dimH(40,260,186,'220',[[40,165,192],[260,165,192]])+'</g>';
+function m1svg(hl){let s=M1BODY;if(hl)s=s.replace(`id="m1${hl}" class="`,`id="m1${hl}" class="hl `);return svgWrap('0 0 300 205',s);}
+function buildGaris(){
+  const tb=workbench(2.6,1.1);tb.position.set(0,0,-3.5);mg.add(tb);
+  const paper=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.68),new THREE.MeshBasicMaterial({map:svgTex(m1svg(''),900,615)}));paper.rotation.x=-Math.PI/2;paper.rotation.z=.08;at(paper,-.5,.936,-3.4);mg.add(paper);
+  const pc=pencil();pc.rotation.set(Math.PI/2,0,1.1);at(pc,-.05,.95,-3.2);mg.add(pc);
+  const tt=turntable();tt.position.set(.55,.93,-3.5);mg.add(tt);
+  const br=bracket({w1:80,h1:120,w2:140,h2:50,d:80,hx:160,hr:20});br.scale.setScalar(.33);br.position.y=.07;tt.userData.spin.add(br);
+  let spin=true;missionUpd.add(dt=>{if(spin)tt.userData.spin.rotation.y+=dt*.35;});
+  view({t:[0,1.1,-3.5],r:3.3,theta:.12,phi:1.02,minR:1.6,maxR:7},1.2);
+  const LT=[{k:'o',ic:lineIc('vis'),label:'<b>Garis gambar</b>: tebal kontinu, untuk tepi yang terlihat'},{k:'h',ic:lineIc('hid'),label:'<b>Garis gores</b>: putus-putus, untuk tepi tersembunyi'},{k:'c',ic:lineIc('cen'),label:'<b>Garis sumbu</b>: tipis titik-garis, untuk sumbu & pusat lubang'},{k:'d',ic:lineIc('thin'),label:'<b>Garis ukur & bantu</b>: tipis kontinu, untuk ukuran'}];
+  const lq=(k,why,show)=>({kick:'Jenis garis',title:'Garis oranye ini jenis garis apa?',text:'Perhatikan garis yang berkedip pada gambar kerja braket di bawah.',html:m1svg(k),keep:true,opts:LT.map(o=>({ic:o.ic,label:o.label,ok:o.k===k})),why,onShow:show});
+  const Q=[
+    lq('o','Garis gambar (tebal kontinu) membentuk kontur benda yang terlihat, biasanya setebal 0,5 atau 0,7 mm.',()=>{br.userData.xray(false);br.userData.axis.visible=false;spin=true;}),
+    lq('h','Garis gores menunjukkan tepi yang <b>tersembunyi</b>, di sini dinding lubang di dalam braket. Lihat model 3D yang kini tembus pandang.',()=>{br.userData.xray(true);toast('Mode tembus pandang: lihat lubang di dalam braket 👀');}),
+    lq('c','Garis sumbu menandai sumbu simetri dan pusat lubang (garis merah pada model 3D). Ujungnya dibuat sedikit melewati tepi benda.',()=>{br.userData.xray(true);br.userData.axis.visible=true;}),
+    lq('d','Garis ukur dan garis bantu digambar tipis supaya tidak tertukar dengan kontur benda. Ujung garis ukur diberi anak panah.',()=>{br.userData.xray(false);br.userData.axis.visible=false;}),
+    {kick:'Skala',title:'Hitung panjang di kertas',text:'Panjang braket sebenarnya <b>220 mm</b>. Jika digambar dengan skala <b>1 : 2</b>, berapa panjang garisnya di kertas?',
+     opts:[{ic:'📐',label:'110 mm',ok:1},{ic:'📐',label:'440 mm',hint:'Itu skala pembesaran 2 : 1'},{ic:'📐',label:'220 mm'},{ic:'📐',label:'22 mm'}],
+     why:'Skala 1 : 2 artinya gambar dibuat setengah ukuran asli: 220 ÷ 2 = 110 mm. Angka ukuran yang ditulis tetap <b>220</b>, yaitu ukuran sebenarnya.'},
+    {kick:'Kertas',title:'Ukuran kertas A4 adalah…',opts:[{ic:'📄',label:'297 × 210 mm',ok:1},{ic:'📄',label:'420 × 297 mm'},{ic:'📄',label:'594 × 420 mm'},{ic:'📄',label:'330 × 215 mm'}],
+     why:'A4 = 297 × 210 mm. Setiap ukuran A berikutnya adalah setengah ukuran sebelumnya: A3 = 420 × 297 mm, A2 = 594 × 420 mm.'},
+    {kick:'Tebal garis',title:'Pasangan tebal garis',text:'Jika garis tebal dibuat <b>0,5 mm</b>, berapa tebal garis tipis pasangannya menurut ISO 128?',
+     opts:[{ic:'✒️',label:'0,25 mm',ok:1},{ic:'✒️',label:'0,5 mm'},{ic:'✒️',label:'1,0 mm'},{ic:'✒️',label:'0,1 mm'}],
+     why:'Perbandingan garis tebal : tipis adalah 2 : 1, misalnya 0,5 & 0,25 mm atau 0,7 & 0,35 mm.'}];
+  intro('✏️','Misi 1 · Pertemuan 1','Garis, Kertas & Skala','<p>Gambar kerja adalah <b>bahasa</b> para teknisi. Setiap jenis garis punya arti, dan salah memilih garis bisa membuat benda salah dibuat di mesin.</p><p>Kenali garis-garis pada gambar kerja braket, lalu uji pemahamanmu tentang skala dan kertas. Model 3D di meja boleh diputar dengan jari. ✋</p>',
+    ()=>chain(Q,()=>finish(['Garis gambar tebal kontinu untuk tepi terlihat; garis gores untuk tepi tersembunyi.','Garis sumbu tipis titik-garis untuk sumbu dan pusat lubang.','Garis ukur & bantu tipis kontinu; perbandingan tebal : tipis = 2 : 1.','Skala 1 : 2 = gambar setengah ukuran asli, angka ukuran tetap ukuran sebenarnya.','A4 = 297 × 210 mm; A3 = 420 × 297 mm.'],'Ambil satu benda di sekitarmu (penghapus atau kotak pensil). Jenis garis apa saja yang dibutuhkan untuk menggambarnya?')));}
+
+/* ---------- MISI 2: BERPIKIR FITUR ---------- */
+function buildFitur(){
+  const tb=workbench(2.6,1.1);tb.position.set(0,0,-3.5);mg.add(tb);const un=.2;
+  const target=mkObj([[3,2,2,3],[3,2,2,3],[1,1,1,0]]);
+  const gw=new THREE.Group();gw.position.set(.5,.94,-3.5);mg.add(gw);gw.add(voxelGroup(target,un,'#3d8bfd',true));
+  const lt=textSprite('🎯 TARGET',{h:.11,border:'#3d8bfd'});lt.position.set(.5,1.72,-3.5);mg.add(lt);
+  const wpC=new THREE.Group();wpC.position.set(-.5,.94,-3.5);mg.add(wpC);
+  const lw=textSprite('🧱 BENDA KERJA',{h:.11});lw.position.set(-.5,1.72,-3.5);mg.add(lw);
+  let H=[[3,3,3,3],[3,3,3,3],[3,3,3,3]];let wp=voxelGroup(mkObj(H),un,'#ff8a1f');wpC.add(wp);
+  missionUpd.add((dt,t)=>{const a=.55+Math.sin(t*.5)*.4;gw.rotation.y=a;wpC.rotation.y=a;});
+  view({t:[0,1.2,-3.5],r:3.3,theta:.1,phi:1.05,minR:1.6,maxR:7},1.2);
+  function apply(f){const old=H.map(r=>r.slice());f(H);const o=mkObj(H);const ox=-4*un/2,oz=-3*un/2;
+    for(let z=0;z<3;z++)for(let x=0;x<4;x++)for(let y=H[z][x];y<old[z][x];y++){const c=box(un*.96,un*.96,un*.96,'#ff5a5a',{transparent:true,opacity:.9});c.position.set(ox+(x+.5)*un,(y+.5)*un,oz+(z+.5)*un);wpC.add(c);
+      const p0=c.position.clone(),dir=new THREE.Vector3(rand(-.4,.4),1,rand(.2,.8));anim(.9,k=>{c.position.copy(p0).addScaledVector(dir,k*.6);c.rotation.x=k*3;c.material.opacity=.9*(1-k);},()=>{wpC.remove(c);disposeObj(c);});}
+    wpC.remove(wp);disposeObj(wp);wp=voxelGroup(o,un,'#ff8a1f');wpC.add(wp);sfx('cut');}
+  const S=[
+   {title:'Fitur 1: bentuk tangga',text:'Balok dasar sudah dibuat. Potongan apa yang membuat benda kerja makin mirip <b>target</b> (biru)?',
+    opts:[{ic:'🪜',label:'Potong bagian <b>depan-atas</b> setinggi 2 kotak sehingga terbentuk tangga',ok:1,f:H=>{H[2]=[1,1,1,1];}},{ic:'🪜',label:'Potong bagian <b>belakang-atas</b> setinggi 2 kotak'},{ic:'🕳️',label:'Buat lubang tembus tegak di tengah balok'}],
+    why:'Tangga paling mudah dibuat dari profil samping berbentuk L, lalu di-<b>Extruded Cut</b> sepanjang benda.'},
+   {title:'Fitur 2: alur',text:'Perhatikan bagian atas target. Potongan apa berikutnya?',
+    opts:[{ic:'〰️',label:'Alur selebar 2 kotak, dalam 1 kotak, dari belakang sampai tangga',ok:1,f:H=>{for(let z=0;z<2;z++){H[z][1]=2;H[z][2]=2;}}},{ic:'〰️',label:'Alur dari kiri ke kanan di bagian belakang'},{ic:'〰️',label:'Alur selebar 1 kotak di sisi paling kiri'}],
+    why:'Alur (slot) dibuat dengan sketsa persegi panjang pada permukaan atas, lalu <b>Extruded Cut</b> sedalam 1 kotak.'},
+   {title:'Fitur 3: coakan',text:'Tinggal satu perbedaan. Di mana coakan tembus harus dibuat?',
+    opts:[{ic:'✂️',label:'Sudut <b>kanan-depan</b>',ok:1,f:H=>{H[2][3]=0;}},{ic:'✂️',label:'Sudut kiri-depan'},{ic:'✂️',label:'Sudut kanan-belakang'}],
+    why:'Coakan tembus dibuat dengan <b>Extruded Cut → Through All</b>. Benda kerja sekarang sama dengan target! 🎉'}];
+  const Q=S.map((s,i)=>({kick:`Fitur ${i+1}/3`,title:s.title,text:s.text,opts:s.opts,why:s.why,hint:'Bandingkan dengan benda target (biru) 🔍',onOk:()=>{const f=s.opts.find(o=>o.ok).f;apply(f);}}));
+  Q.push({kick:'Isometrik',title:'Sudut sumbu isometrik',text:'Pada gambar isometrik, garis lebar dan panjang benda digambar miring berapa derajat terhadap garis horizontal?',
+    opts:[{ic:'📐',label:'30°',ok:1},{ic:'📐',label:'45°'},{ic:'📐',label:'60°'},{ic:'📐',label:'15°'}],why:'Ketiga sumbu isometrik membentuk sudut 120° satu sama lain: satu sumbu tegak, dua sumbu miring 30° terhadap horizontal.'},
+   {kick:'Isometrik',title:'Garis sejajar',text:'Pada sketsa isometrik, rusuk-rusuk yang sejajar pada benda nyata digambar…',
+    opts:[{ic:'∥',label:'Tetap sejajar',ok:1},{ic:'↘️',label:'Menyatu ke satu titik hilang'},{ic:'〰️',label:'Bebas, asal terlihat mirip'}],why:'Isometrik bukan gambar perspektif: tidak ada titik hilang, garis sejajar tetap sejajar, dan ukuran sepanjang sumbu tidak diperpendek.'},
+   {kick:'Strategi modeling',title:'Mulai dari mana?',text:'Saat memodelkan benda di CAD, sebaiknya dimulai dari…',
+    opts:[{ic:'🧱',label:'Bentuk dasar terbesar, lalu fitur potong dan detail',ok:1},{ic:'🔩',label:'Detail terkecil dulu, seperti fillet dan lubang'},{ic:'🌀',label:'Semua bentuk sekaligus dalam satu sketsa yang rumit'}],
+    why:'Seperti tadi: balok dasar dulu, lalu tangga, alur, dan coakan. Model jadi mudah diubah karena setiap fitur berdiri sendiri di FeatureManager.'});
+  intro('🧊','Misi 2 · Pertemuan 2','Berpikir Fitur','<p>Seorang drafter melihat benda rumit sebagai <b>balok dasar yang dipotong-potong</b>. Cara berpikir ini dipakai saat membuat sketsa isometrik dan saat modeling di SolidWorks.</p><p>Ubah balok oranye menjadi sama dengan <b>target biru</b> dengan memilih potongan yang tepat. ✂️</p>',
+    ()=>chain(Q,()=>finish(['Benda rumit = balok dasar + beberapa fitur potong atau tambah.','Mulai dari bentuk dasar terbesar, baru detail.','Sumbu isometrik miring 30°; garis sejajar tetap sejajar.'],'Lihat benda di sekitarmu. Dari balok dasar apa benda itu bisa dibuat, dan potongan apa saja yang perlu?'),'Langkah'));}
+
+/* ---------- MISI 3: KOTAK KACA PROYEKSI ---------- */
+function projSymbol(first){const tr=first?'M20,45 L60,30 L60,90 L20,75 Z':'M110,30 L150,45 L150,75 L110,90 Z';const cx=first?110:45;
+  return svgWrap('0 0 170 120',`<path class="vis" d="${tr}"/><circle class="vis" cx="${cx}" cy="60" r="30"/><circle class="vis" cx="${cx}" cy="60" r="15"/><line class="cen" x1="8" y1="60" x2="162" y2="60"/><line class="cen" x1="${cx}" y1="22" x2="${cx}" y2="98"/>`);}
+function buildProyeksi(){
+  const o=mkObj([[3,3,3],[3,1,1],[1,1,1]]),un=.3,m=.3;const F=o.nx*un/2+m,E=o.ny*un/2+m,D=o.nz*un/2+m;
+  const root=new THREE.Group();root.position.set(-.55,2.45,-3.0);mg.add(root);
+  const obj=voxelGroup(o,un,'#ff8a1f');obj.position.y=-o.ny*un/2;root.add(obj);
+  const glow=new THREE.Mesh(new THREE.CircleGeometry(1.1,40),new THREE.MeshBasicMaterial({color:0x3d8bfd,transparent:true,opacity:.18}));glow.rotation.x=-Math.PI/2;at(glow,-.55,.01,-3.0);mg.add(glow);
+  function pl(w,h,name,label){const g=new THREE.Group();g.add(new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:0xbfe8ff,transparent:true,opacity:.14,side:THREE.DoubleSide,depthWrite:false})));
+    const vm=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex(viewCanvas(o,name,w,h,un,label)),transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));vm.position.z=.003;g.add(vm);
+    g.add(lines([-w/2,-h/2,0,w/2,-h/2,0, w/2,-h/2,0,w/2,h/2,0, w/2,h/2,0,-w/2,h/2,0, -w/2,h/2,0,-w/2,-h/2,0],0x7fb6ff));g.userData.vm=vm;return g;}
+  const pf=pl(2*F,2*E,'front','DEPAN');pf.position.set(0,0,-D);root.add(pf);
+  const pivT=new THREE.Group();pivT.position.set(0,-E,-D);root.add(pivT);const pt=pl(2*F,2*D,'top','ATAS');pt.rotation.x=-Math.PI/2;pt.position.set(0,0,D);pivT.add(pt);
+  const pivS=new THREE.Group();pivS.position.set(F,0,-D);root.add(pivS);const ps=pl(2*D,2*E,'left','SAMPING KIRI');ps.rotation.y=-Math.PI/2;ps.position.set(0,0,D);pivS.add(ps);
+  const hx=o.nx*un/2,hy=o.ny*un/2,hz=o.nz*un/2;
+  const prj=(arr)=>{const l=lines(arr,0x3d8bfd,{dash:.05,gap:.035,op:0});root.add(l);return l;};
+  const lF=prj([-hx,-hy,hz,-hx,-hy,-D, hx,-hy,hz,hx,-hy,-D, -hx,hy,hz,-hx,hy,-D, hx,hy,hz,hx,hy,-D]);
+  const lT=prj([-hx,hy,-hz,-hx,-E,-hz, hx,hy,-hz,hx,-E,-hz, -hx,hy,hz,-hx,-E,hz, hx,hy,hz,hx,-E,hz]);
+  const lS=prj([-hx,-hy,-hz,F,-hy,-hz, -hx,hy,-hz,F,hy,-hz, -hx,-hy,hz,F,-hy,hz, -hx,hy,hz,F,hy,hz]);
+  const mk=[];const marker=(txt,pos,rot)=>{const s=textSprite(txt,{h:.13});s.position.set(...pos);root.add(s);mk.push(s);const c=mesh(new THREE.ConeGeometry(.06,.16,16),mat('#ffc727',{emissive:0x553d00}));c.position.set(pos[0]*.82,pos[1]*.82,pos[2]*.82);c.rotation.set(...rot);root.add(c);mk.push(c);};
+  marker('D · DEPAN',[0,0,hz+.55],[-Math.PI/2,0,0]);marker('A · ATAS',[0,hy+.5,0],[Math.PI,0,0]);marker('K · KIRI',[-hx-.6,0,0],[0,0,-Math.PI/2]);
+  const showMk=v=>mk.forEach(x=>x.visible=v);
+  view({t:[-.1,2.35,-3.0],r:5.6,theta:-.55,phi:1.12,minR:2.5,maxR:10},1.3);
+  const fade=(l,to,d)=>{const a=l.material.opacity;anim(d||.6,k=>{l.material.opacity=lerp(a,to,k);});};
+  function project(next){showMk(false);sfx('whoosh');
+    [[lF,pf],[lT,pt],[lS,ps]].forEach(([l,p],i)=>{later(()=>{fade(l,.95,.5);later(()=>{fade(p.userData.vm,1,.7);sfx('tap');},450);},i*1300);});
+    later(next,4200);}
+  function unfold(next){[lF,lT,lS].forEach(l=>fade(l,0,.5));sfx('whoosh');const y0=obj.position.y;anim(.8,k=>{obj.position.y=y0+k*1.6;obj.scale.setScalar(Math.max(.01,1-k));},()=>{obj.visible=false;});
+    later(()=>{anim(2,k=>{const e=ease(k);pivT.rotation.x=e*Math.PI/2;pivS.rotation.y=e*Math.PI/2;});view({t:[.25,1.55,-3.0],r:6.6,theta:0,phi:1.5},2.2);},400);later(next,2700);}
+  const tv=viewOf(o,'top'),sv=viewOf(o,'left');
+  const Q1={kick:'Arah pandang',title:'Pandangan dari arah mana?',text:'Gambar ini adalah benda di dalam kotak kaca yang dilihat dari satu arah. Putar model 3D bila perlu.',html:viewSVG(tv,{s:34}),
+    opts:[{ic:'⬇️',label:'Dari <b>atas</b> (A)',ok:1},{ic:'➡️',label:'Dari <b>depan</b> (D)'},{ic:'⬅️',label:'Dari <b>samping kiri</b> (K)'}],
+    why:'Ini pandangan atas: tiga tingkat ketinggian terlihat sebagai bidang-bidang. Pada pandangan atas, sisi <b>depan</b> benda berada di bagian bawah gambar.'};
+  const Q2={kick:'Arah pandang',title:'Kalau yang ini?',text:'Perhatikan bagian yang tinggi dan rendah. Dari arah mana benda dilihat?',html:viewSVG(sv,{s:34}),
+    opts:[{ic:'⬅️',label:'Dari <b>samping kiri</b> (K)',ok:1},{ic:'↪️',label:'Dari <b>samping kanan</b>'},{ic:'➡️',label:'Dari <b>depan</b> (D)'}],
+    why:'Dilihat dari kiri, bagian <b>belakang</b> yang tinggi tampak di kiri gambar dan bagian <b>depan</b> yang rendah di kanan.'};
+  const Q3={kick:'Proyeksi Eropa',title:'Letak pandangan atas',text:'Lihat hasil bukaan kotak kaca. Pada proyeksi Eropa, pandangan atas diletakkan…',
+    opts:[{ic:'⬇️',label:'Di <b>bawah</b> pandangan depan',ok:1},{ic:'⬆️',label:'Di <b>atas</b> pandangan depan'},{ic:'⬅️',label:'Di <b>kiri</b> pandangan depan'}],
+    why:'Pada proyeksi Eropa (ISO-E, sudut pertama), benda berada di antara pengamat dan bidang proyeksi, sehingga bayangan pandangan atas jatuh di <b>bawah</b> pandangan depan.'};
+  const Q4={kick:'Proyeksi Eropa',title:'Letak pandangan samping kiri',text:'Pandangan dari kiri diletakkan…',
+    opts:[{ic:'➡️',label:'Di <b>kanan</b> pandangan depan',ok:1},{ic:'⬅️',label:'Di <b>kiri</b> pandangan depan'},{ic:'⬇️',label:'Di <b>bawah</b> pandangan atas'}],
+    why:'Pandangan dari kiri diproyeksikan ke bidang di sebelah kanan, jadi digambar di <b>kanan</b> pandangan depan. Pada proyeksi Amerika (ISO-A) letaknya kebalikannya.'};
+  const Q5={kick:'Simbol proyeksi',title:'Simbol proyeksi Eropa',text:'Simbol mana yang ditulis di kepala gambar untuk proyeksi Eropa?',grid:true,
+    opts:[{svg:projSymbol(true),ok:1},{svg:projSymbol(false),hint:'Itu simbol proyeksi Amerika'}],
+    why:'Pada simbol proyeksi Eropa, lingkaran berada di kanan dan ujung kecil kerucut terpotong <b>menjauhi</b> lingkaran. Pada simbol proyeksi Amerika, ujung kecilnya menghadap lingkaran.'};
+  const Q6={kick:'Ke SolidWorks',title:'Pengaturan di SolidWorks',text:'Agar SolidWorks menyusun pandangan seperti proyeksi Eropa, pengaturan yang benar adalah…',
+    opts:[{ic:'⚙️',label:'Sheet Properties → Type of projection: <b>First angle</b>',ok:1},{ic:'⚙️',label:'Sheet Properties → Type of projection: <b>Third angle</b>'},{ic:'⚙️',label:'Mengubah skala gambar menjadi 1 : 1'}],
+    why:'First angle = proyeksi Eropa. Template ISO biasanya sudah First angle, tetapi selalu periksa sebelum mencetak gambar kerja.'};
+  function step(title,text,btn,fn){sheet(b=>{head(b,'Kotak kaca',title,text);actions(b,[{label:btn,cls:'pri',fn:()=>{hideSheet();fn();}}]);});}
+  const total=6;let n=0;const ask=(q,nx)=>{n++;setProg(`Soal ${n}/${total}`);askQ(q,nx);};
+  intro('📦','Misi 3 · Pertemuan 3','Kotak Kaca Proyeksi','<p>Bayangkan benda dimasukkan ke dalam <b>kotak kaca</b>. Bayangan benda dari depan, atas, dan samping jatuh ke dinding kaca. Saat kotak dibuka, terbentuklah susunan pandangan pada gambar kerja.</p><p>Indonesia memakai <b>proyeksi Eropa</b>. Amati baik-baik ke mana setiap bayangan jatuh! 🔦</p>',
+    ()=>ask(Q1,()=>ask(Q2,s2)));
+  function s2(){step('Proyeksikan!','Sekarang sorotkan bayangan benda ke tiga dinding kaca: belakang, bawah, dan kanan.','Proyeksikan ✨',()=>project(s3));}
+  function s3(){step('Buka kotak kaca','Ketiga bayangan sudah jatuh ke dinding kaca. Benda diangkat keluar, lalu dinding bawah dan kanan dibuka agar sejajar dengan dinding belakang.','Buka kotak 📂',()=>unfold(s4));}
+  function s4(){ask(Q3,()=>ask(Q4,()=>ask(Q5,()=>ask(Q6,()=>finish(['Proyeksi Eropa: benda berada di antara pengamat dan bidang proyeksi.','Pandangan atas di bawah pandangan depan; pandangan kiri di kanan pandangan depan.','Simbol Eropa: lingkaran di kanan, ujung kecil kerucut menjauhi lingkaran.','Di SolidWorks: Type of projection = First angle.'],'Mengapa gambar kerja dari Eropa dan Amerika bisa terbaca terbalik bila simbol proyeksinya tidak diperhatikan?')))));}}
+
+/* ---------- MISI 4: PANDANGAN YANG HILANG ---------- */
+const VNAME={front:'pandangan depan',top:'pandangan atas',left:'pandangan samping kiri'};
+const MIRROR={left:'right',top:'topflip',front:'back'};
+function buildOptions(o,ask){const ck=viewOf(o,ask).key;const given=['front','top','left'].filter(n=>n!==ask);const gk=given.map(n=>viewOf(o,n).key);
+  const out=[{vw:viewOf(o,ask),ok:1}];const keys=new Set([ck]);
+  const mv=viewOf(o,MIRROR[ask]);if(!keys.has(mv.key)){out.push({vw:mv,hint:'Itu bayangan cermin. Periksa lagi arah pandangnya! 🪞'});keys.add(mv.key);}
+  const vars=[];for(let z=0;z<o.nz;z++)for(let x=0;x<o.nx;x++)for(const d of [-1,1]){const h=o.H[z][x]+d;if(h<0||h>o.ny)continue;const H2=o.H.map(r=>r.slice());H2[z][x]=h;const o2=mkObj(H2);if(o2.ny!==o.ny)continue;vars.push(o2);}
+  for(const o2 of shuffle(vars)){if(out.length>=4)break;const vw=viewOf(o2,ask);if(keys.has(vw.key))continue;if(given.every((n,i)=>viewOf(o2,n).key===gk[i]))continue;out.push({vw,hint:'Coba cocokkan tinggi dan lebar setiap bagian dengan pandangan lain 📏'});keys.add(vw.key);}
+  return out;}
+function buildHilang(){
+  const tb=workbench(2.2,1.0);tb.position.set(0,0,-3.5);mg.add(tb);const tt=turntable();tt.position.set(0,.93,-3.5);mg.add(tt);
+  let box_=crate();box_.position.y=.26;tt.userData.spin.add(box_);let objG=null;
+  missionUpd.add(dt=>{tt.userData.spin.rotation.y+=dt*.4;});
+  view({t:[0,1.2,-3.5],r:2.8,theta:.3,phi:1.08,minR:1.4,maxR:7},1.2);
+  const R=[{H:[[2,2,2],[1,1,1]],ask:'left',why:'Dari kiri, bagian belakang yang tinggi tampak di kiri gambar dan bagian depan yang rendah di kanan.'},
+    {H:[[1,2,3],[1,2,3]],ask:'left',why:'Dari kiri, semua anak tangga terlihat sehingga garisnya <b>kontinu</b>. Jika dilihat dari kanan, anak tangga tersembunyi di balik bagian tertinggi dan digambar dengan <b>garis gores</b>.'},
+    {H:[[3,3,1],[3,1,1],[1,1,1]],ask:'left',why:'Tinggi pandangan samping = tinggi pandangan depan, dan lebar pandangan samping = kedalaman pada pandangan atas.'},
+    {H:[[3,3,3],[3,1,3],[1,1,1]],ask:'top',why:'Lebar pandangan atas = lebar pandangan depan, kedalamannya = lebar pandangan samping. Alur di tengah tampak sebagai kotak.'},
+    {H:[[3,1,1],[3,3,1],[1,1,1]],ask:'front',why:'Lebar pandangan depan = lebar pandangan atas, tingginya = tinggi pandangan samping. Bagian yang tertutup digambar dengan garis gores.'}];
+  function reveal(o){const old=box_;anim(.4,k=>old.scale.setScalar(1-k),()=>{tt.userData.spin.remove(old);});
+    if(objG){tt.userData.spin.remove(objG);disposeObj(objG);}const g=voxelGroup(o,.15,'#ff8a1f');objG=g;g.position.y=.01;g.scale.setScalar(.01);tt.userData.spin.add(g);anim(.6,k=>g.scale.setScalar(Math.max(.01,ease(k))));}
+  function reset(){if(objG){const g=objG;anim(.3,k=>g.scale.setScalar(Math.max(.01,1-k)),()=>{tt.userData.spin.remove(g);disposeObj(g);});objG=null;}box_=crate();box_.position.y=.26;box_.scale.setScalar(.01);tt.userData.spin.add(box_);const b=box_;anim(.4,k=>b.scale.setScalar(Math.max(.01,k)));}
+  const Q=R.map((r,i)=>{const o=mkObj(r.H);const opts=buildOptions(o,r.ask);const bu=Math.max(...opts.map(x=>x.vw.nu)),bv=Math.max(...opts.map(x=>x.vw.nv));
+    return{kick:`Teka-teki ${i+1}/5`,title:`Temukan ${VNAME[r.ask]}`,text:`Dua pandangan sudah diketahui (proyeksi Eropa). Pilih ${VNAME[r.ask]} yang benar. Benda aslinya tersembunyi di dalam peti.`,html:layoutSVG(o,r.ask),grid:true,
+      opts:opts.map(x=>({svg:viewSVG(x.vw,{s:30,bu,bv}),ok:x.ok,hint:x.hint})),why:r.why,onShow:()=>{if(i>0)reset();},onOk:()=>{reveal(o);toast('Benda asli terungkap! Putar untuk mengecek 🔄','ok');}};});
+  intro('🧩','Misi 4 · Pertemuan 4','Pandangan yang Hilang','<p>Di bengkel, kamu sering hanya diberi gambar kerja tanpa benda aslinya. Drafter yang baik bisa <b>membayangkan bentuk 3D</b> dan melengkapi pandangan yang hilang.</p><p>Gunakan aturan emas: <b>tinggi sama tinggi, lebar sama lebar, dalam sama dalam</b>. Garis bantu biru tipis menolongmu menyamakan ukuran. 🧠</p>',
+    ()=>chain(Q,()=>finish(['Tinggi pandangan depan = tinggi pandangan samping.','Lebar pandangan depan = lebar pandangan atas.','Kedalaman pada pandangan atas = lebar pandangan samping.','Tepi tersembunyi digambar dengan garis gores.'],'Strategi apa yang paling membantumu menemukan pandangan yang hilang? Bandingkan dengan strategi temanmu.'),'Teka-teki'));}
+
+/* ---------- MISI 5: DETEKTIF UKURAN ---------- */
+const M5D={
+  D1:{err:0,box:[55,190,230,26],svg:dimH(60,280,205,'220',[[60,175,212],[280,175,212]]),msg:'Ukuran total 220 sudah benar ✓'},
+  D2:{err:0,box:[55,28,100,22],svg:dimH(60,150,45,'90',[[60,65,38],[150,65,38]]),msg:'Ukuran 90 sudah benar ✓'},
+  D3:{err:1,box:[152,28,135,22],svg:dimH(150,280,45,'130',[[280,105,38]]),msg:'<b>Ukuran ganda.</b> 90 + 130 = 220, padahal ukuran total 220 sudah ada. Salah satu ukuran harus dihapus.'},
+  D4:{err:1,box:[192,110,46,26],svg:dimH(200,230,128,'30'),msg:'<b>Ukuran ke garis tersembunyi dan tanpa simbol Ø.</b> Ukur lubang pada pandangan yang memperlihatkan lubang dengan jelas, lalu tulis Ø30.'},
+  D5:{err:0,box:[16,66,24,108],svg:dimV(70,170,35,'100',[[70,55,28],[170,55,28]]),msg:'Ukuran tinggi 100 sudah benar ✓'},
+  D6:{err:1,box:[300,105,30,70],svg:dimV(110,170,310,'60',[[110,285,318],[170,285,318]],90),msg:'<b>Arah angka salah.</b> Angka ukuran vertikal ditulis dari bawah ke atas, sehingga terbaca dari sisi kanan gambar.'},
+  D7:{err:1,box:[208,140,78,24],svg:dimH(215,280,158,'65'),msg:'<b>Ukuran di dalam gambar.</b> Garis ukur 65 bertumpuk dengan benda dan memotong garis gores. Letakkan ukuran di luar gambar.'}};
+function m5svg(){let s='<g class="vis"><polyline points="60,170 60,70 150,70 150,110 280,110 280,170 60,170"/></g><g class="hid"><line x1="200" y1="110" x2="200" y2="170"/><line x1="230" y1="110" x2="230" y2="170"/></g><g class="cen"><line x1="215" y1="98" x2="215" y2="182"/></g>';
+  Object.keys(M5D).forEach(k=>{const d=M5D[k],b=d.box;s+=`<g class="dim thin" data-k="${k}">${d.svg}<rect x="${b[0]}" y="${b[1]}" width="${b[2]}" height="${b[3]}" fill="#000" fill-opacity="0" style="stroke:none!important;pointer-events:all"/></g>`;});
+  return svgWrap('0 0 340 225',s);}
+function buildUkuran(){
+  const tb=workbench(2.2,1.0);tb.position.set(0,0,-3.5);mg.add(tb);const tt=turntable();tt.position.set(0,.93,-3.5);mg.add(tt);
+  const br=bracket({w1:90,h1:100,w2:130,h2:60,d:80,hx:155,hr:15});br.scale.setScalar(.32);br.position.y=.03;tt.userData.spin.add(br);
+  missionUpd.add(dt=>{tt.userData.spin.rotation.y+=dt*.3;});
+  view({t:[0,1.15,-3.5],r:2.7,theta:.3,phi:1.05,minR:1.4,maxR:7},1.2);
+  const errs=Object.keys(M5D).filter(k=>M5D[k].err);let found=0,first=true;cur.total+=errs.length;
+  function hunt(fb){setProg(`Kesalahan ditemukan: ${found}/${errs.length}`);
+    sheet(b=>{head(b,'Detektif ukuran','Temukan 4 kesalahan ukuran',`Ketuk ukuran yang <b>salah</b> pada gambar kerja di bawah. Hati-hati, ada ukuran yang sudah benar!`);
+      const p=el('div','paper',m5svg());b.appendChild(p);
+      p.querySelectorAll('[data-k]').forEach(g=>{const k=g.getAttribute('data-k'),d=M5D[k];if(d.done)g.classList.add('found');
+        g.addEventListener('click',()=>{initAudio();if(d.done)return;
+          if(d.err){d.done=true;found++;if(first)cur.ok++;first=true;setScore();sfx('ok');
+            if(found>=errs.length){hunt(el('div','fb ok',d.msg));later(done,900);}else hunt(el('div','fb ok',`<b>${found}/${errs.length} ✓</b> ${d.msg}`));}
+          else{first=false;sfx('bad');g.classList.add('good');toast(d.msg.replace(/<[^>]+>/g,''),'bad');setTimeout(()=>g.classList.remove('good'),1200);}});});
+      if(fb)b.appendChild(fb);});}
+  let fin=false;function done(){if(fin)return;fin=true;
+    const lab=(t,p)=>{const s=textSprite(t,{h:.075,border:'#2fd27a'});s.position.set(...p);tt.userData.spin.add(s);};
+    lab('220',[0,-.02,.2]);lab('90',[-.24,.38,.2]);lab('100',[-.42,.17,0]);lab('60',[.42,.1,0]);lab('Ø30',[.22,.3,0]);
+    chain([{kick:'Ke SolidWorks',title:'Ukuran ganda di SolidWorks',text:'Kalau ukuran ganda seperti 90 + 130 + 220 diberikan pada satu sketch SolidWorks, sketch itu akan menjadi…',
+      opts:[{ic:'🟥',label:'<b>Over Defined</b>: SolidWorks memperingatkan ukuran yang berlebih',ok:1},{ic:'⬛',label:'<b>Fully Defined</b>: semua garis menjadi hitam'},{ic:'🟦',label:'<b>Under Defined</b>: garis tetap biru'}],
+      why:'Ukuran berlebih membuat sketch <b>Over Defined</b>. Sketch yang ukurannya lengkap dan tidak dobel menjadi <b>Fully Defined</b> (hitam).'},
+     {kick:'Cara memberi ukuran',title:'Dari satu bidang acuan',text:'Semua ukuran diambil dari satu bidang acuan, misalnya sisi kiri benda. Cara ini disebut…',
+      opts:[{ic:'📏',label:'Ukuran <b>paralel</b> (dari bidang referensi)',ok:1},{ic:'⛓️',label:'Ukuran <b>berantai</b>'},{ic:'🎯',label:'Ukuran <b>polar</b>'}],
+      why:'Ukuran paralel mencegah penumpukan kesalahan. Ukuran berantai praktis, tetapi kesalahannya bisa menumpuk dari satu ukuran ke ukuran berikutnya.'}],
+      ()=>finish(['Jangan memberi ukuran ganda.','Jangan mengukur ke garis tersembunyi; diameter diberi simbol Ø.','Angka ukuran vertikal terbaca dari sisi kanan.','Letakkan ukuran di luar gambar.','Ukuran paralel dari bidang acuan mencegah penumpukan kesalahan.'],'Ukuran mana yang paling penting untuk fungsi braket ini, dan dari bidang acuan mana kamu akan mengukurnya?'));}
+  Object.values(M5D).forEach(d=>d.done=false);
+  intro('📏','Misi 5 · Pertemuan 5','Detektif Ukuran','<p>Gambar kerja braket ini akan dikirim ke bengkel pemesinan, tetapi drafternya terburu-buru. Ada <b>4 kesalahan</b> pemberian ukuran yang bisa membuat operator mesin bingung.</p><p>Temukan semuanya sebelum gambar dicetak! 🔍</p>',()=>hunt());}
+
+/* ---------- MISI 6: GAMBAR POTONGAN ---------- */
+function secSVG(kind,uid){const P=(id,r)=>`<pattern id="${id}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(${r})"><line x1="0" y1="0" x2="0" y2="7" stroke="#111" stroke-width="1"/></pattern>`;
+  const L='50,40 110,40 110,65 125,65 125,140 50,140',R='250,40 190,40 190,65 175,65 175,140 250,140';
+  let s=`<defs>${P('a'+uid,45)}${P('b'+uid,-45)}</defs>`;
+  if(kind==='ok')s+=`<polygon points="${L}" fill="url(#a${uid})"/><polygon points="${R}" fill="url(#a${uid})"/>`;
+  if(kind==='dir')s+=`<polygon points="${L}" fill="url(#a${uid})"/><polygon points="${R}" fill="url(#b${uid})"/>`;
+  if(kind==='hole')s+=`<rect x="50" y="40" width="200" height="100" fill="url(#a${uid})"/>`;
+  const inner='<line x1="110" y1="40" x2="110" y2="65"/><line x1="190" y1="40" x2="190" y2="65"/><line x1="125" y1="65" x2="125" y2="140"/><line x1="175" y1="65" x2="175" y2="140"/><line x1="110" y1="65" x2="190" y2="65"/>';
+  s+=`<g class="${kind==='noh'?'hid':'vis'}">${inner}</g><rect class="vis" x="50" y="40" width="200" height="100"/><line class="cen" x1="150" y1="28" x2="150" y2="152"/>`;
+  if(kind!=='noh')s+=`<text class="dt" x="150" y="172" text-anchor="middle">POTONGAN A–A</text>`;
+  return svgWrap('0 0 300 180',s);}
+function hatchTex(){const c=cnv(128,128),x=c.getContext('2d');x.fillStyle='#ffe2c4';x.fillRect(0,0,128,128);x.strokeStyle='#3a2410';x.lineWidth=5;
+  for(let i=-128;i<=256;i+=32){x.beginPath();x.moveTo(i,128);x.lineTo(i+128,0);x.stroke();}const t=tex(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(1.5,1.5);return t;}
+function buildPotongan(){
+  const tb=workbench(2.4,1.0);tb.position.set(0,0,-3.5);mg.add(tb);
+  const k=.28,root=new THREE.Group();root.position.set(0,.935,-3.5);root.scale.setScalar(k);mg.add(root);
+  const pm=mat('#ff8a1f',{roughness:.5,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+  function half(back){const g=new THREE.Group();const sg=back?1:-1;
+    [[.5,1.5,0],[.8,.5,1.5]].forEach(([r,dep,y0])=>{const s=new THREE.Shape();s.moveTo(-2,0);s.lineTo(-r,0);s.absarc(0,0,r,Math.PI,0,back);s.lineTo(2,0);s.lineTo(2,sg);s.lineTo(-2,sg);s.lineTo(-2,0);
+      const geo=new THREE.ExtrudeGeometry(s,{depth:dep,bevelEnabled:false,curveSegments:28});geo.rotateX(-Math.PI/2);geo.translate(0,y0,0);
+      const m=new THREE.Mesh(geo,back?pm:pm.clone());m.castShadow=true;m.receiveShadow=true;
+      const ep=new THREE.EdgesGeometry(geo,25).attributes.position.array,keep=[],cf=[];
+      for(let i=0;i<ep.length;i+=6){const a=[ep[i],ep[i+1],ep[i+2]],b=[ep[i+3],ep[i+4],ep[i+5]];const n=(v,t)=>Math.abs(v-t)<1e-3;
+        if(n(a[1],1.5)&&n(b[1],1.5)&&((Math.abs(a[0])>1.99&&Math.abs(b[0])>1.99)||(Math.abs(a[2])>.99&&Math.abs(b[2])>.99)))continue;
+        if(Math.abs(a[2])<1e-3&&Math.abs(b[2])<1e-3){if(back)cf.push(...a,...b);continue;}keep.push(...a,...b);}
+      const kl=lines(keep,0x1a1a1a,{op:1});m.add(kl);if(back){const cl=lines(cf,0x1a1a1a,{op:1});cl.visible=false;m.add(cl);g.userData.cf=(g.userData.cf||[]).concat(cl);}
+      g.add(m);});
+    return g;}
+  const bk=half(true),fr=half(false);root.add(bk);root.add(fr);
+  const ht=hatchTex();const hm=new THREE.MeshBasicMaterial({map:ht,transparent:true,opacity:0,side:THREE.DoubleSide});
+  const cutShape=sx=>{const s=new THREE.Shape();const p=[[-2,0],[-.5,0],[-.5,1.5],[-.8,1.5],[-.8,2],[-2,2]].map(([x,y])=>[x*sx,y]);s.moveTo(...p[0]);p.slice(1).forEach(q=>s.lineTo(...q));s.lineTo(...p[0]);return s;};
+  [1,-1].forEach(sx=>{const m=new THREE.Mesh(new THREE.ShapeGeometry(cutShape(sx)),hm);m.position.z=.012;root.add(m);});
+  const cp=new THREE.Group();const cpm=new THREE.Mesh(new THREE.PlaneGeometry(5.4,3.2),new THREE.MeshBasicMaterial({color:0xff4545,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));cpm.position.y=1;cp.add(cpm);
+  const cpl=lines([-2.7,-.6,0,2.7,-.6,0, 2.7,-.6,0,2.7,2.6,0, 2.7,2.6,0,-2.7,2.6,0, -2.7,2.6,0,-2.7,-.6,0],0xff4545,{op:0});cp.add(cpl);
+  const cps=textSprite('A–A',{h:.6,border:'#ff4545'});cps.position.set(2.9,2.6,0);cps.material.opacity=0;cp.add(cps);root.add(cp);
+  view({t:[0,1.2,-3.5],r:2.6,theta:.6,phi:1.0,minR:1.3,maxR:7},1.2);
+  function showPlane(){sfx('whoosh');cp.position.y=3;anim(1,e=>{const k=ease(e);cp.position.y=3*(1-k);cpm.material.opacity=.28*k;cpl.material.opacity=k;cps.material.opacity=k;});}
+  function cut(next){sfx('cut');const fm=[];fr.traverse(m=>{if(m.material){m.material.transparent=true;fm.push(m.material);}});
+    (bk.userData.cf||[]).forEach(l=>l.visible=true);anim(1.6,e=>{const k=ease(e);fr.position.z=k*3.2;fr.position.y=k*.6;fm.forEach(m=>m.opacity=1-k*.9);hm.opacity=k;cpm.material.opacity=.28*(1-k);cpl.material.opacity=1-k;},()=>{fr.visible=false;});
+    view({t:[0,1.2,-3.5],r:2.4,theta:.18,phi:1.15},1.6);later(next,1800);}
+  const uid=()=>Math.random().toString(36).slice(2,7);
+  const Q1={kick:'Bidang potong',title:'Menandai garis potong',text:'Blok berlubang ini akan dibelah oleh bidang potong <b>A–A</b> (merah). Di gambar kerja, garis potong digambar dengan…',onShow:showPlane,
+    opts:[{ic:'✂️',label:'Garis sumbu dengan ujung tebal, panah arah pandang, dan huruf A',ok:1},{ic:'✂️',label:'Garis gores tipis tanpa keterangan'},{ic:'✂️',label:'Garis tebal kontinu melintang benda'}],
+    why:'Garis potong = garis titik-garis yang ditebalkan di ujung dan belokannya, dengan panah arah pandang dan huruf (A–A) supaya mudah dicari pada gambar potongan.',next:'Belah benda ✂️'};
+  const Q2={kick:'Arsiran',title:'Bagian mana yang diarsir?',text:'Benda sudah dibelah. Pada gambar potongan, arsiran diberikan pada…',
+    opts:[{ic:'🟧',label:'Permukaan material yang terkena bidang potong',ok:1},{ic:'🟫',label:'Seluruh permukaan benda'},{ic:'⭕',label:'Rongga lubang'}],
+    why:'Hanya material padat yang tersentuh bidang potong yang diarsir, seperti bidang bergaris pada model 3D. Lubang tetap kosong karena tidak ada material.'};
+  const Q3={kick:'Pilih gambar',title:'Mana potongan A–A yang benar?',text:'Pilih gambar potongan yang sesuai standar.',grid:true,
+    opts:[{svg:secSVG('ok',uid()),ok:1},{svg:secSVG('hole',uid()),hint:'Lubang tidak boleh diarsir'},{svg:secSVG('dir',uid()),hint:'Satu benda harus berarah arsiran sama'},{svg:secSVG('noh',uid()),hint:'Itu pandangan biasa dengan garis gores, belum dipotong'}],
+    why:'Arsiran hanya pada material, searah untuk satu benda, dan lubang dibiarkan kosong. Garis bahu lubang (counterbore) di belakang bidang potong tetap digambar sebagai garis tebal.'};
+  const Q4={kick:'Arsiran',title:'Aturan garis arsir',text:'Arsiran standar digambar dengan…',
+    opts:[{ic:'▧',label:'Garis tipis kontinu, miring 45°, berjarak sama',ok:1},{ic:'▧',label:'Garis tebal kontinu, miring 45°'},{ic:'▧',label:'Garis gores, miring 30°'}],
+    why:'Arsiran memakai garis tipis kontinu, umumnya 45° terhadap garis sumbu atau tepi benda, dengan jarak yang seragam.'};
+  const Q5={kick:'Garis tersembunyi',title:'Garis gores di gambar potongan',text:'Garis tersembunyi di balik bidang potong biasanya…',
+    opts:[{ic:'🚫',label:'Tidak digambar, karena bagian dalam sudah terlihat',ok:1},{ic:'┅',label:'Tetap digambar semua'},{ic:'─·─',label:'Diganti garis sumbu'}],
+    why:'Tujuan gambar potongan adalah menghilangkan garis gores yang membingungkan. Garis tersembunyi hanya ditambahkan bila benar-benar perlu.'};
+  const Q6={kick:'Ke SolidWorks',title:'Fitur potongan di SolidWorks',text:'Fitur di SolidWorks Drawing untuk membuat gambar potongan seperti A–A adalah…',
+    opts:[{ic:'🖥️',label:'<b>Section View</b>',ok:1},{ic:'🖥️',label:'<b>Detail View</b>'},{ic:'🖥️',label:'<b>Auxiliary View</b>'}],
+    why:'Section View membuat garis potong, huruf A–A, dan arsiran secara otomatis. Detail View untuk memperbesar bagian kecil, Auxiliary View untuk pandangan bantu bidang miring.'};
+  let n=0;const ask=(q,nx)=>{n++;setProg(`Soal ${n}/6`);askQ(q,nx);};
+  intro('🔪','Misi 6 · Pertemuan 6','Gambar Potongan','<p>Blok ini punya <b>lubang bertingkat</b> (counterbore) di dalamnya. Kalau digambar biasa, bagian dalamnya penuh garis gores yang membingungkan.</p><p>Solusinya: <b>belah benda</b> dengan bidang potong, lalu arsir bagian yang terpotong. 🔪</p>',
+    ()=>ask(Q1,()=>{hideSheet();cut(()=>ask(Q2,()=>ask(Q3,()=>ask(Q4,()=>ask(Q5,()=>ask(Q6,()=>finish(['Gambar potongan memperlihatkan bagian dalam tanpa banyak garis gores.','Yang diarsir hanya material yang terkena bidang potong; lubang tidak diarsir.','Arsiran tipis, 45°, berjarak sama, dan searah untuk satu benda.','Garis potong diberi huruf (A–A) dan panah arah pandang.'],'Benda apa di bengkel yang lebih mudah dipahami bila digambar potongan? Sebutkan satu dan jelaskan alasannya.')))))));}));}
+
+const BUILD={garis:buildGaris,fitur:buildFitur,proyeksi:buildProyeksi,hilang:buildHilang,ukuran:buildUkuran,potongan:buildPotongan};
+
+/* ================= HUB ================= */
+function buildHubScene(){clearMission();
+  const dt=draftTable();dt.position.set(-3.4,0,-4.4);dt.rotation.y=.35;mg.add(dt);
+  const cd=cadDesk();cd.position.set(1.6,0,-4.9);mg.add(cd);
+  const pr=printer3D();pr.position.set(4.6,.93,-4.9);mg.add(pr);const pb=workbench(1.2,.8,'#cfd6dc');pb.position.set(4.6,0,-4.9);mg.add(pb);
+  const sh=shelf(1.3,.45,1.75);sh.position.set(-6.2,0,-5.4);mg.add(sh);
+  [[[3,3,1],[3,1,1]],[[1,2,3],[1,2,3]],[[2,2],[2,1]]].forEach((H,i)=>{const v=voxelGroup(mkObj(H),.12,'#ff8a1f');v.position.set(-6.6+i*.42,sh.userData.ys[1]+.015,-5.4);v.rotation.y=.4;mg.add(v);});
+  const v2=voxelGroup(mkObj([[3,2,2,3],[3,2,2,3],[1,1,1,0]]),.1,'#3d8bfd');v2.position.set(-6.2,sh.userData.ys[2]+.015,-5.4);mg.add(v2);
+  const tt=turntable();tt.position.set(-.6,0,-3.2);tt.scale.setScalar(1.6);mg.add(tt);
+  const big=voxelGroup(mkObj([[3,3,3],[3,1,1],[1,1,1]]),.32,'#ff8a1f');big.position.y=.03;tt.userData.spin.add(big);
+  missionUpd.add(d=>{tt.userData.spin.rotation.y+=d*.3;});
+  view({t:[-.6,1.2,-2.8],r:11,theta:.45,phi:1.1,minR:3,maxR:16},0);rig.auto=true;}
+function renderHub(){const g=$('#grid');g.innerHTML='';let tot=0;
+  MIS.forEach(m=>{const r=save.res[m.id];tot+=r?r.stars:0;const c=el('button','card',`<span class="tp">${m.tp}</span><span class="no">MISI ${m.no}</span><span class="ic">${m.ic}</span><b>${m.title}</b><small>${m.sub}</small><span class="st">${r?'⭐'.repeat(r.stars)+'<span style="opacity:.2">'+'⭐'.repeat(3-r.stars)+'</span>':'<span style="color:#97a6b3;font-size:12px;letter-spacing:0;font-weight:700">BELUM DIMAINKAN →</span>'}</span>`);
+    c.onclick=()=>{initAudio();sfx('tap');startMission(m.id);};g.appendChild(c);});
+  $('#totalStars').textContent=`Total: ${tot}/18 ⭐`;}
+function goHub(){closeModal();$('#top').classList.remove('show');$('#hub').classList.remove('hide');buildHubScene();renderHub();cur=null;}
+$('#backBtn').onclick=()=>{modal('<h2 class="disp">Kembali ke peta misi?</h2><p>Progres misi ini tidak akan disimpan.</p>',[{label:'Batal'},{label:'Ya, kembali',cls:'pri',fn:goHub}]);};
+$('#inName').value=save.name||'';$('#inKelas').value=save.kelas||'';
+$('#inName').oninput=e=>{save.name=e.target.value;persist();};$('#inKelas').oninput=e=>{save.kelas=e.target.value;persist();};
+$('#resetBtn').onclick=()=>modal('<h2 class="disp">Reset semua progres?</h2><p>Semua bintang yang sudah diraih di perangkat ini akan dihapus.</p>',[{label:'Batal'},{label:'Reset',cls:'pri',fn:()=>{save.res={};persist();renderHub();}}]);
+$('#certBtn').onclick=()=>{const done=MIS.filter(m=>save.res[m.id]);const tot=done.reduce((a,m)=>a+save.res[m.id].stars,0);
+  const full=done.length===6&&MIS.every(m=>save.res[m.id].stars>=2);const nm=(save.name||'').trim()||'(isi nama di halaman utama)';
+  const d=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const rows=MIS.map(m=>{const r=save.res[m.id];return`<tr><td>${m.ic} ${m.title}</td><td>${m.tp}</td><td style="text-align:right">${r?'⭐'.repeat(r.stars)+` (${r.ok}/${r.total})`:'—'}</td></tr>`;}).join('');
+  const txt=`LISENSI DRAFTER MUDA — STUDIO GAMTEK\nNama: ${nm}\nKelas: ${save.kelas||'-'}\nTanggal: ${d}\nStatus: ${full?'LISENSI PENUH':'LISENSI SEMENTARA'}\nTotal bintang: ${tot}/18\n`+MIS.map(m=>{const r=save.res[m.id];return`- Misi ${m.no} ${m.title}: ${r?r.stars+' bintang, benar '+r.ok+'/'+r.total:'belum'}`;}).join('\n');
+  modal(`<div class="cert"><div style="font-size:12px;font-weight:800;letter-spacing:.1em;color:#123a6b">SMKS 2 TRIPLE "J" · TEKNIK MESIN</div><h3>${full?'LISENSI DRAFTER MUDA':'LISENSI SEMENTARA'}</h3><div style="font-size:13px">diberikan kepada</div><div class="nm">${esc(nm)}</div><div style="font-size:13px">${esc(save.kelas||'')} · ${d}</div>
+    <div style="font-size:30px;margin:6px 0">${full?'🏅':'🔰'} <b style="font-size:20px">${tot}/18 ⭐</b></div><table>${rows}</table>
+    <div style="font-size:11.5px;color:#2c4a6b;margin-top:8px">${full?'Telah menuntaskan seluruh misi pemantapan gambar teknik dasar dengan minimal 2 bintang dan siap melanjutkan ke CAD SolidWorks.':'Selesaikan semua misi dengan minimal 2 bintang untuk mendapat Lisensi Penuh.'}</div></div>
+    <p style="font-size:13px">Salin hasil ini lalu kirim ke Google Classroom sebagai bukti penyelesaian, atau tangkap layar sertifikat.</p>`,
+    [{label:'📋 Salin hasil',cls:'pri',keep:true,fn:()=>{const ok=()=>toast('Hasil tersalin ✓','ok');
+      function fallback(){const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();try{document.execCommand('copy');ok();}catch(e){toast('Gagal menyalin, tangkap layar saja','bad');}t.remove();}
+      try{navigator.clipboard.writeText(txt).then(ok,fallback);}catch(e){fallback();}}},{label:'Tutup'}]);};
+$('#guruBtn').onclick=()=>modal(`<div class="kick">Untuk guru</div><h2 class="disp">Panduan Penggunaan</h2>
+  <p>Simulasi ini untuk <b>pemantapan gambar teknik dasar</b> murid kelas XI Teknik Mesin sebelum masuk CAD SolidWorks. Setiap misi mewakili satu pertemuan pemantapan dan ditutup dengan jembatan ke fitur SolidWorks yang setara.</p>
+  <table class="tbl"><tr><th>Misi</th><th>Materi</th><th>Kegunaan di kelas</th></tr>
+  <tr><td>1 · Garis</td><td>Jenis garis, kertas, skala</td><td>Pemantik sebelum latihan garis di kertas</td></tr>
+  <tr><td>2 · Fitur</td><td>Sketsa isometrik, berpikir fitur</td><td>Pendamping latihan sketsa isometrik dari benda nyata</td></tr>
+  <tr><td>3 · Kotak kaca</td><td>Proyeksi Eropa</td><td>Demonstrasi konsep sebelum menggambar 3 pandangan</td></tr>
+  <tr><td>4 · Pandangan hilang</td><td>Visualisasi</td><td>Latihan inti; cocok juga sebagai kuis awal atau akhir</td></tr>
+  <tr><td>5 · Ukuran</td><td>Aturan pemberian ukuran</td><td>Sebelum memberi ukuran pada gambar kerja</td></tr>
+  <tr><td>6 · Potongan</td><td>Potongan & arsiran</td><td>Pengantar tugas gambar kerja akhir</td></tr></table>
+  <ul><li>Satu misi berdurasi 5–10 menit; cocok dikerjakan berpasangan pada satu HP.</li><li>Bintang dihitung dari jawaban benar <b>pada percobaan pertama</b>, sehingga dapat menjadi data asesmen formatif.</li><li>Gabungkan dengan benda nyata (blok kayu atau hasil 3D print) agar murid bisa memegang bendanya.</li><li>Setiap misi ditutup dengan pertanyaan <b>refleksi</b> untuk diskusi kelas.</li><li>Murid menekan <b>"Lisensi Saya → Salin hasil"</b> lalu menempelkannya di Google Classroom.</li><li>Progres tersimpan di browser perangkat masing-masing.</li></ul>`,[{label:'Tutup',cls:'pri'}]);
+
+/* ================= START ================= */
+function boot(){buildHubScene();renderHub();loop();setTimeout(()=>$('#loading').classList.add('hide'),300);}
+const fontsReady=(document.fonts&&document.fonts.ready)?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1800))]):Promise.resolve();
+fontsReady.then(boot);
+window.__sim={startMission,goHub,get cur(){return cur;},viewOf,mkObj,buildOptions,rig};
+})();
+</script>
+</body>
+</html>
