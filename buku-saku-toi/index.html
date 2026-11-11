@@ -1177,7 +1177,7 @@ Gaya mundur: A = π × (D² − d²) ÷ 4      (d = diameter batang)</div>
   q.addEventListener('input', filter);
   $('#favBtn').onclick = () => {
     onlyFav = !onlyFav; $('#favBtn').setAttribute('aria-pressed', onlyFav);
-    if(onlyFav && !fav.size){ alert('Belum ada kartu yang ditandai. Tekan ☆ di pojok kartu untuk menandai.'); onlyFav = false; $('#favBtn').setAttribute('aria-pressed', false); }
+    if(onlyFav && !fav.size){ onlyFav = false; $('#favBtn').setAttribute('aria-pressed', false); q.value=''; filter(); hit.textContent = 'Belum ada kartu yang ditandai. Tekan ☆ di pojok kartu untuk menandai.'; return; }
     filter();
   };
   hit.textContent = babs.length + ' bab · ' + kartu.length + ' kartu · tekan ☆ untuk menandai kartu favoritmu';
