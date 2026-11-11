@@ -16,6 +16,8 @@ Simulasi dapat dibuka langsung di browser (laptop maupun HP) tanpa instalasi.
 | 5 | Panel Forward–Reverse | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Forward-Reverse/) |
 | 6 | Panel Star–Delta | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Star-Delta/) |
 | 7 | Bengkel Aman TOI — K3LH & Budaya Kerja 5R | K3LH & Budaya Kerja | [Buka](https://lht-sky.github.io/guruvokasi/bengkel-aman-toi/) |
+| 8 | Pabrik Elektronik Tycoon — DK1 Fase E | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pabrik-tycoon/) |
+| 9 | Pneumatik Tycoon — SKEH Fase F | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pneumatik-tycoon/) |
 
 Segera hadir: Power Supply 24 VDC, Forward–Reverse Berbasis PLC (JS-PLC-01), Elektropneumatik 1 Silinder.
 
