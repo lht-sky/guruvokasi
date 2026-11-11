@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Buku Saku Anak TOI — Teknik Otomasi Industri SMKS 2 Triple J</title>
+<meta name="description" content="Buku saku digital murid Teknik Otomasi Industri SMKS 2 Triple J Citeureup: K3LH, dasar listrik, alat ukur, wiring panel, kendali motor, sensor, pneumatik, PLC, robot, troubleshooting, dan PKL.">
+<meta name="theme-color" content="#171f28">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f141a;--surface:#171f28;--surface2:#202a35;--line:#2d3946;--ink:#e6ebf0;--ink2:#c3ccd5;--muted:#8e9cab;--accent:#f3b52f;--ok:#3fcf7d;--danger:#ff5a5a;--blue:#4a9dff;
+ --display:'Barlow Condensed','Arial Narrow',Arial,sans-serif;--body:'Barlow','Segoe UI',Arial,sans-serif;--mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;color-scheme:dark}
+html.light{--bg:#f4f1ea;--surface:#ffffff;--surface2:#f7f5f0;--line:#ddd6c8;--ink:#1d232b;--ink2:#38424e;--muted:#66717e;--accent:#b37a00;--ok:#16884a;--danger:#c62828;--blue:#1565c0;color-scheme:light}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:120px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--body);-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--blue)}
+/* ===== uniform header ===== */
+.bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));border-bottom:1px solid var(--line);background:var(--surface)}
+.bar img{width:42px;height:42px;flex:none}
+.bar .ttl{flex:1;min-width:0}
+.eyebrow{font:600 12px/1.2 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.bar h1{margin:2px 0 0;font:700 23px/1.1 var(--display);letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right}
+.dims{font:500 12px var(--mono);color:var(--ink2);white-space:nowrap;border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+.guru{font:500 12px var(--body);color:var(--muted);white-space:nowrap}
+.guru b{color:var(--ink2);font-weight:600}
+.credit{font:500 11px var(--body);color:var(--muted);text-align:center;padding:10px 10px calc(10px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);overflow-wrap:anywhere}
+@media (max-width:640px){.bar{padding:8px 10px;gap:8px}.bar img{width:34px;height:34px}.bar h1{font-size:19px}.eyebrow{font-size:10.5px}.guru{font-size:10.5px;white-space:normal;max-width:150px}.dims{font-size:10.5px;padding:2px 5px}.credit{font-size:10px}}
+@media (max-width:440px){.bar h1{white-space:normal;font-size:18px}}
+/* ===== tools ===== */
+.tools{position:sticky;top:var(--hb,63px);z-index:15;display:flex;gap:8px;align-items:center;padding:8px 16px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+@media (max-width:640px){.tools{padding:8px 10px}}
+.tools input[type=search]{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:15px}
+.tools input[type=search]:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.tb{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 11px;font-weight:600;font-size:14px;white-space:nowrap}
+.tb[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#141414}
+.tb .lbl{margin-left:4px}
+@media (max-width:420px){.tb .lbl{display:none}}
+@media (min-width:901px){#tocBtn{display:none}}
+/* ===== layout ===== */
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:28px;max-width:1120px;margin:0 auto;padding:0 20px}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr);padding:0 12px}}
+nav.toc{position:sticky;top:130px;align-self:start;max-height:calc(100vh - 140px);overflow:auto;padding:18px 0 30px}
+nav.toc .h{font:600 12px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px 10px}
+nav.toc a{display:flex;gap:8px;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14.5px;line-height:1.3}
+nav.toc a span{font:600 12px var(--mono);color:var(--muted);min-width:22px;padding-top:2px}
+nav.toc a:hover{background:var(--surface)}
+nav.toc a.on{background:var(--surface);color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+@media (max-width:900px){
+ nav.toc{position:fixed;inset:0 25% 0 0;max-width:320px;max-height:none;top:0;z-index:40;background:var(--surface);padding:calc(18px + env(safe-area-inset-top)) 8px 30px;border-right:1px solid var(--line);transform:translateX(-105%);transition:transform .25s}
+ nav.toc.open{transform:none;box-shadow:0 0 0 100vmax #0008}
+}
+main{padding:18px 0 40px;min-width:0}
+/* ===== hero / cover ===== */
+.cover{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:22px 20px 20px;margin-bottom:16px}
+.cover::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;background:repeating-linear-gradient(-45deg,var(--accent) 0 12px,#111 12px 24px)}
+.cover .k{font:600 13px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-top:6px}
+.cover h2{font:700 clamp(34px,8vw,56px)/.95 var(--display);margin:6px 0 10px;letter-spacing:.01em}
+.cover h2 em{font-style:normal;color:var(--accent)}
+.cover p{margin:0;color:var(--ink2);max-width:640px}
+.owner{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:8px;margin-top:16px;max-width:560px}
+.owner label{font-size:12px;color:var(--muted);font-weight:600;display:flex;flex-direction:column;gap:3px}
+.owner input{width:100%;border:none;border-bottom:2px dashed var(--line);background:transparent;padding:6px 2px;font-size:16px;font-weight:600}
+.owner input:focus{outline:none;border-bottom-color:var(--accent)}
+.quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.quick a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-weight:600;font-size:14px}
+.quick a.sos{background:#3a1515;border-color:#7a2a2a;color:#ffd7d7}
+html.light .quick a.sos{background:#fdecea;border-color:#e8a29d;color:#8a1c1c}
+/* ===== chapters ===== */
+section.bab{padding-top:10px;margin-top:22px}
+.babh{display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:12px}
+.babh .no{font:700 14px var(--mono);color:#141414;background:var(--accent);border-radius:6px;padding:2px 8px;flex:none}
+.babh h2{margin:0;font:700 28px/1.1 var(--display);letter-spacing:.01em}
+.babh small{display:block;color:var(--muted);font:500 14px var(--body)}
+.kartu{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:10px 0}
+.kartu>h3{display:flex;align-items:flex-start;gap:8px;margin:0 0 8px;font:700 19px/1.25 var(--display);letter-spacing:.01em}
+.kartu>h3 .t{flex:1}
+.mark{flex:none;border:1px solid var(--line);background:transparent;border-radius:8px;width:32px;height:30px;font-size:15px;line-height:1;color:var(--muted)}
+.mark.on{color:var(--accent);border-color:var(--accent)}
+.kartu p{margin:6px 0}
+.kartu ul,.kartu ol{margin:6px 0;padding-left:22px}
+.kartu li{margin:3px 0}
+.kartu.warn{border-color:#7a5a12;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,var(--surface)),var(--surface))}
+.kartu.sos{border-color:#8a2c2c;background:linear-gradient(135deg,color-mix(in srgb,var(--danger) 14%,var(--surface)),var(--surface))}
+.kartu.sos>h3{color:var(--danger)}
+.ingat{border-left:4px solid var(--accent);background:var(--surface2);border-radius:0 10px 10px 0;padding:8px 12px;margin:10px 0;font-size:15px}
+.ingat b:first-child{color:var(--accent)}
+.rumus{font:500 15px/1.6 var(--mono);background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;overflow-x:auto;white-space:pre}
+.tw{overflow-x:auto;margin:8px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--surface2);font:600 13px var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td code,p code,li code{font:500 13.5px var(--mono);background:var(--surface2);border:1px solid var(--line);border-radius:5px;padding:0 5px;white-space:nowrap}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px;border:1px solid #0006}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.mini{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.mini>b{display:block;font:700 16px var(--display);letter-spacing:.02em;margin-bottom:2px}
+.mini small b{color:var(--ink)}
+.mini small{color:var(--muted);font-size:13.5px;line-height:1.4;display:block}
+.steps{counter-reset:s;list-style:none;padding:0!important}
+.steps li{counter-increment:s;position:relative;padding-left:38px;margin:8px 0!important}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#141414;font:700 14px/26px var(--mono);text-align:center}
+.kartu.sos .steps li::before{background:var(--danger);color:#fff}
+.tag{display:inline-block;font:600 11.5px var(--mono);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--muted);margin-left:4px;vertical-align:2px}
+svg.dg{display:block;width:100%;max-width:520px;height:auto;margin:8px auto;color:var(--ink)}
+/* calculators */
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:8px 0}
+.calc label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.calc input,.calc select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);font-size:16px;width:100%}
+.calc input:focus,.calc select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.hasil{font:500 15px/1.6 var(--mono);background:color-mix(in srgb,var(--ok) 12%,var(--surface2));border:1px solid color-mix(in srgb,var(--ok) 45%,var(--line));border-radius:10px;padding:9px 12px;margin-top:6px;min-height:42px}
+.hasil.err{background:color-mix(in srgb,var(--danger) 12%,var(--surface2));border-color:color-mix(in srgb,var(--danger) 45%,var(--line))}
+.btn{border:1px solid var(--accent);background:var(--accent);color:#141414;border-radius:10px;padding:8px 14px;font-weight:700}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.resistor{display:flex;align-items:center;justify-content:center;margin:10px 0}
+.resistor .lead{height:4px;width:44px;background:#9aa4ad}
+.resistor .body{display:flex;gap:10px;align-items:center;height:42px;padding:0 22px;border-radius:20px;background:#d9c08f}
+.resistor .body i{display:block;width:10px;height:42px}
+.resistor .body i.gap{margin-left:12px}
+.hidden{display:none!important}
+#hitung{color:var(--muted);font-size:14px;margin:8px 0 0}
+.empty{display:none;color:var(--muted);text-align:center;padding:30px 10px}
+.toTop{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:25;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:18px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toTop.show{opacity:1;pointer-events:auto}
+/* print: booklet A5 */
+@media print{
+ @page{size:A5;margin:12mm 10mm}
+ html{--bg:#fff;--surface:#fff;--surface2:#f4f4f4;--line:#bbb;--ink:#000;--ink2:#222;--muted:#555;--accent:#9a6a00}
+ body{font-size:11pt}
+ .tools,nav.toc,.mark,.toTop,.quick,.calcbox,.noprint{display:none!important}
+ .bar{position:static}
+ .layout{display:block;padding:0}
+ .kartu{break-inside:avoid;box-shadow:none}
+ section.bab{break-before:page}
+ section.bab:first-of-type{break-before:auto}
+ .rumus{white-space:pre-wrap}
+}
+</style>
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "zasgkur533");
+</script>
+<script>try{if(localStorage.getItem('bst-tema')==='light')document.documentElement.classList.add('light')}catch(e){}</script>
+</head>
+<body>
+<header class="bar">
+  <img src="data:image/png;base64,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" alt="Logo Teknik Otomasi Industri">
+  <div class="ttl">
+    <div class="eyebrow">Teknik Otomasi Industri · SMKS 2 Triple J</div>
+    <h1>Buku Saku Anak TOI</h1>
+  </div>
+  <div class="right">
+    <span class="dims">Fase E–F · X–XII</span>
+    <span class="guru">Penyusun: <b>Lukman Hakim Tejosaputro, S.T., Gr.</b></span>
+  </div>
+</header>
+
+<div class="tools" role="search">
+  <button class="tb" id="tocBtn" aria-label="Daftar isi">☰<span class="lbl">Isi</span></button>
+  <input id="q" type="search" placeholder="Cari: kontaktor, PNP, 5 bar, LOTO…" aria-label="Cari isi buku saku" autocomplete="off">
+  <button class="tb" id="favBtn" aria-pressed="false" title="Tampilkan yang ditandai saja">★<span class="lbl">Tandai</span></button>
+  <button class="tb" id="temaBtn" title="Ganti tema terang/gelap" aria-label="Ganti tema">🌗</button>
+</div>
+
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="Daftar isi"><div class="h">Daftar Isi</div></nav>
+
+  <main id="isi">
+    <div class="cover" id="sampul">
+      <div class="k">Pegangan cepat murid · bengkel · PKL</div>
+      <h2>BUKU SAKU<br><em>ANAK TOI</em></h2>
+      <p>Rumus, tabel, nomor terminal, langkah K3, dan tips bengkel yang paling sering dicari murid Teknik Otomasi Industri. Simpan halaman ini di layar utama HP, buka saat praktik, saat PKL, atau saat belajar untuk ujian.</p>
+      <div class="owner noprint">
+        <label>Buku ini milik<input id="pNama" maxlength="40" placeholder="Nama murid" autocomplete="off"></label>
+        <label>Kelas<input id="pKelas" maxlength="20" placeholder="mis. XI TOI 1" autocomplete="off"></label>
+      </div>
+      <div class="quick">
+        <a class="sos" href="#k-setrum">🚨 Darurat tersengat listrik</a>
+        <a class="sos" href="#k-apar">🧯 Kebakaran</a>
+        <a href="#k-terminal">🔢 Nomor terminal</a>
+        <a href="#b-kalk">🧮 Kalkulator</a>
+        <a href="#k-pkl">🏭 Siap PKL</a>
+      </div>
+      <p id="hitung"></p>
+    </div>
+
+    <!-- ================= BAB 1 ================= -->
+    <section class="bab" id="b-kenal" data-no="1" data-judul="Kenalan dengan TOI">
+      <div class="babh"><span class="no">01</span><div><h2>Kenalan dengan TOI</h2><small>Apa yang kamu pelajari dan ke mana arahnya</small></div></div>
+
+      <div class="kartu" id="k-apa">
+        <h3><span class="t">Apa itu otomasi industri?</span></h3>
+        <p>Otomasi industri adalah ilmu membuat mesin dan proses produksi berjalan <b>sendiri, aman, dan berulang dengan hasil yang sama</b>. Sebuah sistem otomasi selalu punya tiga bagian:</p>
+        <div class="cols">
+          <div class="mini"><b>1 · Sensor (input)</b><small>"Mata dan telinga": tombol, limit switch, proximity, sensor cahaya, sensor suhu.</small></div>
+          <div class="mini"><b>2 · Pengendali</b><small>"Otak": rangkaian relay/kontaktor, PLC, mikrokontroler, atau komputer industri.</small></div>
+          <div class="mini"><b>3 · Aktuator (output)</b><small>"Otot": motor listrik, silinder pneumatik, solenoid valve, lampu, buzzer, robot.</small></div>
+        </div>
+      </div>
+
+      <div class="kartu" id="k-peta">
+        <h3><span class="t">Peta belajar TOI kelas X–XII</span></h3>
+        <div class="tw"><table>
+          <tr><th>Kelas</th><th>Fokus</th><th>Isi utama</th></tr>
+          <tr><td><b>X</b><br><small>Fase E</small></td><td>Dasar-dasar program keahlian</td><td>Wawasan dunia kerja, K3LH &amp; budaya kerja, perkakas tangan, gambar teknik, dasar kelistrikan, alat ukur, komponen elektronika, mesin listrik, dasar teknik digital</td></tr>
+          <tr><td><b>XI</b><br><small>Fase F</small></td><td>Konsentrasi TOI</td><td>Sistem kontrol elektromagnetik (panel motor), sistem kontrol elektronik, elektropneumatik, sensor &amp; aktuator, Proyek Kreatif dan Kewirausahaan (PKK)</td></tr>
+          <tr><td><b>XII</b><br><small>Fase F</small></td><td>Pendalaman &amp; dunia kerja</td><td>PLC &amp; SCADA, sistem robot industri, lanjutan elektropneumatik, PKL di DUDI, UKK</td></tr>
+        </table></div>
+        <p style="font-size:14px;color:var(--muted)">Jumlah jam dan urutan pastinya mengikuti struktur kurikulum sekolah yang berlaku.</p>
+      </div>
+
+      <div class="kartu" id="k-karier">
+        <h3><span class="t">Lulusan TOI bisa jadi apa?</span></h3>
+        <div class="cols">
+          <div class="mini"><b>Teknisi maintenance</b><small>Merawat dan memperbaiki mesin produksi di pabrik.</small></div>
+          <div class="mini"><b>Instalatur panel</b><small>Merakit dan memasang panel kontrol motor dan distribusi.</small></div>
+          <div class="mini"><b>Operator mesin otomatis</b><small>Menjalankan dan memantau lini produksi, mesin CNC, robot.</small></div>
+          <div class="mini"><b>Programmer PLC junior</b><small>Membuat dan mengubah program ladder dan HMI.</small></div>
+          <div class="mini"><b>Teknisi robot / commissioning</b><small>Memasang, menyetel, dan menguji mesin baru di lokasi pelanggan.</small></div>
+          <div class="mini"><b>Wirausaha</b><small>Jasa instalasi listrik, panel, perbaikan mesin, atau produk elektronik sendiri.</small></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= BAB 2 ================= -->
+    <section class="bab" id="b-k3" data-no="2" data-judul="K3LH & Budaya Kerja">
+      <div class="babh"><span class="no">02</span><div><h2>K3LH &amp; Budaya Kerja</h2><small>Keselamatan dulu, baru kecepatan</small></div></div>
+
+      <div class="kartu warn" id="k-emas">
+        <h3><span class="t">10 aturan emas bengkel TOI</span></h3>
+        <ol>
+          <li>Tidak menyalakan sumber listrik <b>tanpa izin guru</b> atau pembimbing.</li>
+          <li>Pakai APD sesuai pekerjaan sebelum masuk area praktik.</li>
+          <li>Anggap setiap kabel <b>bertegangan</b> sampai terbukti mati dengan alat ukur.</li>
+          <li>Wiring dikerjakan dalam keadaan sumber <b>OFF</b>; MCB dikunci atau diberi label.</li>
+          <li>Tangan dan lantai harus kering. Jangan bekerja di atas genangan air.</li>
+          <li>Lepas cincin, jam tangan logam, dan kalung saat bekerja di panel.</li>
+          <li>Jangan arahkan udara bertekanan ke tubuh siapa pun.</li>
+          <li>Buang tekanan udara sebelum melepas selang atau komponen pneumatik.</li>
+          <li>Laporkan kabel terkelupas, alat rusak, atau kejadian hampir celaka (<i>near miss</i>).</li>
+          <li>Selesai praktik: matikan sumber, rapikan alat, bersihkan meja kerja (5R).</li>
+        </ol>
+      </div>
+
+      <div class="kartu" id="k-apd">
+        <h3><span class="t">APD: pakai yang mana?</span></h3>
+        <div class="tw"><table>
+          <tr><th>APD</th><th>Melindungi dari</th><th>Wajib saat</th></tr>
+          <tr><td>Wearpack / baju kerja</td><td>Percikan, kotoran, tersangkut</td><td>Semua praktik bengkel</td></tr>
+          <tr><td>Sepatu safety</td><td>Benda jatuh, tertusuk, lantai licin</td><td>Semua praktik bengkel</td></tr>
+          <tr><td>Kacamata safety</td><td>Serpihan, potongan kabel, udara tekan</td><td>Memotong, mengebor, pneumatik</td></tr>
+          <tr><td>Sarung tangan isolasi</td><td>Sengatan listrik</td><td>Mengukur di rangkaian bertegangan</td></tr>
+          <tr><td>Sarung tangan kerja</td><td>Luka gores, panas</td><td>Memotong rel/duct, mengangkat</td></tr>
+          <tr><td>Ear plug / ear muff</td><td>Bising</td><td>Ruang kompresor, mesin bising</td></tr>
+        </table></div>
+        <div class="ingat"><b>Ingat:</b> jangan memakai sarung tangan kain di dekat bagian mesin yang berputar (bor, gerinda, poros motor). Sarung tangan bisa tertarik bersama tanganmu.</div>
+      </div>
+
+      <div class="kartu" id="k-loto">
+        <h3><span class="t">LOTO — Lock Out Tag Out</span></h3>
+        <p>Prosedur mengunci sumber energi supaya mesin tidak dinyalakan orang lain saat kamu sedang bekerja di dalamnya.</p>
+        <ol class="steps">
+          <li><b>Siapkan</b> — kenali semua sumber energi: listrik, udara tekan, pegas, bagian berputar.</li>
+          <li><b>Beri tahu</b> operator dan rekan bahwa mesin akan dimatikan.</li>
+          <li><b>Matikan</b> mesin dengan cara normal (tombol STOP).</li>
+          <li><b>Isolasi</b> — buka MCB/isolator utama, tutup katup udara utama.</li>
+          <li><b>Kunci &amp; beri label</b> — gembok pribadi + tag berisi nama, tanggal, alasan.</li>
+          <li><b>Buang energi tersimpan</b> — buang tekanan udara, tunggu kapasitor kosong, tahan bagian yang bisa jatuh.</li>
+          <li><b>Verifikasi</b> — ukur tegangan (<i>test before touch</i>) dan coba tekan START: mesin harus tetap diam.</li>
+        </ol>
+        <div class="ingat"><b>Aturan gembok:</b> satu orang, satu gembok, satu kunci. Gembok hanya boleh dilepas oleh pemiliknya.</div>
+      </div>
+
+      <div class="kartu" id="k-5r">
+        <h3><span class="t">Budaya kerja 5R</span></h3>
+        <div class="tw"><table>
+          <tr><th>5R</th><th>Jepang</th><th>Artinya di bengkel</th></tr>
+          <tr><td><b>Ringkas</b></td><td>Seiri</td><td>Pisahkan yang perlu dan tidak perlu. Sisa kabel dan skun rusak keluar dari meja.</td></tr>
+          <tr><td><b>Rapi</b></td><td>Seiton</td><td>Setiap alat punya tempat dan label. Mudah diambil, mudah dikembalikan.</td></tr>
+          <tr><td><b>Resik</b></td><td>Seiso</td><td>Bersihkan meja, lantai, dan alat. Sambil membersihkan, periksa kerusakan.</td></tr>
+          <tr><td><b>Rawat</b></td><td>Seiketsu</td><td>Pertahankan 3R di atas dengan standar, jadwal piket, dan foto contoh.</td></tr>
+          <tr><td><b>Rajin</b></td><td>Shitsuke</td><td>Jadikan kebiasaan tanpa perlu disuruh.</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu" id="k-rambu">
+        <h3><span class="t">Warna rambu K3</span></h3>
+        <div class="tw"><table>
+          <tr><th>Warna &amp; bentuk</th><th>Arti</th><th>Contoh</th></tr>
+          <tr><td><span class="sw" style="background:#d32f2f"></span>Lingkaran merah dicoret</td><td>Larangan</td><td>Dilarang merokok, dilarang menyalakan</td></tr>
+          <tr><td><span class="sw" style="background:#1565c0"></span>Lingkaran biru</td><td>Wajib</td><td>Wajib kacamata, wajib sepatu safety</td></tr>
+          <tr><td><span class="sw" style="background:#fbc02d"></span>Segitiga kuning</td><td>Peringatan bahaya</td><td>Awas tegangan listrik, awas terjepit</td></tr>
+          <tr><td><span class="sw" style="background:#2e7d32"></span>Persegi hijau</td><td>Kondisi aman</td><td>Jalur evakuasi, P3K, titik kumpul</td></tr>
+          <tr><td><span class="sw" style="background:#c62828"></span>Persegi merah</td><td>Alat pemadam</td><td>Letak APAR, hidran</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu sos" id="k-setrum">
+        <h3><span class="t">🚨 Teman tersengat listrik</span></h3>
+        <ol class="steps">
+          <li><b>Jangan sentuh korban</b> dengan tangan kosong selama ia masih terhubung ke listrik.</li>
+          <li><b>Putuskan sumber</b>: matikan MCB/saklar utama atau tekan Emergency Stop.</li>
+          <li>Jika sumber tidak bisa diputus, pisahkan korban memakai benda <b>kering dan tidak menghantar</b> (kayu, plastik, karet).</li>
+          <li><b>Teriak minta tolong</b> dan panggil guru. Hubungi <b>112</b> (darurat) atau <b>119</b> (gawat darurat medis) jika korban tidak sadar.</li>
+          <li>Periksa kesadaran dan napas. Jika tidak bernapas, lakukan RJP bila kamu terlatih, sampai bantuan datang.</li>
+          <li>Korban yang sadar tetap harus diperiksa tenaga medis, walau terlihat baik-baik saja.</li>
+        </ol>
+      </div>
+
+      <div class="kartu sos" id="k-apar">
+        <h3><span class="t">🧯 Kebakaran &amp; APAR</span></h3>
+        <p><b>Kebakaran listrik: jangan disiram air.</b> Putuskan sumber listrik dulu, lalu gunakan APAR CO₂ atau serbuk kimia kering (<i>dry powder</i>).</p>
+        <div class="tw"><table>
+          <tr><th>Kelas</th><th>Bahan terbakar</th><th>Media pemadam</th></tr>
+          <tr><td><b>A</b></td><td>Kertas, kayu, kain, plastik</td><td>Air, busa, dry powder</td></tr>
+          <tr><td><b>B</b></td><td>Cairan mudah terbakar (bensin, oli, thinner)</td><td>Busa, CO₂, dry powder</td></tr>
+          <tr><td><b>C</b></td><td>Peralatan listrik bertegangan</td><td>CO₂, dry powder</td></tr>
+          <tr><td><b>D</b></td><td>Logam (magnesium, natrium)</td><td>Serbuk khusus logam</td></tr>
+        </table></div>
+        <p><b>Cara pakai APAR — TATS:</b></p>
+        <ol class="steps">
+          <li><b>Tarik</b> pin pengaman.</li>
+          <li><b>Arahkan</b> selang ke <b>pangkal</b> api, bukan ke nyalanya.</li>
+          <li><b>Tekan</b> tuas penyemprot.</li>
+          <li><b>Sapukan</b> ke kiri-kanan sampai api padam. Jaga jarak ±2–3 meter, posisi membelakangi jalan keluar.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ================= BAB 3 ================= -->
+    <section class="bab" id="b-listrik" data-no="3" data-judul="Dasar Listrik">
+      <div class="babh"><span class="no">03</span><div><h2>Dasar Listrik</h2><small>Besaran, satuan, dan rumus yang wajib hafal</small></div></div>
+
+      <div class="kartu" id="k-besaran">
+        <h3><span class="t">Besaran dan satuan</span></h3>
+        <div class="tw"><table>
+          <tr><th>Besaran</th><th>Simbol</th><th>Satuan</th><th>Alat ukur</th></tr>
+          <tr><td>Tegangan</td><td>V / U</td><td>volt (V)</td><td>Voltmeter</td></tr>
+          <tr><td>Arus</td><td>I</td><td>ampere (A)</td><td>Amperemeter, tang ampere</td></tr>
+          <tr><td>Hambatan</td><td>R</td><td>ohm (Ω)</td><td>Ohmmeter</td></tr>
+          <tr><td>Daya</td><td>P</td><td>watt (W)</td><td>Wattmeter</td></tr>
+          <tr><td>Energi</td><td>W</td><td>kWh, joule (J)</td><td>kWh meter</td></tr>
+          <tr><td>Frekuensi</td><td>f</td><td>hertz (Hz)</td><td>Frekuensimeter</td></tr>
+          <tr><td>Kapasitansi</td><td>C</td><td>farad (F)</td><td>Kapasitansimeter</td></tr>
+          <tr><td>Induktansi</td><td>L</td><td>henry (H)</td><td>LCR meter</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu" id="k-awalan">
+        <h3><span class="t">Awalan satuan</span></h3>
+        <div class="tw"><table>
+          <tr><th>Awalan</th><th>Simbol</th><th>Kali</th><th>Contoh</th></tr>
+          <tr><td>mega</td><td>M</td><td>× 1.000.000</td><td>2,2 MΩ = 2.200.000 Ω</td></tr>
+          <tr><td>kilo</td><td>k</td><td>× 1.000</td><td>4,7 kΩ = 4.700 Ω</td></tr>
+          <tr><td>mili</td><td>m</td><td>× 0,001</td><td>250 mA = 0,25 A</td></tr>
+          <tr><td>mikro</td><td>µ</td><td>× 0,000001</td><td>100 µF</td></tr>
+          <tr><td>nano</td><td>n</td><td>× 10⁻⁹</td><td>100 nF = 0,1 µF</td></tr>
+          <tr><td>piko</td><td>p</td><td>× 10⁻¹²</td><td>22 pF</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu" id="k-ohm">
+        <h3><span class="t">Hukum Ohm &amp; daya</span></h3>
+        <div class="rumus">V = I × R        I = V ÷ R        R = V ÷ I
+P = V × I        P = I² × R       P = V² ÷ R</div>
+        <p><b>Contoh:</b> lampu indikator 24 V menarik arus 20 mA. Dayanya P = 24 × 0,02 = <b>0,48 W</b>.</p>
+        <div class="ingat"><b>Trik segitiga:</b> tulis V di atas, I dan R di bawah. Tutup besaran yang dicari: sisanya menunjukkan kali (sejajar) atau bagi (atas-bawah).</div>
+      </div>
+
+      <div class="kartu" id="k-seripar">
+        <h3><span class="t">Rangkaian seri dan paralel</span></h3>
+        <div class="tw"><table>
+          <tr><th></th><th>Seri</th><th>Paralel</th></tr>
+          <tr><td><b>Arus</b></td><td>Sama di semua titik</td><td>Terbagi: I = I₁ + I₂ + …</td></tr>
+          <tr><td><b>Tegangan</b></td><td>Terbagi: V = V₁ + V₂ + …</td><td>Sama di semua cabang</td></tr>
+          <tr><td><b>Hambatan total</b></td><td>R = R₁ + R₂ + …</td><td>1/R = 1/R₁ + 1/R₂ + …<br>dua resistor: R = (R₁×R₂)/(R₁+R₂)</td></tr>
+          <tr><td><b>Di panel</b></td><td>Kontak-kontak syarat (AND): STOP, TOR, interlock</td><td>Beban-beban: lampu, koil, stopkontak</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu" id="k-acdc">
+        <h3><span class="t">Listrik AC, DC, dan 3 fasa</span></h3>
+        <div class="tw"><table>
+          <tr><th>Sumber</th><th>Nilai di Indonesia</th><th>Dipakai untuk</th></tr>
+          <tr><td>1 fasa (L–N)</td><td>220–230 V, 50 Hz</td><td>Lampu, stopkontak, koil kontaktor 220 V</td></tr>
+          <tr><td>3 fasa (L–L)</td><td>380–400 V, 50 Hz</td><td>Motor induksi 3 fasa, mesin produksi</td></tr>
+          <tr><td>DC kontrol</td><td>24 VDC</td><td>PLC, sensor, solenoid valve, relay kontrol</td></tr>
+        </table></div>
+        <div class="rumus">Daya 1 fasa : P = V × I × cos φ
+Daya 3 fasa : P = √3 × V_LL × I × cos φ     (√3 ≈ 1,732)
+Tegangan    : V_LL = √3 × V_LN   → 220 V × 1,732 ≈ 380 V</div>
+      </div>
+
+      <div class="kartu" id="k-resistor">
+        <h3><span class="t">Kode warna resistor</span></h3>
+        <div class="tw"><table>
+          <tr><th>Warna</th><th>Angka</th><th>Pengali</th><th>Toleransi</th></tr>
+          <tr><td><span class="sw" style="background:#111"></span>Hitam</td><td>0</td><td>× 1</td><td></td></tr>
+          <tr><td><span class="sw" style="background:#7b4a26"></span>Coklat</td><td>1</td><td>× 10</td><td>±1%</td></tr>
+          <tr><td><span class="sw" style="background:#d32f2f"></span>Merah</td><td>2</td><td>× 100</td><td>±2%</td></tr>
+          <tr><td><span class="sw" style="background:#f57c00"></span>Oranye</td><td>3</td><td>× 1 k</td><td></td></tr>
+          <tr><td><span class="sw" style="background:#fdd835"></span>Kuning</td><td>4</td><td>× 10 k</td><td></td></tr>
+          <tr><td><span class="sw" style="background:#2e7d32"></span>Hijau</td><td>5</td><td>× 100 k</td><td>±0,5%</td></tr>
+          <tr><td><span class="sw" style="background:#1565c0"></span>Biru</td><td>6</td><td>× 1 M</td><td>±0,25%</td></tr>
+          <tr><td><span class="sw" style="background:#7b1fa2"></span>Ungu</td><td>7</td><td>× 10 M</td><td>±0,1%</td></tr>
+          <tr><td><span class="sw" style="background:#9e9e9e"></span>Abu-abu</td><td>8</td><td></td><td></td></tr>
+          <tr><td><span class="sw" style="background:#fff"></span>Putih</td><td>9</td><td></td><td></td></tr>
+          <tr><td><span class="sw" style="background:#c9a227"></span>Emas</td><td></td><td>× 0,1</td><td>±5%</td></tr>
+          <tr><td><span class="sw" style="background:#c0c0c0"></span>Perak</td><td></td><td>× 0,01</td><td>±10%</td></tr>
+        </table></div>
+        <p><b>Jembatan keledai:</b> <i>Hitam Coklat Merah Oranye Kuning Hijau Biru Ungu Abu Putih</i> → 0 sampai 9. Kalkulatornya ada di <a href="#k-calc-res">Bab 13</a>.</p>
+      </div>
+    </section>
+
+    <!-- ================= BAB 4 ================= -->
+    <section class="bab" id="b-ukur" data-no="4" data-judul="Alat Ukur">
+      <div class="babh"><span class="no">04</span><div><h2>Alat Ukur</h2><small>Mengukur dengan benar = aman + akurat</small></div></div>
+
+      <div class="kartu" id="k-multi">
+        <h3><span class="t">Multimeter: cara pasang</span></h3>
+        <div class="tw"><table>
+          <tr><th>Mengukur</th><th>Posisi selektor</th><th>Cara pasang</th><th>Kondisi rangkaian</th></tr>
+          <tr><td>Tegangan</td><td>V~ (AC) / V⎓ (DC)</td><td><b>Paralel</b> dengan beban</td><td>Bertegangan</td></tr>
+          <tr><td>Arus</td><td>A / mA</td><td><b>Seri</b>, rangkaian diputus; probe merah pindah ke lubang A/mA</td><td>Bertegangan</td></tr>
+          <tr><td>Hambatan</td><td>Ω</td><td>Pada ujung komponen</td><td><b>Tanpa tegangan</b></td></tr>
+          <tr><td>Kontinuitas</td><td>🔊 / diode</td><td>Pada ujung kabel / kontak</td><td><b>Tanpa tegangan</b></td></tr>
+        </table></div>
+        <div class="ingat"><b>Kesalahan berbahaya:</b> lupa memindahkan probe merah kembali dari lubang A ke lubang V, lalu mengukur stopkontak. Itu sama dengan hubung singkat. Biasakan kembalikan probe setiap selesai mengukur arus.</div>
+        <ul>
+          <li>Tidak tahu besarnya? Mulai dari batas ukur (<i>range</i>) paling besar.</li>
+          <li>Probe hitam ke COM, probe merah ke V/Ω.</li>
+          <li>Pegang probe di bagian berpelindung, jari di belakang batas pengaman.</li>
+        </ul>
+      </div>
+
+      <div class="kartu" id="k-alatlain">
+        <h3><span class="t">Alat ukur lain di bengkel</span></h3>
+        <div class="cols">
+          <div class="mini"><b>Tang ampere</b><small>Mengukur arus tanpa memutus kabel. Jepit <b>satu</b> kabel saja. Kalau L dan N dijepit bersamaan, hasilnya ±0.</small></div>
+          <div class="mini"><b>Insulation tester (megger)</b><small>Mengukur tahanan isolasi kabel dan belitan motor. Untuk instalasi ≤ 500 V pakai tegangan uji 500 VDC; hasil minimal 1 MΩ. Lakukan saat sumber mati.</small></div>
+          <div class="mini"><b>Tespen</b><small>Hanya petunjuk ada/tidaknya fasa. <b>Bukan</b> bukti rangkaian aman. Untuk memastikan mati, ukur pakai multimeter.</small></div>
+          <div class="mini"><b>Phase sequence meter</b><small>Mengecek urutan fasa L1-L2-L3 sebelum motor 3 fasa dijalankan, supaya arah putarnya benar.</small></div>
+          <div class="mini"><b>Manometer</b><small>Mengukur tekanan udara pada unit F.R.L atau jalur pneumatik (bar / psi).</small></div>
+          <div class="mini"><b>Jangka sorong</b><small>Mengukur diameter kabel, poros, baut, dan lubang. Ketelitian umum 0,05 atau 0,02 mm.</small></div>
+        </div>
+      </div>
+
+      <div class="kartu" id="k-cat">
+        <h3><span class="t">Kategori keamanan alat ukur (CAT)</span></h3>
+        <div class="tw"><table>
+          <tr><th>CAT</th><th>Lokasi pengukuran</th></tr>
+          <tr><td>CAT II</td><td>Peralatan yang dicolok ke stopkontak</td></tr>
+          <tr><td>CAT III</td><td>Panel distribusi, MCB, motor yang terpasang tetap</td></tr>
+          <tr><td>CAT IV</td><td>Sumber instalasi: kWh meter, kabel masuk dari PLN</td></tr>
+        </table></div>
+        <p>Untuk mengukur di panel, pakai multimeter dan probe minimal <b>CAT III</b>.</p>
+      </div>
+    </section>
+
+    <!-- ================= BAB 5 ================= -->
+    <section class="bab" id="b-wiring" data-no="5" data-judul="Instalasi & Wiring Panel">
+      <div class="babh"><span class="no">05</span><div><h2>Instalasi &amp; Wiring Panel</h2><small>Rapi, benar, mudah dilacak</small></div></div>
+
+      <div class="kartu" id="k-warnakabel">
+        <h3><span class="t">Warna kabel instalasi (PUIL)</span></h3>
+        <div class="tw"><table>
+          <tr><th>Penghantar</th><th>Warna (PUIL 2011)</th><th>Instalasi lama</th></tr>
+          <tr><td>L1 / R</td><td><span class="sw" style="background:#7b4a26"></span>Coklat</td><td>Merah</td></tr>
+          <tr><td>L2 / S</td><td><span class="sw" style="background:#111"></span>Hitam</td><td>Kuning</td></tr>
+          <tr><td>L3 / T</td><td><span class="sw" style="background:#9e9e9e"></span>Abu-abu</td><td>Hitam</td></tr>
+          <tr><td>Netral (N)</td><td><span class="sw" style="background:#1565c0"></span>Biru</td><td>Biru</td></tr>
+          <tr><td>Pembumian (PE)</td><td><span class="sw" style="background:repeating-linear-gradient(45deg,#2e7d32 0 4px,#fdd835 4px 8px)"></span>Hijau-kuning</td><td>Hijau-kuning</td></tr>
+        </table></div>
+        <div class="ingat"><b>Hijau-kuning</b> hanya untuk pembumian. Jangan dipakai untuk fasa, netral, atau kabel kontrol.</div>
+      </div>
+
+      <div class="kartu warn" id="k-standarlab">
+        <h3><span class="t">Standar wiring praktik panel di lab TOI</span></h3>
+        <p>Dipakai di praktik panel kontrol motor bersama DUDI:</p>
+        <div class="tw"><table>
+          <tr><th>Bagian</th><th>Standar</th></tr>
+          <tr><td>Kabel rangkaian daya</td><td><span class="sw" style="background:#fdd835"></span>Kuning</td></tr>
+          <tr><td>Kabel rangkaian kontrol</td><td><span class="sw" style="background:#1565c0"></span>Biru</td></tr>
+          <tr><td>Ujung kabel</td><td>Skun Y, dipres dengan tang crimping yang ukurannya sesuai</td></tr>
+          <tr><td>Penandaan</td><td><i>Tube marking</i> berisi alamat kabel, di <b>kedua</b> ujung kabel</td></tr>
+          <tr><td>Kabel sumber masuk panel</td><td>Dari arah <b>bawah</b>, bukan dari atas (mencegah air bocor dan debu masuk)</td></tr>
+          <tr><td>Terminal kabel</td><td>Terminal blok TB-1512</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu" id="k-langkahwiring">
+        <h3><span class="t">Urutan kerja merakit panel</span></h3>
+        <ol class="steps">
+          <li><b>Baca gambar</b>: diagram daya, diagram kontrol, dan layout panel. Tandai komponen yang dipakai.</li>
+          <li><b>Cek komponen</b>: tegangan koil kontaktor (24 VDC / 220 VAC), rating MCB dan TOR, kondisi fisik.</li>
+          <li><b>Pasang mekanik</b>: rel DIN, cable duct, komponen, terminal, sesuai layout.</li>
+          <li><b>Wiring daya</b> (kuning) lalu <b>wiring kontrol</b> (biru), satu jalur selesai baru pindah.</li>
+          <li><b>Beri tube marking</b> dan rapikan kabel di dalam duct.</li>
+          <li><b>Uji tanpa tegangan</b>: kontinuitas setiap jalur, cek tidak ada hubung singkat L–L, L–N, L–PE.</li>
+          <li><b>Minta pemeriksaan guru</b>, baru uji fungsi dengan tegangan.</li>
+          <li><b>Isi lembar uji</b> dan rapikan tempat kerja.</li>
+        </ol>
+      </div>
+
+      <div class="kartu" id="k-tipswiring">
+        <h3><span class="t">Ciri wiring yang lulus inspeksi</span></h3>
+        <ul>
+          <li>Tidak ada tembaga terbuka di luar skun atau terminal.</li>
+          <li>Skun dipres kuat: kabel ditarik pelan tidak lepas.</li>
+          <li>Paling banyak 2 kabel dalam satu terminal; lebih dari itu pakai terminal tambahan atau jumper.</li>
+          <li>Baut terminal dikencangkan sesuai ukuran obeng; tidak dol, tidak menjepit isolasi.</li>
+          <li>Kabel lurus, belok siku, tidak saling silang di depan komponen.</li>
+          <li>Kabel PE terpasang ke badan panel dan pintu panel.</li>
+          <li>Alamat di tube marking sama dengan alamat di gambar.</li>
+        </ul>
+      </div>
+
+      <div class="kartu" id="k-ip">
+        <h3><span class="t">Membaca kode IP (Ingress Protection)</span></h3>
+        <p>Contoh <code>IP54</code>: angka pertama = perlindungan dari benda padat/debu, angka kedua = perlindungan dari air.</p>
+        <div class="tw"><table>
+          <tr><th>Angka 1</th><th>Padat</th><th>Angka 2</th><th>Air</th></tr>
+          <tr><td>2</td><td>Jari (&gt; 12,5 mm)</td><td>0</td><td>Tidak terlindung</td></tr>
+          <tr><td>4</td><td>Kawat (&gt; 1 mm)</td><td>4</td><td>Percikan dari segala arah</td></tr>
+          <tr><td>5</td><td>Terlindung debu</td><td>5</td><td>Semprotan air</td></tr>
+          <tr><td>6</td><td>Kedap debu</td><td>7</td><td>Terendam sementara</td></tr>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ================= BAB 6 ================= -->
+    <section class="bab" id="b-motor" data-no="6" data-judul="Kendali Elektromagnetik">
+      <div class="babh"><span class="no">06</span><div><h2>Kendali Elektromagnetik</h2><small>Kontaktor, TOR, timer, dan rangkaian motor</small></div></div>
+
+      <div class="kartu" id="k-komponen">
+        <h3><span class="t">Komponen panel dan kode hurufnya</span></h3>
+        <div class="tw"><table>
+          <tr><th>Komponen</th><th>Kode</th><th>Fungsi</th></tr>
+          <tr><td>MCB / MCCB</td><td>Q / F</td><td>Pengaman hubung singkat dan beban lebih, sekaligus saklar</td></tr>
+          <tr><td>Sekring</td><td>F</td><td>Pengaman hubung singkat</td></tr>
+          <tr><td>Kontaktor</td><td>K / KM</td><td>Saklar elektromagnetik untuk beban daya (motor)</td></tr>
+          <tr><td>Relay kontrol</td><td>K / KA</td><td>Saklar elektromagnetik untuk sinyal kontrol</td></tr>
+          <tr><td>TOR (Thermal Overload Relay)</td><td>F</td><td>Pengaman beban lebih motor</td></tr>
+          <tr><td>Timer (TDR)</td><td>KT / T</td><td>Kontak yang bekerja setelah waktu tunda</td></tr>
+          <tr><td>Tombol tekan, selector</td><td>S</td><td>Perintah manual START, STOP, AUTO/MAN</td></tr>
+          <tr><td>Lampu indikator</td><td>H</td><td>Tanda status: RUN, TRIP, READY</td></tr>
+          <tr><td>Motor</td><td>M</td><td>Aktuator putar</td></tr>
+          <tr><td>Solenoid valve</td><td>Y</td><td>Membuka/menutup jalur udara (Y1, Y2)</td></tr>
+          <tr><td>Sensor, limit switch</td><td>B</td><td>Input posisi, benda, suhu</td></tr>
+        </table></div>
+        <p style="font-size:14px;color:var(--muted)">Kode huruf bisa sedikit berbeda antar standar dan pabrik. Ikuti daftar komponen pada gambar kerja yang kamu pakai.</p>
+      </div>
+
+      <div class="kartu warn" id="k-terminal">
+        <h3><span class="t">Nomor terminal yang wajib hafal</span></h3>
+        <div class="tw"><table>
+          <tr><th>Bagian</th><th>Nomor</th><th>Keterangan</th></tr>
+          <tr><td>Koil kontaktor/relay</td><td><code>A1</code> – <code>A2</code></td><td>Diberi tegangan sesuai rating koil</td></tr>
+          <tr><td>Kontak utama (daya)</td><td><code>1/L1</code>–<code>2/T1</code><br><code>3/L2</code>–<code>4/T2</code><br><code>5/L3</code>–<code>6/T3</code></td><td>Ganjil = dari sumber, genap = ke beban</td></tr>
+          <tr><td>Kontak bantu NO</td><td><code>13–14</code>, <code>43–44</code></td><td>Angka akhir <b>3–4</b> = NO</td></tr>
+          <tr><td>Kontak bantu NC</td><td><code>21–22</code>, <code>31–32</code></td><td>Angka akhir <b>1–2</b> = NC</td></tr>
+          <tr><td>TOR – kontak NC</td><td><code>95–96</code></td><td>Membuka saat motor beban lebih → memutus koil</td></tr>
+          <tr><td>TOR – kontak NO</td><td><code>97–98</code></td><td>Menutup saat trip → lampu TRIP/alarm</td></tr>
+          <tr><td>Kontak waktu</td><td>akhir <b>5–6</b> (NC tunda)<br>akhir <b>7–8</b> (NO tunda)</td><td>Timer soket 8 pin punya nomor pin sendiri, lihat diagram di badan timer</td></tr>
+        </table></div>
+        <div class="ingat"><b>Angka depan</b> (1, 2, 3, 4 pada 13, 21, 31, 43) adalah nomor urut kontak. <b>Angka belakang</b> menunjukkan jenisnya.</div>
+      </div>
+
+      <div class="kartu" id="k-warnatombol">
+        <h3><span class="t">Warna tombol dan lampu indikator</span></h3>
+        <div class="tw"><table>
+          <tr><th>Warna</th><th>Tombol</th><th>Lampu indikator</th></tr>
+          <tr><td><span class="sw" style="background:#2e7d32"></span>Hijau</td><td>START / ON</td><td>Kondisi normal, siap</td></tr>
+          <tr><td><span class="sw" style="background:#d32f2f"></span>Merah</td><td>STOP / OFF</td><td>Bahaya, gangguan, darurat</td></tr>
+          <tr><td><span class="sw" style="background:#fdd835"></span>Kuning</td><td>Intervensi / reset</td><td>Kondisi tidak normal, peringatan</td></tr>
+          <tr><td><span class="sw" style="background:#1565c0"></span>Biru</td><td>Reset, tindakan wajib</td><td>Operator harus bertindak</td></tr>
+          <tr><td><span class="sw" style="background:#fff"></span>Putih</td><td>Fungsi umum</td><td>Informasi netral</td></tr>
+        </table></div>
+        <p><b>Emergency Stop</b>: tombol jamur merah di atas latar kuning, mengunci saat ditekan, dilepas dengan diputar/ditarik. Harus memutus rangkaian secara langsung (kontak NC), tidak boleh hanya lewat program.</p>
+      </div>
+
+      <div class="kartu" id="k-pengunci">
+        <h3><span class="t">Rangkaian pengunci (self-holding)</span></h3>
+        <p>Dasar semua rangkaian kontrol motor: tombol START ditekan sesaat, kontaktor tetap ON karena dikunci kontak bantunya sendiri.</p>
+        <svg class="dg" viewBox="0 0 520 250" role="img" aria-label="Diagram rangkaian pengunci: F TOR 95-96, S0 STOP NC, S1 START NO paralel dengan K1 13-14, lalu koil K1">
+          <g fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="40" y1="20" x2="40" y2="230"/><line x1="480" y1="20" x2="480" y2="230"/>
+            <line x1="40" y1="70" x2="70" y2="70"/>
+            <line x1="70" y1="70" x2="82" y2="70"/><line x1="98" y1="70" x2="140" y2="70"/>
+            <line x1="82" y1="58" x2="82" y2="82"/><line x1="98" y1="58" x2="98" y2="82"/><line x1="80" y1="84" x2="100" y2="56"/>
+            <line x1="140" y1="70" x2="172" y2="70"/><line x1="188" y1="70" x2="230" y2="70"/>
+            <line x1="172" y1="58" x2="172" y2="82"/><line x1="188" y1="58" x2="188" y2="82"/><line x1="170" y1="84" x2="190" y2="56"/>
+            <line x1="230" y1="70" x2="262" y2="70"/><line x1="278" y1="70" x2="330" y2="70"/>
+            <line x1="262" y1="58" x2="262" y2="82"/><line x1="278" y1="58" x2="278" y2="82"/>
+            <line x1="230" y1="70" x2="230" y2="160"/><line x1="230" y1="160" x2="262" y2="160"/><line x1="278" y1="160" x2="330" y2="160"/><line x1="330" y1="160" x2="330" y2="70"/>
+            <line x1="262" y1="148" x2="262" y2="172"/><line x1="278" y1="148" x2="278" y2="172"/>
+            <line x1="330" y1="70" x2="380" y2="70"/><circle cx="400" cy="70" r="20"/><line x1="420" y1="70" x2="480" y2="70"/>
+          </g>
+          <g fill="currentColor" font-family="IBM Plex Mono,monospace" font-size="13" text-anchor="middle">
+            <text x="40" y="14">L / +24V</text><text x="480" y="14">N / 0V</text>
+            <text x="90" y="104">F1 95-96</text><text x="90" y="120" font-size="11" opacity=".7">TOR (NC)</text>
+            <text x="180" y="104">S0</text><text x="180" y="120" font-size="11" opacity=".7">STOP (NC)</text>
+            <text x="270" y="50">S1</text><text x="270" y="36" font-size="11" opacity=".7">START (NO)</text>
+            <text x="270" y="194">K1 13-14</text><text x="270" y="210" font-size="11" opacity=".7">pengunci (NO)</text>
+            <text x="400" y="75" font-weight="700">K1</text><text x="400" y="110" font-size="11" opacity=".7">A1 — A2</text>
+          </g>
+        </svg>
+        <ul>
+          <li>Kontak syarat berhenti (STOP, TOR, E-Stop) dipasang <b>seri</b> dan memakai kontak <b>NC</b>.</li>
+          <li>Kontak syarat jalan (START) dipasang <b>paralel</b> dengan kontak pengunci <b>NO</b>.</li>
+        </ul>
+      </div>
+
+      <div class="kartu" id="k-rangkaianmotor">
+        <h3><span class="t">DOL, Forward–Reverse, Star–Delta</span></h3>
+        <div class="tw"><table>
+          <tr><th>Rangkaian</th><th>Prinsip</th><th>Yang harus diperhatikan</th></tr>
+          <tr><td><b>DOL</b><br><small>Direct On Line</small></td><td>Motor langsung mendapat tegangan penuh lewat satu kontaktor.</td><td>Arus start besar (±5–7 × arus nominal). Umumnya untuk motor kecil.</td></tr>
+          <tr><td><b>Forward–Reverse</b></td><td>Dua kontaktor; kontaktor kedua <b>menukar dua fasa</b> (mis. L1 dan L3) sehingga arah putar berbalik.</td><td>Wajib <b>interlock</b>: kontak NC K1 di jalur koil K2 dan sebaliknya. Tanpa interlock, kedua kontaktor ON = hubung singkat antar fasa.</td></tr>
+          <tr><td><b>Star–Delta</b></td><td>Start dalam hubungan bintang (Y), setelah timer pindah ke segitiga (Δ).</td><td>Arus start turun menjadi ±1/3 dari DOL. Motor harus berating Δ pada tegangan jaringan (nameplate 380/660 V Δ/Y). Kontaktor Y dan Δ saling interlock.</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu" id="k-nameplate">
+        <h3><span class="t">Membaca nameplate motor 3 fasa</span></h3>
+        <div class="tw"><table>
+          <tr><th>Tulisan</th><th>Artinya</th></tr>
+          <tr><td>kW / HP</td><td>Daya keluaran mekanis di poros</td></tr>
+          <tr><td>V  Δ/Y  220/380</td><td>Hubung Δ di jaringan 220 V, hubung Y di jaringan 380 V</td></tr>
+          <tr><td>A  8,4/4,9</td><td>Arus nominal (In) sesuai hubungan di atas</td></tr>
+          <tr><td>cos φ</td><td>Faktor daya, umumnya 0,75–0,9</td></tr>
+          <tr><td>rpm / min⁻¹</td><td>Putaran poros pada beban penuh</td></tr>
+          <tr><td>IP55, Ins. Cl. F</td><td>Perlindungan debu/air dan kelas isolasi belitan</td></tr>
+        </table></div>
+        <div class="rumus">Arus motor     : In = P ÷ (√3 × V × cos φ × η)
+Putaran sinkron: ns = 120 × f ÷ p        (p = jumlah kutub)
+                 50 Hz: 2 kutub = 3000, 4 kutub = 1500, 6 kutub = 1000 rpm
+Torsi          : T (N·m) = 9550 × P (kW) ÷ n (rpm)</div>
+        <div class="ingat"><b>Setelan TOR:</b> atur pada arus nominal (In) di nameplate sesuai hubungan motor yang dipakai. Hitung cepat di <a href="#k-calc-motor">kalkulator arus motor</a>.</div>
+        <p><b>Terminal motor:</b> U1-V1-W1 dan W2-U2-V2. Hubung bintang: W2, U2, V2 disatukan. Hubung segitiga: U1–W2, V1–U2, W1–V2 dengan plat jumper.</p>
+      </div>
+    </section>
+
+    <!-- ================= BAB 7 ================= -->
+    <section class="bab" id="b-sensor" data-no="7" data-judul="Sensor & Aktuator">
+      <div class="babh"><span class="no">07</span><div><h2>Sensor &amp; Aktuator</h2><small>Memilih, memasang, dan menghubungkan ke PLC</small></div></div>
+
+      <div class="kartu" id="k-jenissensor">
+        <h3><span class="t">Jenis sensor dan kegunaannya</span></h3>
+        <div class="tw"><table>
+          <tr><th>Sensor</th><th>Mendeteksi</th><th>Contoh pemakaian</th></tr>
+          <tr><td>Limit switch</td><td>Sentuhan mekanis</td><td>Posisi akhir pintu, meja, silinder</td></tr>
+          <tr><td>Proximity induktif</td><td>Logam saja, jarak beberapa mm</td><td>Hitung baut, posisi bracket besi</td></tr>
+          <tr><td>Proximity kapasitif</td><td>Hampir semua bahan, termasuk cairan</td><td>Level biji plastik, air dalam botol</td></tr>
+          <tr><td>Fotoelektrik</td><td>Benda yang memotong/memantulkan cahaya</td><td>Deteksi kardus di conveyor</td></tr>
+          <tr><td>Reed switch / sensor silinder</td><td>Magnet di piston</td><td>Posisi silinder a0/a1</td></tr>
+          <tr><td>Ultrasonik</td><td>Jarak dengan gelombang suara</td><td>Level tangki, jarak benda</td></tr>
+          <tr><td>Encoder</td><td>Putaran dan posisi poros</td><td>Panjang potong, kecepatan conveyor</td></tr>
+          <tr><td>Termokopel / PT100</td><td>Suhu</td><td>Oven, mesin plastik</td></tr>
+        </table></div>
+        <p><b>Fotoelektrik 3 tipe:</b> <i>thru-beam</i> (pemancar dan penerima terpisah, paling jauh), <i>retro-reflective</i> (pakai reflektor), <i>diffuse</i> (pantulan dari benda itu sendiri, paling dekat).</p>
+      </div>
+
+      <div class="kartu warn" id="k-npnpnp">
+        <h3><span class="t">Sensor 3 kabel: NPN atau PNP?</span></h3>
+        <div class="tw"><table>
+          <tr><th>Warna kabel</th><th>Fungsi</th></tr>
+          <tr><td><span class="sw" style="background:#7b4a26"></span>Coklat (BN)</td><td>+24 VDC</td></tr>
+          <tr><td><span class="sw" style="background:#1565c0"></span>Biru (BU)</td><td>0 V</td></tr>
+          <tr><td><span class="sw" style="background:#111"></span>Hitam (BK)</td><td>Output sinyal</td></tr>
+          <tr><td><span class="sw" style="background:#fff"></span>Putih (WH)</td><td>Output kedua (sensor 4 kabel)</td></tr>
+        </table></div>
+        <div class="cols">
+          <div class="mini"><b>PNP (sourcing)</b><small>Saat aktif, kabel hitam mengeluarkan <b>+24 V</b>. Beban dipasang antara hitam dan 0 V. COM input PLC dihubungkan ke <b>0 V</b>.</small></div>
+          <div class="mini"><b>NPN (sinking)</b><small>Saat aktif, kabel hitam tersambung ke <b>0 V</b>. Beban dipasang antara +24 V dan hitam. COM input PLC dihubungkan ke <b>+24 V</b>.</small></div>
+        </div>
+        <div class="ingat"><b>Sensor menyala tapi PLC tidak membaca?</b> Hampir selalu karena tipe sensor (NPN/PNP) tidak cocok dengan cara COM input PLC disambung.</div>
+      </div>
+
+      <div class="kartu" id="k-aktuator">
+        <h3><span class="t">Aktuator yang sering dipakai</span></h3>
+        <div class="cols">
+          <div class="mini"><b>Motor induksi 3 fasa</b><small>Kuat, murah, perawatan ringan. Kecepatan diatur dengan inverter (VFD).</small></div>
+          <div class="mini"><b>Motor DC</b><small>Arah dibalik dengan menukar polaritas. Cocok untuk alat kecil 12/24 V.</small></div>
+          <div class="mini"><b>Motor stepper</b><small>Bergerak per langkah (mis. 1,8°/step). Posisi tepat tanpa sensor umpan balik.</small></div>
+          <div class="mini"><b>Motor servo</b><small>Posisi dan kecepatan presisi dengan encoder umpan balik. Dipakai di robot dan CNC.</small></div>
+          <div class="mini"><b>Solenoid valve</b><small>Membuka/menutup jalur udara atau cairan. Koil umum 24 VDC.</small></div>
+          <div class="mini"><b>Silinder pneumatik</b><small>Gerak lurus maju-mundur dengan udara bertekanan. Lihat Bab 8.</small></div>
+        </div>
+        <div class="ingat"><b>Beban induktif DC</b> (koil relay, solenoid) sebaiknya diberi dioda <i>freewheel</i> atau LED pelindung, supaya lonjakan tegangan saat OFF tidak merusak output transistor.</div>
+      </div>
+    </section>
+
+    <!-- ================= BAB 8 ================= -->
+    <section class="bab" id="b-pneu" data-no="8" data-judul="Elektropneumatik">
+      <div class="babh"><span class="no">08</span><div><h2>Elektropneumatik</h2><small>Udara tekan + sinyal listrik = gerak</small></div></div>
+
+      <div class="kartu" id="k-jalurudara">
+        <h3><span class="t">Jalur udara dari kompresor sampai silinder</span></h3>
+        <div class="rumus">Kompresor (+tangki) → jalur utama → F.R.L → katup (solenoid valve) → selang → silinder</div>
+        <div class="tw"><table>
+          <tr><th>Bagian</th><th>Fungsi</th></tr>
+          <tr><td>Kompresor</td><td>Memampatkan udara. Tangkinya menyimpan udara dan meredam fluktuasi tekanan.</td></tr>
+          <tr><td>Keran drain</td><td>Di titik terendah tangki, membuang air embun. Dibuka rutin.</td></tr>
+          <tr><td><b>F</b>ilter</td><td>Menyaring debu dan air dari udara.</td></tr>
+          <tr><td><b>R</b>egulator</td><td>Menurunkan dan menstabilkan tekanan kerja (dibaca di manometer).</td></tr>
+          <tr><td><b>L</b>ubricator</td><td>Menambah kabut oli untuk komponen yang memerlukan.</td></tr>
+          <tr><td>Katup</td><td>Mengarahkan udara ke sisi maju atau mundur silinder.</td></tr>
+          <tr><td>Flow control (cekik)</td><td>Mengatur kecepatan gerak silinder.</td></tr>
+        </table></div>
+        <div class="ingat"><b>Tekanan kerja praktik di lab TOI: 5 bar.</b> Perhatikan arah panah masuk–keluar pada unit F.R.L.</div>
+      </div>
+
+      <div class="kartu" id="k-tekanan">
+        <h3><span class="t">Satuan tekanan</span></h3>
+        <div class="rumus">1 bar = 100 kPa = 0,1 MPa = 0,1 N/mm² ≈ 14,5 psi ≈ 1,02 kgf/cm²
+5 bar = 500 kPa = 0,5 MPa ≈ 72,5 psi</div>
+      </div>
+
+      <div class="kartu" id="k-katup">
+        <h3><span class="t">Membaca nama dan nomor port katup</span></h3>
+        <p>Nama katup ditulis <b>jumlah port / jumlah posisi</b>. Contoh <b>5/2</b> = 5 lubang, 2 posisi.</p>
+        <div class="tw"><table>
+          <tr><th>Port</th><th>Fungsi</th></tr>
+          <tr><td><code>1</code></td><td>Suplai udara masuk (dulu: P)</td></tr>
+          <tr><td><code>2</code>, <code>4</code></td><td>Saluran kerja ke silinder (dulu: B, A)</td></tr>
+          <tr><td><code>3</code>, <code>5</code></td><td>Buang ke udara luar (dulu: R, S)</td></tr>
+          <tr><td><code>12</code>, <code>14</code></td><td>Sinyal pilot: 14 menghubungkan 1→4, 12 menghubungkan 1→2</td></tr>
+        </table></div>
+        <div class="tw"><table>
+          <tr><th>Katup</th><th>Dipakai untuk</th></tr>
+          <tr><td>3/2</td><td>Silinder kerja tunggal, sinyal on/off</td></tr>
+          <tr><td>5/2 single solenoid</td><td>Silinder kerja ganda; kembali dengan pegas saat Y1 OFF</td></tr>
+          <tr><td>5/2 double solenoid</td><td>Silinder kerja ganda; posisi "ingat" (memori) — Y1 maju, Y2 mundur</td></tr>
+          <tr><td>5/3</td><td>Silinder bisa berhenti di tengah langkah</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu warn" id="k-namalab">
+        <h3><span class="t">Penamaan di jobsheet dan simulasi SKEH</span></h3>
+        <div class="tw"><table>
+          <tr><th>Komponen</th><th>Penamaan</th></tr>
+          <tr><td>Solenoid katup</td><td><code>Y1</code>, <code>Y2</code></td></tr>
+          <tr><td>Limit switch / sensor silinder A</td><td><code>a0</code> (mundur penuh), <code>a1</code> (maju penuh)</td></tr>
+          <tr><td>Limit switch / sensor silinder B</td><td><code>b0</code>, <code>b1</code></td></tr>
+          <tr><td>Silinder di lab</td><td>MA25×100 (diameter 25 mm, langkah 100 mm)</td></tr>
+          <tr><td>Tekanan kerja</td><td>5 bar</td></tr>
+          <tr><td>Kabel</td><td>Kuning untuk daya, biru untuk kontrol</td></tr>
+        </table></div>
+        <p style="font-size:14px;color:var(--muted)">Huruf kecil a0/a1 dipakai supaya tidak tertukar dengan terminal koil kontaktor A1/A2.</p>
+      </div>
+
+      <div class="kartu" id="k-gaya">
+        <h3><span class="t">Gaya silinder</span></h3>
+        <div class="rumus">F = p × A          A = π × D² ÷ 4
+Gaya maju  : A = π × D² ÷ 4
+Gaya mundur: A = π × (D² − d²) ÷ 4      (d = diameter batang)</div>
+        <p><b>Contoh MA25 di 5 bar:</b> A = 3,14 × 25² ÷ 4 = 490,9 mm². F = 0,5 N/mm² × 490,9 mm² = <b>±245 N</b> (±25 kgf) saat maju, teoretis. Gaya nyata lebih kecil karena gesekan; untuk perencanaan, ambil sekitar 70–80%.</p>
+      </div>
+
+      <div class="kartu" id="k-pneuk3">
+        <h3><span class="t">K3 pneumatik</span></h3>
+        <ul>
+          <li>Tutup katup utama dan <b>buang tekanan</b> sebelum melepas selang, katup, atau silinder.</li>
+          <li>Pasang selang sampai benar-benar masuk ke fitting; tarik pelan untuk mengecek.</li>
+          <li>Selang terlepas saat bertekanan bisa "mengamuk". Tutup suplai udara dulu, jangan mencoba menangkapnya.</li>
+          <li>Jauhkan tangan dari ujung batang silinder dan area jepit.</li>
+          <li>Cek kebocoran dengan air sabun, bukan dengan tangan di depan lubang.</li>
+          <li>Pakai kacamata dan ear plug di dekat kompresor dan saluran buang.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= BAB 9 ================= -->
+    <section class="bab" id="b-plc" data-no="9" data-judul="PLC & SCADA">
+      <div class="babh"><span class="no">09</span><div><h2>PLC &amp; SCADA</h2><small>Logika ladder dan alamat I/O</small></div></div>
+
+      <div class="kartu" id="k-plcapa">
+        <h3><span class="t">PLC dan siklus scan</span></h3>
+        <p><b>PLC</b> (Programmable Logic Controller) adalah komputer industri yang menggantikan banyak relay dan timer. Bagiannya: catu daya, CPU, memori, modul input, modul output, dan port komunikasi.</p>
+        <div class="rumus">① Baca semua input → ② Jalankan program dari atas ke bawah → ③ Tulis semua output → ④ Diagnosa &amp; komunikasi → ulang</div>
+        <p>Satu putaran (scan) biasanya hanya beberapa milidetik.</p>
+      </div>
+
+      <div class="kartu" id="k-ladder">
+        <h3><span class="t">Simbol ladder dasar</span></h3>
+        <div class="tw"><table>
+          <tr><th>Simbol</th><th>Nama</th><th>Bekerja jika</th></tr>
+          <tr><td><code>--| |--</code></td><td>Kontak NO</td><td>Bit bernilai 1 → tersambung</td></tr>
+          <tr><td><code>--|/|--</code></td><td>Kontak NC</td><td>Bit bernilai 0 → tersambung</td></tr>
+          <tr><td><code>--( )--</code></td><td>Koil output</td><td>ON selama jalur di kirinya tersambung</td></tr>
+          <tr><td><code>--(S)--</code> / <code>--(R)--</code></td><td>Set / Reset</td><td>Set: ON dan tetap ON. Reset: OFF.</td></tr>
+          <tr><td><code>TON</code></td><td>Timer on-delay</td><td>Output ON setelah input ON selama waktu setel</td></tr>
+          <tr><td><code>TOF</code></td><td>Timer off-delay</td><td>Output tetap ON selama waktu setel setelah input OFF</td></tr>
+          <tr><td><code>CTU</code></td><td>Counter naik</td><td>Output ON setelah hitungan mencapai nilai setel</td></tr>
+        </table></div>
+        <div class="tw"><table>
+          <tr><th>Logika</th><th>Di ladder</th><th>Contoh</th></tr>
+          <tr><td>AND</td><td>Kontak seri</td><td>Pintu tertutup <b>dan</b> START ditekan</td></tr>
+          <tr><td>OR</td><td>Kontak paralel</td><td>START panel <b>atau</b> START remote</td></tr>
+          <tr><td>NOT</td><td>Kontak NC</td><td><b>Tidak</b> ada alarm</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu" id="k-alamat">
+        <h3><span class="t">Alamat I/O beberapa merek PLC</span></h3>
+        <div class="tw"><table>
+          <tr><th>Merek / seri</th><th>Input</th><th>Output</th><th>Memori bit</th></tr>
+          <tr><td>Schneider Modicon M221</td><td><code>%I0.0</code></td><td><code>%Q0.0</code></td><td><code>%M0</code></td></tr>
+          <tr><td>Siemens S7-1200</td><td><code>I0.0</code> (%I0.0)</td><td><code>Q0.0</code></td><td><code>M0.0</code></td></tr>
+          <tr><td>Mitsubishi FX</td><td><code>X0</code></td><td><code>Y0</code></td><td><code>M0</code></td></tr>
+          <tr><td>Omron CP1E / CP1L</td><td><code>0.00</code></td><td><code>100.00</code></td><td><code>W0.00</code></td></tr>
+        </table></div>
+        <p style="font-size:14px;color:var(--muted)">Mitsubishi memakai bilangan oktal untuk X/Y: X0–X7, lalu X10 (tidak ada X8, X9).</p>
+      </div>
+
+      <div class="kartu warn" id="k-plcjebak">
+        <h3><span class="t">Jebakan yang sering membuat program "tidak jalan"</span></h3>
+        <ul>
+          <li><b>Tombol STOP fisik dipasang NC.</b> Saat tidak ditekan, input PLC bernilai 1. Jadi di program pakai kontak <b>NO</b> untuk STOP. Kalau kamu pakai NC, motor tidak akan pernah jalan.</li>
+          <li><b>Double coil</b>: satu output ditulis di dua rung. Yang berlaku hanya rung terakhir.</li>
+          <li><b>Interlock hanya di program.</b> Untuk forward–reverse, interlock tetap dipasang juga secara hardware (kontak NC kontaktor).</li>
+          <li><b>Emergency Stop</b> harus memutus sumber kontrol/output secara fisik, tidak boleh hanya berupa input program.</li>
+          <li><b>COM output</b> belum diberi suplai: lampu output PLC menyala tapi beban diam.</li>
+          <li>Output relay PLC tidak untuk menyalakan motor langsung. Pakai kontaktor sebagai perantara.</li>
+        </ul>
+      </div>
+
+      <div class="kartu" id="k-scada">
+        <h3><span class="t">HMI, SCADA, dan komunikasi</span></h3>
+        <div class="cols">
+          <div class="mini"><b>HMI</b><small>Layar sentuh di mesin: tombol, indikator, setpoint, alarm. Terhubung ke satu atau beberapa PLC.</small></div>
+          <div class="mini"><b>SCADA</b><small>Software di komputer untuk memantau dan mengendalikan banyak mesin, menyimpan data, dan membuat laporan.</small></div>
+          <div class="mini"><b>Protokol</b><small>Modbus RTU (RS-485), Modbus TCP, Ethernet/IP, Profinet. Pastikan baud rate, alamat, dan IP sama.</small></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= BAB 10 ================= -->
+    <section class="bab" id="b-robot" data-no="10" data-judul="Robot Industri">
+      <div class="babh"><span class="no">10</span><div><h2>Robot Industri</h2><small>Istilah dan keselamatan dasar</small></div></div>
+
+      <div class="kartu" id="k-jenisrobot">
+        <h3><span class="t">Jenis robot industri</span></h3>
+        <div class="tw"><table>
+          <tr><th>Jenis</th><th>Ciri</th><th>Contoh tugas</th></tr>
+          <tr><td>Artikulasi (6 sumbu)</td><td>Seperti lengan manusia, jangkauan luas</td><td>Las, cat, bongkar-muat mesin</td></tr>
+          <tr><td>SCARA</td><td>Cepat di bidang datar</td><td>Perakitan elektronik, pick &amp; place</td></tr>
+          <tr><td>Kartesian / gantry</td><td>Gerak lurus X-Y-Z</td><td>Printer 3D, CNC, palletizing</td></tr>
+          <tr><td>Delta</td><td>Sangat cepat, beban ringan</td><td>Sortir makanan, kemasan</td></tr>
+          <tr><td>Cobot</td><td>Boleh bekerja berdampingan dengan manusia (dengan penilaian risiko)</td><td>Perakitan, inspeksi</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu" id="k-istilahrobot">
+        <h3><span class="t">Istilah robot</span></h3>
+        <div class="tw"><table>
+          <tr><th>Istilah</th><th>Artinya</th></tr>
+          <tr><td>DOF / axis</td><td>Jumlah sumbu gerak (derajat kebebasan)</td></tr>
+          <tr><td>Payload</td><td>Beban maksimal di ujung lengan, termasuk gripper</td></tr>
+          <tr><td>Reach</td><td>Jangkauan maksimal lengan</td></tr>
+          <tr><td>Repeatability</td><td>Ketepatan kembali ke titik yang sama (mis. ±0,02 mm)</td></tr>
+          <tr><td>End effector</td><td>Alat di ujung lengan: gripper, vacuum, torch las</td></tr>
+          <tr><td>TCP</td><td>Tool Center Point, titik kerja ujung alat</td></tr>
+          <tr><td>Teach pendant</td><td>Remote untuk menggerakkan (jog) dan mengajari titik ke robot</td></tr>
+          <tr><td>Home position</td><td>Posisi awal aman robot</td></tr>
+          <tr><td>Koordinat joint / world / tool</td><td>Gerak per sumbu / terhadap dasar robot / terhadap arah alat</td></tr>
+        </table></div>
+      </div>
+
+      <div class="kartu warn" id="k-robotk3">
+        <h3><span class="t">K3 robot</span></h3>
+        <ul>
+          <li>Jangan masuk area kerja (dalam pagar) saat robot dalam mode otomatis.</li>
+          <li>Mengajari titik dilakukan di mode manual kecepatan rendah, sambil menahan tombol <b>enabling</b> 3 posisi di teach pendant.</li>
+          <li>Lepas tombol enabling atau tekan keras-keras = robot berhenti. Itu fungsi keselamatannya.</li>
+          <li>Selalu tahu di mana tombol Emergency Stop terdekat.</li>
+          <li>Coba program baru dengan kecepatan rendah dulu, baru dinaikkan bertahap.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= BAB 11 ================= -->
+    <section class="bab" id="b-trouble" data-no="11" data-judul="Troubleshooting">
+      <div class="babh"><span class="no">11</span><div><h2>Troubleshooting</h2><small>Mencari kerusakan dengan kepala dingin</small></div></div>
+
+      <div class="kartu" id="k-langkahts">
+        <h3><span class="t">7 langkah mencari kerusakan</span></h3>
+        <ol class="steps">
+          <li><b>Amati gejala</b>: apa yang terjadi, kapan, dan apa yang seharusnya terjadi.</li>
+          <li><b>Tanya</b> operator: apa yang berubah sebelum rusak? Lihat catatan perbaikan sebelumnya.</li>
+          <li><b>Cek yang paling mudah dulu</b>: sumber listrik, MCB, sekring, E-Stop, TOR, tekanan udara.</li>
+          <li><b>Baca gambar</b> dan tentukan bagian yang mungkin rusak.</li>
+          <li><b>Bagi dua</b> rangkaian: ukur di tengah jalur. Masalah ada di sebelah kiri atau kanan? Ulangi.</li>
+          <li><b>Perbaiki</b> penyebabnya, bukan hanya gejalanya. Uji ulang sampai normal.</li>
+          <li><b>Catat</b>: gejala, penyebab, tindakan, komponen yang diganti.</li>
+        </ol>
+      </div>
+
+      <div class="kartu" id="k-gejala">
+        <h3><span class="t">Gejala dan kemungkinan penyebab</span></h3>
+        <div class="tw"><table>
+          <tr><th>Gejala</th><th>Cek dulu</th></tr>
+          <tr><td>MCB langsung trip saat dinaikkan</td><td>Hubung singkat L–N / L–L / L–PE; kabel terjepit; komponen terbakar</td></tr>
+          <tr><td>Kontaktor tidak menarik</td><td>Tegangan di A1–A2, STOP/E-Stop/TOR 95-96 terbuka, rating koil salah</td></tr>
+          <tr><td>Kontaktor menarik lalu lepas saat START dilepas</td><td>Kontak pengunci 13-14 belum disambung/salah nomor</td></tr>
+          <tr><td>Kontaktor berdengung keras</td><td>Tegangan koil kurang, inti kotor/berkarat, ring hubung singkat rusak</td></tr>
+          <tr><td>TOR sering trip</td><td>Setelan terlalu rendah, motor kelebihan beban, kehilangan satu fasa, bantalan macet</td></tr>
+          <tr><td>Motor berdengung tidak berputar</td><td>Satu fasa hilang, rotor macet, hubungan Y/Δ salah</td></tr>
+          <tr><td>Motor berputar terbalik</td><td>Urutan fasa; tukar dua fasa di sisi motor</td></tr>
+          <tr><td>Silinder lambat / lemah</td><td>Tekanan regulator, flow control terlalu tertutup, kebocoran selang/seal</td></tr>
+          <tr><td>Silinder tidak bergerak, koil Y1 ON</td><td>Suplai udara tertutup, selang tertukar port 2/4, katup macet</td></tr>
+          <tr><td>Sensor LED menyala tapi PLC tidak membaca</td><td>NPN/PNP tidak cocok dengan COM input, kabel hitam salah alamat</td></tr>
+          <tr><td>Output PLC menyala, beban diam</td><td>COM output tanpa suplai, sekring output, kabel ke beban putus</td></tr>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ================= BAB 12 ================= -->
+    <section class="bab" id="b-pkl" data-no="12" data-judul="Gambar Kerja & PKL">
+      <div class="babh"><span class="no">12</span><div><h2>Gambar Kerja &amp; Siap PKL</h2><small>Bekerja seperti orang industri</small></div></div>
+
+      <div class="kartu" id="k-gambar">
+        <h3><span class="t">Jenis gambar kerja listrik</span></h3>
+        <div class="tw"><table>
+          <tr><th>Gambar</th><th>Isinya</th></tr>
+          <tr><td>Diagram daya</td><td>Jalur arus besar: sumber → MCB → kontaktor → TOR → motor</td></tr>
+          <tr><td>Diagram kontrol</td><td>Logika: tombol, kontak, koil, lampu, timer</td></tr>
+          <tr><td>Diagram pengawatan (wiring)</td><td>Kabel dari terminal mana ke terminal mana, dengan alamat</td></tr>
+          <tr><td>Layout panel</td><td>Letak komponen, rel DIN, duct, dan ukuran panel</td></tr>
+          <tr><td>Daftar komponen (BOM)</td><td>Kode, nama, merek/tipe, jumlah</td></tr>
+        </table></div>
+        <p>Gambar teknik mesin di Indonesia umumnya memakai <b>proyeksi Eropa</b> (tampak atas digambar di bawah tampak depan).</p>
+      </div>
+
+      <div class="kartu warn" id="k-pkl">
+        <h3><span class="t">Siap PKL: kebiasaan yang dinilai DUDI</span></h3>
+        <ol>
+          <li>Datang <b>15 menit</b> sebelum jam kerja, absen tepat waktu.</li>
+          <li>Seragam dan APD lengkap sesuai aturan perusahaan.</li>
+          <li><b>Lapor</b> ke pembimbing saat datang, sebelum pulang, dan saat ada masalah.</li>
+          <li>Tanya dulu sebelum menyentuh mesin atau panel. "Izin, Pak/Bu, boleh saya…"</li>
+          <li>Kalau berbuat salah atau merusak, <b>segera lapor</b>. Menyembunyikan masalah jauh lebih berbahaya.</li>
+          <li>Isi <b>jurnal harian</b> setiap hari, jangan dirapel di akhir minggu.</li>
+          <li>Jaga rahasia perusahaan: jangan memotret mesin, gambar, atau produk tanpa izin.</li>
+          <li>HP dipakai sesuai aturan tempat PKL.</li>
+          <li>Kembalikan alat ke tempatnya dan jaga kebersihan area (5R).</li>
+        </ol>
+      </div>
+
+      <div class="kartu" id="k-jurnal">
+        <h3><span class="t">Format jurnal harian PKL</span></h3>
+        <div class="tw"><table>
+          <tr><th>Kolom</th><th>Contoh isi</th></tr>
+          <tr><td>Hari, tanggal</td><td>Senin, 12 Januari</td></tr>
+          <tr><td>Pekerjaan</td><td>Membantu mengganti kontaktor conveyor 2</td></tr>
+          <tr><td>Alat &amp; bahan</td><td>Obeng, multimeter, kontaktor 9 A koil 220 V</td></tr>
+          <tr><td>Langkah singkat</td><td>LOTO → lepas kabel + foto → pasang baru → cek → uji</td></tr>
+          <tr><td>Kendala</td><td>Nomor kabel lama pudar</td></tr>
+          <tr><td>Pelajaran hari ini</td><td>Foto wiring sebelum dilepas dan tulis ulang tube marking</td></tr>
+          <tr><td>Paraf pembimbing</td><td>✍</td></tr>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ================= BAB 13 ================= -->
+    <section class="bab" id="b-kalk" data-no="13" data-judul="Kalkulator & Konversi">
+      <div class="babh"><span class="no">13</span><div><h2>Kalkulator &amp; Konversi</h2><small>Hitung cepat di bengkel</small></div></div>
+
+      <div class="kartu calcbox" id="k-calc-ohm">
+        <h3><span class="t">Kalkulator Hukum Ohm</span></h3>
+        <p style="font-size:14px;color:var(--muted)">Isi dua kolom, kosongkan satu yang dicari.</p>
+        <div class="calc">
+          <label>Tegangan V (volt)<input id="oV" type="number" inputmode="decimal" step="any"></label>
+          <label>Arus I (ampere)<input id="oI" type="number" inputmode="decimal" step="any"></label>
+          <label>Hambatan R (ohm)<input id="oR" type="number" inputmode="decimal" step="any"></label>
+        </div>
+        <div class="row" style="display:flex;gap:8px"><button class="btn" id="oGo">Hitung</button><button class="btn ghost" id="oClr">Bersihkan</button></div>
+        <div class="hasil" id="oOut">—</div>
+      </div>
+
+      <div class="kartu calcbox" id="k-calc-motor">
+        <h3><span class="t">Arus nominal motor 3 fasa</span></h3>
+        <div class="calc">
+          <label>Daya P (kW)<input id="mP" type="number" inputmode="decimal" step="any" value="2.2"></label>
+          <label>Tegangan L–L (V)<input id="mV" type="number" inputmode="decimal" step="any" value="380"></label>
+          <label>cos φ<input id="mC" type="number" inputmode="decimal" step="any" value="0.85"></label>
+          <label>Efisiensi η (0–1)<input id="mE" type="number" inputmode="decimal" step="any" value="0.85"></label>
+        </div>
+        <div class="hasil" id="mOut">—</div>
+        <p style="font-size:14px;color:var(--muted)">Hasil hitungan hanya perkiraan. Kalau ada nameplate, yang dipakai tetap arus di nameplate.</p>
+      </div>
+
+      <div class="kartu calcbox" id="k-calc-silinder">
+        <h3><span class="t">Gaya silinder pneumatik</span></h3>
+        <div class="calc">
+          <label>Diameter piston D (mm)<input id="sD" type="number" inputmode="decimal" step="any" value="25"></label>
+          <label>Diameter batang d (mm)<input id="sd" type="number" inputmode="decimal" step="any" value="10"></label>
+          <label>Tekanan p (bar)<input id="sP" type="number" inputmode="decimal" step="any" value="5"></label>
+        </div>
+        <div class="hasil" id="sOut">—</div>
+      </div>
+
+      <div class="kartu calcbox" id="k-calc-res">
+        <h3><span class="t">Pembaca kode warna resistor</span></h3>
+        <div class="resistor" aria-hidden="true"><span class="lead"></span><span class="body"><i id="rb1"></i><i id="rb2"></i><i id="rb3"></i><i id="rb4" class="gap"></i></span><span class="lead"></span></div>
+        <div class="calc">
+          <label>Gelang 1<select id="r1"></select></label>
+          <label>Gelang 2<select id="r2"></select></label>
+          <label>Pengali<select id="r3"></select></label>
+          <label>Toleransi<select id="r4"></select></label>
+        </div>
+        <div class="hasil" id="rOut">—</div>
+      </div>
+
+      <div class="kartu calcbox" id="k-calc-tekanan">
+        <h3><span class="t">Konversi tekanan</span></h3>
+        <div class="calc">
+          <label>Nilai<input id="pVal" type="number" inputmode="decimal" step="any" value="5"></label>
+          <label>Satuan<select id="pUnit"><option value="bar">bar</option><option value="kpa">kPa</option><option value="mpa">MPa</option><option value="psi">psi</option><option value="kgf">kgf/cm²</option></select></label>
+        </div>
+        <div class="hasil" id="pOut">—</div>
+      </div>
+
+      <div class="kartu" id="k-konversi">
+        <h3><span class="t">Tabel konversi cepat</span></h3>
+        <div class="tw"><table>
+          <tr><th>Besaran</th><th>Konversi</th></tr>
+          <tr><td>Panjang</td><td>1 inci = 25,4 mm · 1 ft = 304,8 mm</td></tr>
+          <tr><td>Daya</td><td>1 HP = 0,746 kW · 1 kW = 1,34 HP · 1 PK ≈ 0,735 kW</td></tr>
+          <tr><td>Gaya</td><td>1 kgf ≈ 9,81 N · 10 N ≈ 1 kgf</td></tr>
+          <tr><td>Torsi</td><td>1 kgf·m ≈ 9,81 N·m</td></tr>
+          <tr><td>Suhu</td><td>°F = °C × 9/5 + 32 · K = °C + 273</td></tr>
+          <tr><td>Energi</td><td>1 kWh = 1000 W selama 1 jam = 3,6 MJ</td></tr>
+        </table></div>
+        <div class="tw"><table>
+          <tr><th>AWG</th><th>Luas penampang</th></tr>
+          <tr><td>22</td><td>0,33 mm²</td></tr>
+          <tr><td>20</td><td>0,52 mm²</td></tr>
+          <tr><td>18</td><td>0,82 mm²</td></tr>
+          <tr><td>16</td><td>1,31 mm²</td></tr>
+          <tr><td>14</td><td>2,08 mm²</td></tr>
+          <tr><td>12</td><td>3,31 mm²</td></tr>
+          <tr><td>10</td><td>5,26 mm²</td></tr>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ================= BAB 14 ================= -->
+    <section class="bab" id="b-kamus" data-no="14" data-judul="Kamus Istilah">
+      <div class="babh"><span class="no">14</span><div><h2>Kamus Istilah Industri</h2><small>Bahasa yang akan kamu dengar di pabrik</small></div></div>
+
+      <div class="kartu" id="k-kamus">
+        <h3><span class="t">A–Z istilah</span></h3>
+        <div class="tw"><table id="kamusTbl">
+          <tr><th>Istilah</th><th>Arti</th></tr>
+          <tr><td>Breakdown</td><td>Mesin berhenti karena rusak</td></tr>
+          <tr><td>Commissioning</td><td>Pengujian dan penyerahan mesin/sistem baru sampai siap produksi</td></tr>
+          <tr><td>Cycle time</td><td>Waktu satu siklus kerja mesin</td></tr>
+          <tr><td>Downtime</td><td>Lama waktu mesin tidak berproduksi</td></tr>
+          <tr><td>Feedback</td><td>Umpan balik, sinyal hasil yang dikirim kembali ke pengendali</td></tr>
+          <tr><td>Interlock</td><td>Penguncian agar dua keadaan berbahaya tidak terjadi bersamaan</td></tr>
+          <tr><td>Jog</td><td>Menggerakkan mesin/robot sedikit demi sedikit secara manual</td></tr>
+          <tr><td>Kaizen</td><td>Perbaikan kecil yang terus-menerus</td></tr>
+          <tr><td>LOTO</td><td>Lock Out Tag Out, prosedur penguncian energi</td></tr>
+          <tr><td>Near miss</td><td>Kejadian hampir celaka</td></tr>
+          <tr><td>NO / NC</td><td>Normally Open / Normally Closed, keadaan kontak saat tidak dioperasikan</td></tr>
+          <tr><td>Preventive maintenance</td><td>Perawatan terjadwal sebelum rusak</td></tr>
+          <tr><td>Corrective maintenance</td><td>Perbaikan setelah terjadi kerusakan</td></tr>
+          <tr><td>Rung</td><td>Satu baris logika pada program ladder</td></tr>
+          <tr><td>Setpoint</td><td>Nilai target yang diatur, mis. suhu 60 °C atau tekanan 5 bar</td></tr>
+          <tr><td>SOP</td><td>Standard Operating Procedure, urutan kerja baku</td></tr>
+          <tr><td>Spare part</td><td>Suku cadang</td></tr>
+          <tr><td>Trip</td><td>Pengaman memutus rangkaian karena gangguan</td></tr>
+          <tr><td>Troubleshooting</td><td>Mencari dan mengatasi penyebab kerusakan</td></tr>
+          <tr><td>Wiring</td><td>Pengawatan, pemasangan kabel</td></tr>
+          <tr><td>Work instruction (WI)</td><td>Instruksi kerja rinci untuk satu pekerjaan</td></tr>
+        </table></div>
+      </div>
+    </section>
+
+    <p class="empty" id="kosong">Tidak ada isi yang cocok. Coba kata lain, mis. "motor", "silinder", atau "PLC".</p>
+  </main>
+</div>
+
+<button class="toTop" id="toTop" aria-label="Kembali ke atas">↑</button>
+<footer class="credit">Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</footer>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+  const fmt = (n, d=2) => Number(n).toLocaleString('id-ID', {maximumFractionDigits:d});
+
+  /* ---------- tinggi header untuk bar alat ---------- */
+  const setHb = () => { const h = document.querySelector('.bar').offsetHeight; document.documentElement.style.setProperty('--hb', h + 'px'); document.documentElement.style.scrollPaddingTop = (h + 60) + 'px'; };
+  setHb(); addEventListener('resize', setHb);
+
+  /* ---------- tema ---------- */
+  $('#temaBtn').onclick = () => {
+    const light = document.documentElement.classList.toggle('light');
+    try{ localStorage.setItem('bst-tema', light ? 'light' : 'dark'); }catch(e){}
+  };
+
+  /* ---------- pemilik buku ---------- */
+  [['#pNama','bst-nama'],['#pKelas','bst-kelas']].forEach(([sel,key])=>{
+    const el = $(sel); el.value = store.get(key, '');
+    el.addEventListener('input', () => store.set(key, el.value));
+  });
+
+  /* ---------- daftar isi ---------- */
+  const toc = $('#toc');
+  const babs = $$('section.bab');
+  babs.forEach(b => {
+    const a = document.createElement('a');
+    a.href = '#' + b.id;
+    a.innerHTML = '<span>' + String(b.dataset.no).padStart(2,'0') + '</span>' + b.dataset.judul.replace(/&/g,'&amp;');
+    a.addEventListener('click', () => toc.classList.remove('open'));
+    toc.appendChild(a);
+  });
+  $('#tocBtn').onclick = e => { e.stopPropagation(); toc.classList.toggle('open'); };
+  document.addEventListener('click', e => { if(toc.classList.contains('open') && !toc.contains(e.target)) toc.classList.remove('open'); });
+  const links = [...toc.querySelectorAll('a')];
+  if('IntersectionObserver' in window){
+    const io = new IntersectionObserver(ents => {
+      ents.forEach(en => { if(en.isIntersecting){ links.forEach(l => l.classList.toggle('on', l.hash === '#' + en.target.id)); } });
+    }, {rootMargin:'-30% 0px -60% 0px'});
+    babs.forEach(b => io.observe(b));
+  }
+
+  /* ---------- tandai ---------- */
+  let fav = new Set(store.get('bst-tandai', []));
+  const kartu = $$('.kartu');
+  kartu.forEach(k => {
+    const h = k.querySelector('h3'); if(!h) return;
+    const b = document.createElement('button');
+    b.className = 'mark'; b.type = 'button'; b.title = 'Tandai kartu ini';
+    const paint = () => { const on = fav.has(k.id); b.classList.toggle('on', on); b.textContent = on ? '★' : '☆'; b.setAttribute('aria-pressed', on); };
+    b.onclick = () => { fav.has(k.id) ? fav.delete(k.id) : fav.add(k.id); store.set('bst-tandai', [...fav]); paint(); if(onlyFav) filter(); };
+    paint(); h.appendChild(b);
+  });
+
+  /* ---------- pencarian ---------- */
+  let onlyFav = false;
+  const q = $('#q'), hit = $('#hitung'), kosong = $('#kosong');
+  function filter(){
+    const kata = q.value.trim().toLowerCase();
+    let n = 0;
+    kartu.forEach(k => {
+      const ok = (!kata || k.textContent.toLowerCase().includes(kata)) && (!onlyFav || fav.has(k.id));
+      k.classList.toggle('hidden', !ok); if(ok) n++;
+    });
+    babs.forEach(b => {
+      const vis = b.querySelectorAll('.kartu:not(.hidden)').length;
+      b.classList.toggle('hidden', !vis && (kata || onlyFav));
+    });
+    const aktif = kata || onlyFav;
+    $('#sampul').classList.toggle('hidden', !!aktif);
+    kosong.style.display = aktif && !n ? 'block' : 'none';
+    hit.textContent = '';
+    if(aktif) window.scrollTo({top:0});
+  }
+  q.addEventListener('input', filter);
+  $('#favBtn').onclick = () => {
+    onlyFav = !onlyFav; $('#favBtn').setAttribute('aria-pressed', onlyFav);
+    if(onlyFav && !fav.size){ onlyFav = false; $('#favBtn').setAttribute('aria-pressed', false); q.value=''; filter(); hit.textContent = 'Belum ada kartu yang ditandai. Tekan ☆ di pojok kartu untuk menandai.'; return; }
+    filter();
+  };
+  hit.textContent = babs.length + ' bab · ' + kartu.length + ' kartu · tekan ☆ untuk menandai kartu favoritmu';
+
+  /* ---------- tombol ke atas ---------- */
+  const tt = $('#toTop');
+  addEventListener('scroll', () => tt.classList.toggle('show', scrollY > 800), {passive:true});
+  tt.onclick = () => scrollTo({top:0});
+
+  /* ---------- kalkulator ohm ---------- */
+  const oV=$('#oV'), oI=$('#oI'), oR=$('#oR'), oOut=$('#oOut');
+  const num = el => el.value.trim() === '' ? null : parseFloat(el.value);
+  $('#oGo').onclick = () => {
+    let V=num(oV), I=num(oI), R=num(oR);
+    const isi = [V,I,R].filter(x => x !== null && !isNaN(x)).length;
+    oOut.classList.remove('err');
+    if(isi !== 2){ oOut.classList.add('err'); oOut.textContent = 'Isi tepat dua kolom, kosongkan satu yang dicari.'; return; }
+    if(V === null){ V = I*R; oV.value = +V.toPrecision(6); }
+    else if(I === null){ if(!R){ oOut.classList.add('err'); oOut.textContent='R tidak boleh 0.'; return; } I = V/R; oI.value = +I.toPrecision(6); }
+    else { if(!I){ oOut.classList.add('err'); oOut.textContent='I tidak boleh 0.'; return; } R = V/I; oR.value = +R.toPrecision(6); }
+    oOut.innerHTML = 'V = ' + fmt(V,4) + ' V · I = ' + fmt(I,4) + ' A (' + fmt(I*1000,2) + ' mA) · R = ' + fmt(R,3) + ' Ω<br>Daya P = V × I = <b>' + fmt(V*I,3) + ' W</b>';
+  };
+  $('#oClr').onclick = () => { oV.value = oI.value = oR.value = ''; oOut.classList.remove('err'); oOut.textContent = '—'; };
+
+  /* ---------- kalkulator motor ---------- */
+  function motor(){
+    const P=parseFloat($('#mP').value)*1000, V=parseFloat($('#mV').value), c=parseFloat($('#mC').value), e=parseFloat($('#mE').value);
+    const out=$('#mOut'); out.classList.remove('err');
+    if(!(P>0&&V>0&&c>0&&c<=1&&e>0&&e<=1)){ out.classList.add('err'); out.textContent='Periksa isian: semua harus > 0, cos φ dan η maksimal 1.'; return; }
+    const In = P/(Math.sqrt(3)*V*c*e);
+    out.innerHTML = 'In ≈ <b>' + fmt(In,2) + ' A</b> · arus start DOL ±' + fmt(In*5,1) + '–' + fmt(In*7,1) + ' A<br>Daya listrik masuk ≈ ' + fmt(P/e/1000,2) + ' kW · setel TOR ≈ ' + fmt(In,1) + ' A';
+  }
+  ['#mP','#mV','#mC','#mE'].forEach(s => $(s).addEventListener('input', motor)); motor();
+
+  /* ---------- kalkulator silinder ---------- */
+  function silinder(){
+    const D=parseFloat($('#sD').value), d=parseFloat($('#sd').value)||0, p=parseFloat($('#sP').value);
+    const out=$('#sOut'); out.classList.remove('err');
+    if(!(D>0&&p>0&&d>=0&&d<D)){ out.classList.add('err'); out.textContent='Periksa isian: D dan p > 0, d lebih kecil dari D.'; return; }
+    const A1=Math.PI*D*D/4, A2=Math.PI*(D*D-d*d)/4, s=p*0.1;
+    out.innerHTML = 'Maju: A = ' + fmt(A1,1) + ' mm² → F = <b>' + fmt(A1*s,0) + ' N</b> (±' + fmt(A1*s/9.81,1) + ' kgf)<br>Mundur: A = ' + fmt(A2,1) + ' mm² → F = <b>' + fmt(A2*s,0) + ' N</b> (±' + fmt(A2*s/9.81,1) + ' kgf)<br><small>Teoretis; gaya nyata ±70–80% karena gesekan.</small>';
+  }
+  ['#sD','#sd','#sP'].forEach(s => $(s).addEventListener('input', silinder)); silinder();
+
+  /* ---------- resistor ---------- */
+  const W=[['Hitam','#111'],['Coklat','#7b4a26'],['Merah','#d32f2f'],['Oranye','#f57c00'],['Kuning','#fdd835'],['Hijau','#2e7d32'],['Biru','#1565c0'],['Ungu','#7b1fa2'],['Abu-abu','#9e9e9e'],['Putih','#fafafa']];
+  const MUL=[['Hitam','#111',1],['Coklat','#7b4a26',10],['Merah','#d32f2f',100],['Oranye','#f57c00',1e3],['Kuning','#fdd835',1e4],['Hijau','#2e7d32',1e5],['Biru','#1565c0',1e6],['Emas','#c9a227',0.1],['Perak','#c0c0c0',0.01]];
+  const TOL=[['Emas','#c9a227','±5%'],['Perak','#c0c0c0','±10%'],['Coklat','#7b4a26','±1%'],['Merah','#d32f2f','±2%'],['Hijau','#2e7d32','±0,5%']];
+  const fill=(sel,arr,def)=>{ const el=$(sel); arr.forEach((w,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=w[0]; el.appendChild(o); }); el.value=def; return el; };
+  const r1=fill('#r1',W,4), r2=fill('#r2',W,7), r3=fill('#r3',MUL,2), r4=fill('#r4',TOL,0);
+  function ohmStr(v){ if(v>=1e6) return fmt(v/1e6,2)+' MΩ'; if(v>=1e3) return fmt(v/1e3,2)+' kΩ'; return fmt(v,2)+' Ω'; }
+  function resistor(){
+    const a=+r1.value, b=+r2.value, m=MUL[+r3.value], t=TOL[+r4.value];
+    $('#rb1').style.background=W[a][1]; $('#rb2').style.background=W[b][1]; $('#rb3').style.background=m[1]; $('#rb4').style.background=t[1];
+    const v=(a*10+b)*m[2];
+    $('#rOut').innerHTML = '<b>' + ohmStr(v) + '</b> ' + t[2] + ' · kode ' + a + b + ' × ' + fmt(m[2],2);
+  }
+  [r1,r2,r3,r4].forEach(el => el.addEventListener('change', resistor)); resistor();
+
+  /* ---------- tekanan ---------- */
+  const KE_BAR={bar:1,kpa:0.01,mpa:10,psi:0.0689476,kgf:0.980665};
+  function tekanan(){
+    const v=parseFloat($('#pVal').value), u=$('#pUnit').value, out=$('#pOut');
+    if(isNaN(v)){ out.textContent='—'; return; }
+    const bar=v*KE_BAR[u];
+    out.innerHTML = fmt(bar,3)+' bar · '+fmt(bar*100,1)+' kPa · '+fmt(bar/10,3)+' MPa · '+fmt(bar/KE_BAR.psi,1)+' psi · '+fmt(bar/KE_BAR.kgf,2)+' kgf/cm²';
+  }
+  $('#pVal').addEventListener('input', tekanan); $('#pUnit').addEventListener('change', tekanan); tekanan();
+})();
+</script>
+</body>
+</html>

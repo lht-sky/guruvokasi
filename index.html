@@ -75,8 +75,11 @@
    isi judul, folder, kelompok, dan keterangan.
    - folder : nama folder di repo (huruf besar/kecil harus sama persis)
    - kosongkan folder ("") jika simulasinya belum diunggah → tampil "Segera hadir"
+   - aksi  : (opsional) teks tombol, default "Buka simulasi →"
    ========================================================= */
 const SIMULASI = [
+  { judul:"Buku Saku Anak TOI", folder:"buku-saku-toi", kelompok:"Buku Saku & Referensi", ket:"Pegangan cepat murid: K3LH, rumus listrik, nomor terminal kontaktor, sensor NPN/PNP, pneumatik, PLC, troubleshooting, siap PKL, dan kalkulator.", aksi:"Buka buku saku →" },
+
   { judul:"Kode Warna Resistor", folder:"simulasi-3D-kode-warna-resistor", kelompok:"Dasar Kelistrikan & Elektronika", ket:"Membaca nilai resistor 4 dan 5 gelang warna." },
   { judul:"Multimeter Digital", folder:"simulasi-3D-multimeter-digital", kelompok:"Dasar Kelistrikan & Elektronika", ket:"Mengenal fungsi selektor dan cara mengukur tegangan, arus, serta resistansi." },
   { judul:"Hukum Ohm & Rangkaian Seri–Paralel", folder:"simulasi-3d-hukum-ohm", kelompok:"Dasar Kelistrikan & Elektronika", ket:"Hubungan V, I, R pada rangkaian seri dan paralel." },
@@ -128,7 +131,7 @@ function render(){
     html += `<h2>${esc(k)}</h2><div class="grid">`;
     isi.forEach(s=>{
       if(s.folder){
-        html += `<a class="card" href="./${encodeURI(s.folder)}/"><span class="tag">${esc(k)}</span><h3>${esc(s.judul)}</h3><p>${esc(s.ket)}</p><span class="go">Buka simulasi →</span></a>`;
+        html += `<a class="card" href="./${encodeURI(s.folder)}/"><span class="tag">${esc(k)}</span><h3>${esc(s.judul)}</h3><p>${esc(s.ket)}</p><span class="go">${esc(s.aksi || 'Buka simulasi →')}</span></a>`;
       } else {
         html += `<div class="card" aria-disabled="true"><span class="tag">${esc(k)}</span><h3>${esc(s.judul)}</h3><p>${esc(s.ket)}</p><span class="go">Segera hadir</span></div>`;
       }
