@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi 3D Listrik Dasar: AC–DC &amp; Baterai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e3e8ec; --ink:#14202b; --muted:#56636e; --line:#d2dae0; --soft:#eef2f5;
+  --accent:#0a62a8; --yellow:#f3b52f; --ok:#24834b; --okbg:#eef8f1; --bad:#bb3a2c; --badbg:#fdf0ee; --warn:#b8650f; --warnbg:#fff5e6;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+header.top{background:#171f28;color:#e6ebf0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #2d3946}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand img{width:44px;height:44px;flex:none}
+.eyebrow2{font:600 12px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+h1{margin:2px 0 0;font:700 24px/1.1 var(--f-display);letter-spacing:.01em}
+.meta{display:grid;justify-items:end;gap:4px;text-align:right;flex:none}
+.dims{font:500 12px var(--f-mono);color:var(--yellow);border:1px solid #4a3d18;border-radius:4px;padding:3px 7px;white-space:nowrap}
+.guru{font-size:12.5px;color:#c3ccd5}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(380px,1fr);gap:16px;padding:16px;max-width:1440px;margin:0 auto;align-items:start}
+.stage{position:sticky;top:12px}
+.viewer{position:relative;height:min(74vh,660px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(#eef2f5,#c9d2da)}
+#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;font:600 12px/1.25 var(--f-body);background:rgba(20,32,43,.88);color:#fff;border-radius:7px;padding:3px 7px;white-space:nowrap;text-align:center}
+.lbl small{display:block;font:500 11px var(--f-mono);color:#f3d36a}
+.lbl.pos{background:#c42b22}.lbl.neg{background:#23272c}.lbl.big{font-size:14px;padding:5px 10px;background:#0a62a8}
+.lbl.hot{background:#b8321f}
+.hud{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.tool{border:1px solid var(--line);background:rgba(251,252,253,.94);padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+#toast{position:absolute;right:10px;top:52px;z-index:5;width:min(calc(100% - 20px),380px);display:grid;gap:6px;pointer-events:none}
+.tst{background:var(--ink);color:#fff;padding:9px 13px;border-radius:8px;font-size:13.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.22);border-left:4px solid #4aa3e0;animation:tin .25s ease-out}
+.tst b{display:block}.tst.bad{border-left-color:#ff5a45}.tst.ok{border-left-color:#4cc47e}.tst.warn{border-left-color:#f3b52f}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+.vchip{position:absolute;left:10px;bottom:10px;background:rgba(20,32,43,.92);color:#e6ebf0;border-radius:8px;padding:7px 11px;font:600 13px var(--f-mono);display:flex;gap:14px;flex-wrap:wrap}
+.vchip b{color:var(--yellow);font-size:16px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#dfe5ea;color:var(--muted);font-weight:600;text-align:center;padding:20px}
+.panel{min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#d6dde4;border-radius:10px;padding:4px;margin-bottom:12px}
+.tabs button{border:0;background:transparent;border-radius:7px;padding:7px 2px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.2}
+.tabs button .n{display:block;font:600 11px var(--f-mono);color:#8a97a2}
+.tabs button.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,32,43,.12)}
+.tabs button.done .n::after{content:" ✓";color:var(--ok)}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.card h2{font:700 21px/1.1 var(--f-display);letter-spacing:.02em;margin:0 0 6px}
+.card h3{font:700 15px/1.2 var(--f-display);letter-spacing:.04em;margin:12px 0 4px;color:var(--accent);text-transform:uppercase}
+.muted{color:var(--muted);font-size:13.5px;margin:4px 0 0;line-height:1.5}
+.goal{background:var(--soft);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;font-size:14px;margin:6px 0 4px}
+.seg{display:flex;flex-wrap:wrap;background:var(--soft);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:7px 8px;border-radius:6px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.lbl2{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.fb{border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5;background:var(--soft);margin-top:10px}
+.fb:empty{display:none}.fb.ok{background:var(--okbg)}.fb.bad{background:var(--badbg)}.fb.warn{background:var(--warnbg)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px;margin-top:10px}
+.kv div{background:var(--soft);border-radius:6px;padding:7px 9px}
+.kv dt{font-size:11.5px;color:var(--muted)}
+.kv dd{margin:0;font:600 15px var(--f-mono)}
+.kv dd.bad{color:var(--bad)}
+.analog{background:#f4f9fd;border:1px solid #cfe2f1;border-radius:10px;margin-top:10px;padding:8px}
+.analog canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.analog .cap{font-size:13px;color:#24506f;padding:4px 4px 0;line-height:1.45}
+.map{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px;margin-top:6px}
+.map b{color:var(--accent)}
+.cells{display:flex;gap:6px;flex-wrap:wrap}
+.cells button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;font:600 13px var(--f-mono);cursor:pointer}
+.cells button.rev{background:var(--badbg);border-color:#e4a59c;color:var(--bad)}
+#scopeA{display:block;width:100%;height:auto;aspect-ratio:10/5;background:#06110d;border-radius:8px;margin-top:10px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.slider{display:flex;align-items:center;gap:10px}
+.slider output{font:600 14px var(--f-mono);min-width:72px;text-align:right;color:var(--accent)}
+/* tes */
+.qnav{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0 10px}
+.qnav span{width:26px;height:26px;border-radius:6px;background:var(--soft);display:grid;place-items:center;font:600 12px var(--f-mono);color:var(--muted)}
+.qnav span.cur{background:var(--ink);color:#fff}.qnav span.ans{background:#d6e6f5;color:var(--accent)}
+.qtext{font-weight:600;font-size:16px;line-height:1.45}
+.opts{display:grid;gap:7px;margin-top:10px}
+.opt{text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:10px 12px;font-size:14.5px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.opt .k{font:700 13px var(--f-mono);background:var(--soft);border-radius:5px;padding:1px 7px;flex:none}
+.opt.on{border-color:var(--accent);background:#eef5fc}
+.opt.on .k{background:var(--accent);color:#fff}
+.conf{display:flex;gap:6px;margin-top:10px}
+.conf button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:8px;font-weight:600;font-size:13.5px;cursor:pointer}
+.conf button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.field{display:grid;gap:4px;margin-top:8px}
+.field input{border:1.5px solid var(--line);border-radius:8px;padding:9px 12px}
+.prof{list-style:none;margin:8px 0 0;padding:0}
+.prof li{border-top:1px solid var(--line);padding:8px 0;font-size:14px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.prof li:first-child{border-top:0}
+.tag{font:600 11.5px var(--f-mono);padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag.sp{background:var(--badbg);color:var(--bad)}.tag.bt{background:var(--warnbg);color:var(--warn)}.tag.ok{background:var(--okbg);color:var(--ok)}.tag.rg{background:#eef5fc;color:var(--accent)}
+.prof .go{font-size:12.5px;color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:0;padding:0}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:13.5px;margin-top:8px}
+.bars i{display:block;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.bars i b{display:block;height:100%;background:var(--accent)}
+.bars i b.post{background:var(--ok)}
+textarea.rekap{width:100%;min-height:150px;border:1px solid var(--line);border-radius:8px;padding:9px;font:500 12.5px/1.5 var(--f-mono);background:#fbfcfd;margin-top:8px}
+/* sortir */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+.sc{border:1.5px solid var(--line);border-radius:10px;padding:9px;background:#fff;display:grid;gap:6px}
+.sc .ic{font-size:26px;line-height:1}
+.sc .nm{font-weight:600;font-size:13.5px;line-height:1.3}
+.sc .bb{display:flex;gap:4px}
+.sc .bb button{flex:1;border:1px solid var(--line);background:var(--soft);border-radius:6px;padding:5px;font:700 12.5px var(--f-mono);cursor:pointer}
+.sc.right{border-color:#9fd0b2;background:var(--okbg)}.sc.wrong{border-color:#e4a59c;background:var(--badbg)}
+.sc .why{font-size:12px;color:var(--muted);line-height:1.35}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px;line-height:1.6}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:0;gap:0}
+  .stage{top:0;z-index:20}
+  .viewer{height:36vh;min-height:230px;border-radius:0;border:none;border-bottom:1px solid var(--line)}
+  .panel{padding:12px}
+  header.top{padding:8px 12px}
+  .brand img{width:36px;height:36px}
+  h1{font-size:18px}.eyebrow2{font-size:10.5px}
+  .meta .guru,.dims .full{display:none}
+  .tabs button{font-size:12px}
+  .vchip{font-size:11.5px;gap:10px;padding:5px 8px}.vchip b{font-size:14px}
+}
+</style>
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "zasgkur533");
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <img src="data:image/webp;base64,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" alt="Logo Teknik Otomasi Industri">
+    <div>
+      <div class="eyebrow2">SMK 2 Triple J · Teknik Otomasi Industri</div>
+      <h1>Simulasi 3D Listrik Dasar: AC–DC &amp; Baterai</h1>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="dims"><span class="full">DK2 · Konsep Dasar Kelistrikan · </span>Fase E</span>
+    <span class="guru">Guru pengampu: Ade Irma Suryani, S.T., Gr.</span>
+  </div>
+</header>
+<main class="layout">
+  <section class="stage">
+    <div class="viewer" id="viewer">
+      <canvas id="c" aria-label="Model 3D rangkaian baterai atau sumber AC/DC"></canvas>
+      <div id="labels"></div>
+      <div class="hud"><button class="tool" id="bReset">⌂</button></div>
+      <div id="toast"></div>
+      <div class="vchip" id="vchip"></div>
+      <div id="loading">Memuat model 3D…</div>
+    </div>
+  </section>
+  <section class="panel">
+    <nav class="tabs" id="tabs"></nav>
+    <div id="pane"></div>
+  </section>
+</main>
+<footer>Media pembelajaran interaktif · Program Keahlian Teknik Elektronika · Konsentrasi Teknik Otomasi Industri · SMKS 2 Triple J<br>Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const nf=(x,d=1)=>Number(x).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+/* ================= TES DIAGNOSTIK ================= */
+const MISC={
+  m1:{t:'DC dianggap selalu tegangan kecil, AC selalu tegangan besar',go:'ac'},
+  m2:{t:'Pengertian AC dan DC tertukar',go:'ac'},
+  m3:{t:'Charger/adaptor dianggap hanya meneruskan listrik PLN',go:'sort'},
+  m4:{t:'Susunan seri dan paralel baterai tertukar atau dianggap tidak mengubah tegangan',go:'bat'},
+  m5:{t:'Baterai paralel dianggap tidak ada manfaatnya',go:'bat'},
+  m6:{t:'Semakin banyak baterai diseri dianggap selalu lebih baik',go:'bat'},
+  m7:{t:'Baterai terbalik dianggap hanya “tidak ikut bekerja”',go:'bat'},
+  m8:{t:'Arus dianggap habis terpakai di lampu/beban',go:'bat'},
+  m9:{t:'Semua alat (termasuk sensor & PLC) dianggap memakai listrik PLN langsung',go:'sort'}
+};
+const QUEST=[
+  {q:'Arus listrik DC (searah) adalah arus yang…',o:[['Mengalir satu arah dengan kutub + dan − yang tetap',1],['Selalu bertegangan kecil, di bawah 12 V','m1'],['Hanya ada di dalam baterai','m1'],['Berubah arah 50 kali setiap detik','m2']]},
+  {q:'Stopkontak di rumah dan sekolah mengeluarkan listrik…',o:[['DC 220 V','m2'],['AC 220 V, 50 Hz',1],['AC 110 V, 60 Hz','m2'],['Tergantung alat yang dicolokkan','m3']]},
+  {q:'Charger HP dicolok ke stopkontak. Listrik yang keluar di kabel USB-nya adalah…',o:[['AC 220 V, sama seperti stopkontak','m3'],['AC 5 V','m3'],['DC 5 V',1],['DC 220 V','m2']]},
+  {q:'Dua baterai AA 1,5 V disusun SERI (kutub + bertemu kutub −). Tegangan totalnya…',o:[['1,5 V','m4'],['3 V',1],['0,75 V','m4'],['Tidak bisa diukur','m4']]},
+  {q:'Dua baterai AA 1,5 V disusun PARALEL. Dibanding satu baterai, apa yang berubah?',o:[['Tegangan menjadi 3 V','m4'],['Tegangan tetap 1,5 V, tetapi baterai lebih awet',1],['Tegangan turun menjadi 0,75 V','m4'],['Tidak ada bedanya sama sekali','m5']]},
+  {q:'Senter butuh 3 V. Kamu punya 4 baterai AA. Agar senter terang DAN awet, susun baterainya…',o:[['4 baterai seri (6 V) supaya lebih terang','m6'],['4 baterai paralel (1,5 V)','m4'],['2 seri, lalu 2 pasang itu diparalel (3 V)',1],['Susunan apa saja sama hasilnya','m5']]},
+  {q:'Tiga baterai 1,5 V disusun seri, tetapi satu baterai terpasang TERBALIK. Tegangan totalnya…',o:[['4,5 V','m7'],['3 V — baterai terbalik hanya tidak ikut','m7'],['1,5 V',1],['0 V','m7']]},
+  {q:'Mengapa baterai bisa “habis”?',o:[['Arusnya terpakai habis oleh lampu','m8'],['Energi kimia di dalamnya sudah berubah menjadi energi listrik',1],['Listriknya bocor ke udara','m8'],['Tegangannya berubah menjadi AC','m2']]},
+  {q:'Arus yang MASUK ke lampu dibandingkan arus yang KELUAR dari lampu…',o:[['Arus masuk lebih besar, sebagian terpakai lampu','m8'],['Sama besar',1],['Arus keluar lebih besar','m8'],['Arus keluar nol karena sudah dipakai','m8']]},
+  {q:'Sensor, PLC, dan lampu indikator di panel kontrol otomasi umumnya memakai…',o:[['220 VAC langsung dari PLN','m9'],['24 VDC dari power supply',1],['380 VAC','m9'],['Baterai AA','m9']]}
+];
+const PROFILE={sp:'Salah paham',bt:'Belum tahu',rg:'Benar tapi ragu',ok:'Paham'};
+
+/* ================= SORTIR ================= */
+const SORT=[
+  ['🔌','Stopkontak di rumah','AC','220 V, 50 Hz — dari PLN.'],
+  ['🔋','Baterai AA','DC','1,5 V. Semua baterai menghasilkan DC.'],
+  ['🏍️','Aki sepeda motor','DC','12 V = 6 sel 2 V disusun seri.'],
+  ['📱','Kabel USB charger HP','DC','5 V. Charger mengubah AC menjadi DC.'],
+  ['🧲','Colokan charger HP (sisi dinding)','AC','Masukan charger berasal dari stopkontak 220 VAC.'],
+  ['🗄️','Keluaran PSU di panel kontrol','DC','24 VDC untuk PLC, sensor, relay.'],
+  ['⚙️','Motor induksi 3 fasa di pabrik','AC','380 V AC tiga fasa.'],
+  ['☀️','Panel surya','DC','Sel surya menghasilkan DC; inverter mengubahnya ke AC.'],
+  ['🔁','Keluaran inverter','AC','Inverter mengubah DC (aki/panel surya) menjadi AC 220 V.'],
+  ['📡','Sensor proximity di mesin','DC','Umumnya 12–24 VDC.'],
+  ['🔋','Power bank','DC','Berisi sel-sel lithium yang diparalel.'],
+  ['⛽','Genset (generator)','AC','Generator menghasilkan AC 220/380 V.']
+];
+
+/* ================= STATE ================= */
+const S={tab:'pre',name:'',kelas:'',
+  test:{pre:{ans:[],conf:[],i:0,done:false},post:{ans:[],conf:[],i:0,done:false,order:null}},
+  bat:{n:2,rev:[false,false,false,false],socS:[1,1,1,1],socP:[1,1,1,1],run:false,hours:0,doneS:false,doneP:false},
+  ac:{src:'dc',pol:1,slow:1,phase:0},
+  sort:{}, visited:{}};
+try{const sv=JSON.parse(localStorage.getItem('toi-listrik-dasar-v1')||'null'); if(sv){Object.assign(S.test,sv.test||{});S.name=sv.name||'';S.kelas=sv.kelas||'';S.sort=sv.sort||{};S.visited=sv.visited||{};}}catch(e){}
+function save(){try{localStorage.setItem('toi-listrik-dasar-v1',JSON.stringify({test:S.test,name:S.name,kelas:S.kelas,sort:S.sort,visited:S.visited}));}catch(e){}}
+
+/* ================= MODEL BATERAI ================= */
+const CELLV=1.5, CAP=2000, LAMPR=12, LAMPV=6;
+const cellV=soc=>soc>0.01?CELLV*(0.86+0.14*Math.min(1,soc*1.5)):0;
+function batSolve(){
+  const b=S.bat,n=b.n;
+  let Vs=0; for(let i=0;i<n;i++) Vs+=(b.rev[i]?-1:1)*cellV(b.socS[i]);
+  if(b.socS.slice(0,n).some(x=>x<=0.01)) Vs=0;
+  const Is=Math.abs(Vs)/LAMPR;
+  let Vp=0,c=0; for(let i=0;i<n;i++){ if(b.socP[i]>0.01){Vp+=cellV(b.socP[i]);c++;} } Vp=c?Vp/c:0;
+  const Ip=Vp/LAMPR;
+  const brS=Math.min(1,Math.abs(Vs)/LAMPV), brP=Math.min(1,Vp/LAMPV);
+  const sS=Math.min(...b.socS.slice(0,n)), sP=b.socP.slice(0,n).reduce((a,x)=>a+x,0);
+  const runS=Is>0.001?CAP*sS/(Is*1000):0, runP=Ip>0.001?CAP*sP/(Ip*1000):0;
+  return {n,Vs,Is,Vp,Ip,brS,brP,runS,runP,capS:CAP,capP:CAP*n,rev:b.rev.slice(0,n).filter(x=>x).length};
+}
+
+/* ================= 3D ================= */
+let T=null;
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+const M=(h,o)=>new THREE.MeshStandardMaterial(Object.assign({color:col(h),roughness:.55,metalness:0},o||{}));
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
+function glowSprite(rgb){const t=canvasTex(128,128,g=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,`rgba(${rgb},.95)`);gr.addColorStop(.35,`rgba(${rgb},.45)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,128,128);});return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));}
+function shadowAll(o){o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});}
+function disposeGroup(g){while(g.children.length){const c=g.children.pop();c.traverse(m=>{if(m.isMesh||m.isSprite){m.geometry&&m.geometry.dispose();if(m.material.map)m.material.map.dispose();m.material.dispose();}});}}
+function tube(pts,r,c){const cu=new THREE.CatmullRomCurve3(pts,false,'centripetal');const m=new THREE.Mesh(new THREE.TubeGeometry(cu,Math.max(30,pts.length*16),r,8,false),M(c,{roughness:.5}));m.castShadow=true;return {m,cu};}
+function textPlane(w,h,draw){const t=canvasTex(Math.round(w*110),Math.round(h*110),draw);return new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,roughness:.7,transparent:true}));}
+
+function init3D(){
+  if(typeof THREE==='undefined') throw new Error('three');
+  const canvas=$('#c'),viewer=$('#viewer');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,0.1,200);
+  const pmrem=new THREE.PMREMGenerator(renderer),env=new THREE.Scene();
+  const sky=new THREE.SphereGeometry(50,32,16),pa=sky.attributes.position,cols=[];const lo=new THREE.Color(0x2c3540),hi=new THREE.Color(0xf2f5f8);
+  for(let i=0;i<pa.count;i++){const t=(pa.getY(i)/50+1)/2;const c=lo.clone().lerp(hi,Math.pow(t,.8));cols.push(c.r,c.g,c.b);}
+  sky.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));env.add(new THREE.Mesh(sky,new THREE.MeshBasicMaterial({side:THREE.BackSide,vertexColors:true})));
+  const pm=new THREE.MeshBasicMaterial({color:new THREE.Color(3,3,3),side:THREE.DoubleSide});
+  [[0,32,12,40,12],[-34,8,22,14,30],[30,-4,-20,10,24]].forEach(([x,y,z,w,h])=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),pm);m.position.set(x,y,z);m.lookAt(0,0,0);env.add(m);});
+  scene.environment=pmrem.fromScene(env,0.03).texture;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x7a8590,0.35));
+  const key=new THREE.DirectionalLight(0xffffff,0.8);key.position.set(5,16,10);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-12,right:12,top:10,bottom:-10,near:1,far:50});key.shadow.bias=-0.0006;scene.add(key);
+  const fill=new THREE.DirectionalLight(0xd6e4ff,0.3);fill.position.set(-10,6,-6);scene.add(fill);
+  const bench=new THREE.Mesh(new THREE.BoxGeometry(40,0.6,24),M('#5f7c70',{roughness:.85}));bench.position.y=-0.3;bench.receiveShadow=true;scene.add(bench);
+  const batG=new THREE.Group(),acG=new THREE.Group();scene.add(batG,acG);
+  const dots=new THREE.InstancedMesh(new THREE.SphereGeometry(0.07,10,6),new THREE.MeshBasicMaterial({color:0xffd21a,toneMapped:false}),500);dots.count=0;dots.frustumCulled=false;scene.add(dots);
+  T={renderer,scene,camera,canvas,viewer,batG,acG,dots,paths:[],pins:[],cells:[],cam:{yaw:0,pitch:0.72,zoom:1,t:V3(0,0.8,0),d:20},lamp:null,leds:null};
+  bind();new ResizeObserver(resize).observe(viewer);resize();
+  buildScene();
+  $('#loading').style.display='none';
+  requestAnimationFrame(loop);
+}
+function cellMesh(rev,soc){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,1.95,32),M('#1b1f26',{roughness:.35,metalness:.3,emissive:new THREE.Color(0xff2a10),emissiveIntensity:0}));body.rotation.z=Math.PI/2;g.add(body);
+  const top=new THREE.Mesh(new THREE.CylinderGeometry(0.345,0.345,0.7,32),M('#c8793e',{roughness:.35,metalness:.6}));top.rotation.z=Math.PI/2;top.position.x=0.62;g.add(top);
+  const nub=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.12,20),M('#d4d8dc',{metalness:.95,roughness:.2}));nub.rotation.z=Math.PI/2;nub.position.x=1.03;g.add(nub);
+  const neg=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.03,24),M('#d4d8dc',{metalness:.95,roughness:.2}));neg.rotation.z=Math.PI/2;neg.position.x=-0.985;g.add(neg);
+  const lab=textPlane(1.0,0.36,(c,w,h)=>{c.fillStyle='rgba(0,0,0,0)';c.clearRect(0,0,w,h);c.fillStyle='#e9eef2';c.font=`700 ${h*.62}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('AA 1,5V',w/2,h/2);});
+  lab.rotation.x=-Math.PI/2;lab.position.set(-0.25,0.345,0);g.add(lab);
+  if(rev) g.rotation.y=Math.PI;
+  g.userData.body=body;
+  return g;
+}
+function makeLamp(g,x,z){
+  const lamp=new THREE.Group();lamp.position.set(x,0.3,z);
+  const lb=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.8,0.5,32),M('#22262a'));lb.position.y=0.25;lamp.add(lb);
+  const ls=new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.32,0.6,24),M('#d9dcdf',{metalness:.7,roughness:.3}));ls.position.y=0.8;lamp.add(ls);
+  const gm=new THREE.MeshStandardMaterial({color:col('#fff6dc'),roughness:.1,transparent:true,opacity:.5,emissive:new THREE.Color(0xffc561),emissiveIntensity:0});
+  const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.62,32,20),gm);bulb.position.y=1.55;lamp.add(bulb);
+  const fil=new THREE.Mesh(new THREE.TorusGeometry(0.16,0.025,8,20,Math.PI),M('#6b5a3a',{emissive:new THREE.Color(0xffb347),emissiveIntensity:0}));fil.position.y=1.5;lamp.add(fil);
+  const gs=glowSprite('255,200,110');gs.position.y=1.55;lamp.add(gs);
+  const pl=new THREE.PointLight(0xffc56b,0,9);pl.position.set(0,2.2,0.6);lamp.add(pl);
+  g.add(lamp); return {gm,gs,pl,fil};
+}
+const XS=-4.4, XP=4.4;
+function buildBat(){
+  const g=T.batG;disposeGroup(g);T.paths=[];T.cells=[];
+  const b=S.bat,n=b.n, hold=M('#202327',{roughness:.6});
+  const base=new THREE.Mesh(new THREE.BoxGeometry(18,0.3,8),M('#c9a678',{roughness:.8}));base.position.set(0,0.15,0);g.add(base);
+  const div=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.02,7.4),M('#8a6a45'));div.position.set(0,0.31,0);g.add(div);
+  const add=(pts,c,I)=>{const t=tube(pts,0.06,c);g.add(t.m);T.paths.push({pts:t.cu.getSpacedPoints(Math.max(16,Math.round(t.cu.getLength()*8))),I});return t;};
+  const CY=0.75;
+  // ---- SERI ----
+  const zc=1.3, xs=[...Array(n).keys()].map(i=>XS+(i-(n-1)/2)*2.3);
+  xs.forEach((x,i)=>{const c=cellMesh(b.rev[i]);c.position.set(x,CY,zc);c.userData.idx=i;g.add(c);T.cells.push(c);
+    const sl=new THREE.Mesh(new THREE.BoxGeometry(2.2,0.45,0.82),hold);sl.position.set(x,0.48,zc);g.add(sl);});
+  for(let i=0;i<n-1;i++){const a=xs[i]+1.05,bb=xs[i+1]-1.0;add([V3(a,CY+0.1,zc),V3(a+0.05,CY+0.6,zc),V3(bb-0.05,CY+0.6,zc),V3(bb,CY+0.1,zc)],'#e0a020','S');}
+  const xL=xs[0]-1.0, xR=xs[n-1]+1.05;
+  T.lampS=makeLamp(g,XS,-2.1);
+  add([V3(xR,CY,zc),V3(xR+0.6,0.6,zc-0.4),V3(XS+1.4,0.5,-0.9),V3(XS+0.3,1.0,-2.0)],'#c62a22','S');
+  add([V3(XS-0.3,1.0,-2.0),V3(XS-1.4,0.5,-0.9),V3(xL-0.6,0.6,zc-0.4),V3(xL,CY,zc)],'#1d1f22','S');
+  // ---- PARALEL ----
+  const zs=[...Array(n).keys()].map(i=>2.4-i*1.1), zmin=zs[n-1], zmax=zs[0];
+  zs.forEach((z,i)=>{const c=cellMesh(false);c.position.set(XP,CY,z);g.add(c);
+    const sl=new THREE.Mesh(new THREE.BoxGeometry(2.2,0.45,0.82),hold);sl.position.set(XP,0.48,z);g.add(sl);
+    add([V3(XP+1.05,CY,z),V3(XP+1.35,CY+0.15,z),V3(XP+1.6,CY+0.15,z)],'#c62a22','Pn');
+    add([V3(XP-1.6,CY+0.15,z),V3(XP-1.35,CY+0.15,z),V3(XP-1.0,CY,z)],'#1d1f22','Pn');});
+  if(n>1){const bp=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,zmax-zmin+0.2),M('#c62a22'));bp.position.set(XP+1.6,CY+0.15,(zmax+zmin)/2);g.add(bp);
+    const bn=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,zmax-zmin+0.2),M('#1d1f22'));bn.position.set(XP-1.6,CY+0.15,(zmax+zmin)/2);g.add(bn);}
+  T.lampP=makeLamp(g,XP,-2.5);
+  add([V3(XP+1.6,CY+0.15,zmin),V3(XP+1.7,0.6,zmin-0.6),V3(XP+1.0,0.6,-2.0),V3(XP+0.3,1.0,-2.4)],'#c62a22','P');
+  add([V3(XP-0.3,1.0,-2.4),V3(XP-1.0,0.6,-2.0),V3(XP-1.7,0.6,zmin-0.6),V3(XP-1.6,CY+0.15,zmin)],'#1d1f22','P');
+  T.batEnds={xL,xR,zc,zmin,zmax};
+  shadowAll(g);prepPaths();
+}
+function buildAC(){
+  const g=T.acG;disposeGroup(g);T.paths=[];
+  const base=new THREE.Mesh(new THREE.BoxGeometry(14,0.3,7),M('#c9a678',{roughness:.8}));base.position.set(0.5,0.15,0);g.add(base);
+  const steel=M('#cfd3d8',{metalness:.95,roughness:.25});
+  const isAC=S.ac.src==='ac';
+  if(isAC){
+    const tr=new THREE.Group();tr.position.set(-3.8,0.3,0);
+    const core=new THREE.Mesh(new THREE.BoxGeometry(2.6,2.6,2.2),M('#8b9097',{metalness:.6,roughness:.45}));core.position.y=1.3;tr.add(core);
+    const coil=new THREE.Mesh(new THREE.BoxGeometry(1.5,2.0,2.6),M('#d9a128'));coil.position.y=1.3;tr.add(coil);
+    const tp=textPlane(1.5,0.9,(c,w,h)=>{c.fillStyle='#f1e7c9';c.fillRect(0,0,w,h);c.fillStyle='#14202b';c.textAlign='center';c.font=`700 ${h*.3}px "Barlow Condensed",Arial`;c.fillText('TRAFO',w/2,h*.34);c.font=`600 ${h*.22}px "IBM Plex Mono",monospace`;c.fillText('220/12 VAC',w/2,h*.72);});
+    tp.rotation.x=-Math.PI/2;tp.position.y=2.32;tr.add(tp);g.add(tr);
+    g.add(tube([V3(-5.1,1.0,0),V3(-6.2,0.4,0.4),V3(-7.6,0.35,1.2)],0.14,'#1d1f22').m);
+    const plug=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.6,1.1),M('#1d1f22'));plug.position.set(-7.8,0.6,1.3);g.add(plug);
+  } else {
+    const ad=new THREE.Group();ad.position.set(-3.8,0.3,0);
+    const bx=new THREE.Mesh(new THREE.BoxGeometry(2.4,1.4,1.8),M('#202327',{roughness:.45}));bx.position.y=0.7;ad.add(bx);
+    const tp=textPlane(2.0,0.8,(c,w,h)=>{c.fillStyle='#202327';c.fillRect(0,0,w,h);c.fillStyle='#e9eef2';c.textAlign='center';c.font=`700 ${h*.32}px "Barlow Condensed",Arial`;c.fillText('ADAPTOR',w/2,h*.38);c.font=`600 ${h*.24}px "IBM Plex Mono",monospace`;c.fillText('OUT 12 VDC',w/2,h*.75);});
+    tp.rotation.x=-Math.PI/2;tp.position.y=1.42;ad.add(tp);g.add(ad);
+    g.add(tube([V3(-5.0,0.9,0),V3(-6.2,0.4,0.4),V3(-7.6,0.35,1.2)],0.14,'#1d1f22').m);
+  }
+  // papan: resistor + 2 LED antiparalel (dua cabang terpisah, arah berlawanan)
+  const neg=!isAC&&S.ac.pol<0;
+  const pcb=new THREE.Mesh(new THREE.BoxGeometry(6.4,0.2,4.4),M('#1f6b45',{roughness:.55}));pcb.position.set(1.7,0.4,0.1);g.add(pcb);
+  const silk=textPlane(6.4,4.4,(c,w,h)=>{const X=x=>(x-1.7+3.2)/6.4*w, Z=z=>(z-0.1+2.2)/4.4*h;c.clearRect(0,0,w,h);
+    c.strokeStyle='#eaf2ec';c.fillStyle='#eaf2ec';c.lineWidth=4;
+    const dio=(x,dir,label)=>{const zc=0.1,s=26;c.beginPath();c.moveTo(X(x)-s,Z(zc)-dir*s*0.9);c.lineTo(X(x)+s,Z(zc)-dir*s*0.9);c.lineTo(X(x),Z(zc)+dir*s*0.9);c.closePath();c.stroke();
+      c.beginPath();c.moveTo(X(x)-s,Z(zc)+dir*s*0.9);c.lineTo(X(x)+s,Z(zc)+dir*s*0.9);c.stroke();
+      c.font='700 22px "IBM Plex Mono",monospace';c.textAlign='center';c.fillText('A',X(x)-46,Z(zc)-dir*44+8);c.fillText('K',X(x)-46,Z(zc)+dir*44+8);
+      c.font='700 24px "IBM Plex Sans",Arial';c.fillText(label,X(x)+(x<3?-70:70),Z(zc)+8);};
+    dio(2.2,1,'D1');dio(3.8,-1,'D2');
+    c.font='600 22px "IBM Plex Mono",monospace';c.textAlign='left';c.fillText('R 1 kΩ',X(-0.1),Z(-1.75));
+    c.font='700 30px "IBM Plex Sans",Arial';c.fillStyle=neg?'#9fb3ff':'#ffb0a8';c.fillText(neg?'−':'+',X(-1.2),Z(-1.25));c.fillStyle=neg?'#ffb0a8':'#9fb3ff';c.fillText(neg?'+':'−',X(-1.2),Z(1.95));});
+  silk.rotation.x=-Math.PI/2;silk.position.set(1.7,0.505,0.1);g.add(silk);
+  const cu=M('#c8793e',{metalness:.9,roughness:.3});
+  const tr=(x1,z1,x2,z2)=>{const len=Math.hypot(x2-x1,z2-z1)+0.25;const m=new THREE.Mesh(new THREE.BoxGeometry(len,0.04,0.25),cu);m.position.set((x1+x2)/2,0.52,(z1+z2)/2);m.rotation.y=-Math.atan2(z2-z1,x2-x1);g.add(m);};
+  tr(-0.8,-1.4,-0.4,-1.4);tr(1.2,-1.4,3.8,-1.4);tr(2.2,-1.4,2.2,-0.55);tr(2.2,0.75,2.2,1.6);tr(3.8,-1.4,3.8,-0.55);tr(3.8,0.75,3.8,1.6);tr(3.8,1.6,-0.8,1.6);
+  const rb=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,0.9,20),M('#d9c497'));rb.rotation.z=Math.PI/2;rb.position.set(0.4,0.72,-1.4);g.add(rb);
+  const rl=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,1.6,8),M('#c9cdd2',{metalness:.9}));rl.rotation.z=Math.PI/2;rl.position.set(0.4,0.72,-1.4);g.add(rl);
+  const ledMat=c=>new THREE.MeshStandardMaterial({color:col(c),roughness:.2,transparent:true,opacity:.92,emissive:new THREE.Color(c),emissiveIntensity:0});
+  const leds=[];
+  [['#ff3b30',2.2,'255,60,40'],['#2fd35a',3.8,'60,230,90']].forEach(([c,x,rgb])=>{const m=ledMat(c);
+    const b=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.32,0.5,24),m);b.position.set(x,0.85,0.1);g.add(b);
+    const d=new THREE.Mesh(new THREE.SphereGeometry(0.3,24,12,0,Math.PI*2,0,Math.PI/2),m);d.position.set(x,1.1,0.1);g.add(d);
+    [-0.45,0.65].forEach(z=>{const l=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.7,8),M('#c9cdd2',{metalness:.9}));l.rotation.x=Math.PI/2;l.position.set(x,0.6,z<0?-0.2:0.4);g.add(l);});
+    const s2=glowSprite(rgb);s2.position.set(x,1.05,0.1);g.add(s2);const pl=new THREE.PointLight(new THREE.Color(c),0,5);pl.position.set(x,1.6,0.4);g.add(pl);leds.push({m,s:s2,pl});});
+  T.leds=leds;
+  // kabel dari sumber: bila adaptor dibalik, merah & hitam bertukar ujung
+  const cTop=neg?'#1d1f22':'#c62a22', cBot=neg?'#c62a22':'#1d1f22';
+  const wa=tube([V3(-2.6,1.0,-0.6),V3(-1.6,1.1,-1.5),V3(-0.8,0.6,-1.4)],0.07,cTop);g.add(wa.m);
+  const wb=tube([V3(-0.8,0.6,1.6),V3(-1.6,1.1,1.3),V3(-2.6,1.0,0.6)],0.07,cBot);g.add(wb.m);
+  const head=[...wa.cu.getSpacedPoints(30),V3(1.2,0.62,-1.4)], tail=[V3(-0.8,0.62,1.6),...wb.cu.getSpacedPoints(30)];
+  T.paths=[{pts:[...head,V3(2.2,0.62,-1.4),V3(2.2,0.62,1.6),...tail],k:'A'},{pts:[...head,V3(3.8,0.62,-1.4),V3(3.8,0.62,1.6),...tail],k:'B'}];
+  shadowAll(g);prepPaths();
+}
+function prepPaths(){T.paths.forEach(p=>{let L=0;const c=[0];for(let i=1;i<p.pts.length;i++){L+=p.pts[i].distanceTo(p.pts[i-1]);c.push(L);}p.len=L;p.cum=c;p.n=Math.max(1,Math.round(L/0.35));p.u=0;});}
+function buildScene(){
+  if(!T) return;
+  const ac=S.tab==='ac';
+  T.batG.visible=!ac;T.acG.visible=ac;
+  if(ac) buildAC(); else buildBat();
+  setPins();
+}
+function setPins(){
+  const L=$('#labels');L.innerHTML='';T.pins=[];
+  const add=(html,p,cls)=>{const el=document.createElement('div');el.className='lbl'+(cls?' '+cls:'');el.innerHTML=html;L.appendChild(el);T.pins.push({el,p});};
+  if(S.tab==='ac'){
+    add(S.ac.src==='ac'?'Trafo 12 VAC':'Adaptor 12 VDC',V3(-3.8,3.1,0));
+    const ng=S.ac.src==='dc'&&S.ac.pol<0;
+    add('D1 merah',V3(1.7,1.9,0.1));add('D2 hijau',V3(4.4,1.9,0.1));
+    if(S.ac.src==='dc'){add(ng?'−':'+',V3(-0.8,1.2,-1.4),ng?'neg':'pos');add(ng?'+':'−',V3(-0.8,1.2,1.6),ng?'pos':'neg');}
+  } else {
+    const r=batSolve(),e=T.batEnds;
+    add(`SERI<small>${nf(Math.abs(r.Vs),2)} V</small>`,V3(XS,4.1,-2.1),'big');
+    add(`PARALEL<small>${nf(r.Vp,2)} V</small>`,V3(XP,4.1,-2.5),'big');
+    T.cells.forEach((c,i)=>{if(S.bat.rev[i])add('terbalik',c.position.clone().add(V3(0,0.8,0)),'hot');});
+    add('−',V3(e.xL,1.5,e.zc),'neg');add('+',V3(e.xR,1.5,e.zc),'pos');
+    if(r.n>1){add('+ semua',V3(XP+2.3,1.2,e.zmax+0.3),'pos');add('− semua',V3(XP-2.3,1.2,e.zmax+0.3),'neg');}
+  }
+}
+function bind(){
+  const cv=T.canvas,pts=new Map();let pinch=null,start=null,moved=false;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===1){start={x:e.clientX,y:e.clientY};moved=false;}if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:T.cam.zoom};moved=true;}});
+  cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const pr=pts.get(e.pointerId),cu={x:e.clientX,y:e.clientY};pts.set(e.pointerId,cu);
+    if(pts.size===1){T.cam.yaw=Math.max(-1.3,Math.min(1.3,T.cam.yaw-(cu.x-pr.x)*0.006));T.cam.pitch=Math.max(0.15,Math.min(1.4,T.cam.pitch+(cu.y-pr.y)*0.005));if(Math.hypot(cu.x-start.x,cu.y-start.y)>6)moved=true;}
+    else if(pts.size===2&&pinch){const [a,b]=[...pts.values()];T.cam.zoom=Math.min(1.8,Math.max(0.4,pinch.z*pinch.d/Math.hypot(a.x-b.x,a.y-b.y)));}});
+  const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+  const up=e=>{if(pts.size===1&&!moved&&e.type==='pointerup'&&S.tab==='bat'){const r=cv.getBoundingClientRect();ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,T.camera);
+      const h=ray.intersectObjects(T.cells,true)[0];if(h){let o=h.object;while(o&&o.userData.idx==null)o=o.parent;if(o)flipCell(o.userData.idx);}}
+    pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{e.preventDefault();T.cam.zoom=Math.min(1.8,Math.max(0.4,T.cam.zoom*Math.exp(e.deltaY*0.0012)));},{passive:false});
+  $('#bReset').addEventListener('click',()=>{T.cam.yaw=0;T.cam.pitch=0.72;T.cam.zoom=1;});
+}
+function resize(){if(!T)return;const w=T.viewer.clientWidth,h=T.viewer.clientHeight;T.renderer.setSize(w,h,false);T.camera.aspect=w/h;T.camera.updateProjectionMatrix();}
+let last=performance.now();const mtx=new THREE.Matrix4(),tmp=V3(0,0,0);
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000);last=t;
+  const c=T.cam,tt=Math.tan(THREE.MathUtils.degToRad(T.camera.fov/2)),a=T.camera.aspect;
+  const gd=Math.max((S.tab==='ac'?7.6:9.6)/(tt*a),4.4/tt)*c.zoom;c.d+=(gd-c.d)*(1-Math.exp(-dt*5));
+  T.camera.position.set(c.t.x+c.d*Math.cos(c.pitch)*Math.sin(c.yaw),c.t.y+c.d*Math.sin(c.pitch),c.t.z+c.d*Math.cos(c.pitch)*Math.cos(c.yaw));T.camera.lookAt(c.t);
+  let k=0;
+  if(S.tab==='ac'){
+    const ac=S.ac, f=50/ac.slow; ac.phase=(ac.phase+dt*f)%1;
+    const isAC=ac.src==='ac', s=isAC?Math.sin(ac.phase*2*Math.PI):ac.pol;
+    // LED: merah menyala bila arus positif, hijau bila negatif
+    const realtime=isAC&&ac.slow<=1;
+    const red=isAC?(realtime?0.5:Math.max(0,s)):(ac.pol>0?1:0), grn=isAC?(realtime?0.5:Math.max(0,-s)):(ac.pol<0?1:0);
+    [[T.leds[0],red],[T.leds[1],grn]].forEach(([L,v])=>{L.m.emissiveIntensity=v*2.4;L.s.material.opacity=Math.min(1,v*1.2);L.s.scale.setScalar(0.4+2*v);L.pl.intensity=v*1.4;});
+    T.paths.forEach(p=>{
+      const act=p.k==='A'?red:grn; if(act<0.05) return;
+      const dir=p.k==='A'?1:-1; p.u=((p.u+dt*0.16*dir*(realtime?1:Math.min(1,act*1.4)))%1+1)%1;
+      for(let j=0;j<p.n&&k<500;j++){const u=((p.u+j/p.n)%1)*p.len;let s2=1;while(s2<p.cum.length-1&&p.cum[s2]<u)s2++;const fr=(u-p.cum[s2-1])/Math.max(1e-6,p.cum[s2]-p.cum[s2-1]);tmp.copy(p.pts[s2-1]).lerp(p.pts[s2],Math.min(1,fr));mtx.makeTranslation(tmp.x,tmp.y,tmp.z);T.dots.setMatrixAt(k++,mtx);} });
+    drawScope();drawBottleAC();
+  } else if(T.lampS){
+    const r=batSolve();
+    [[T.lampS,r.brS],[T.lampP,r.brP]].forEach(([L,br])=>{L.gm.emissiveIntensity=br*1.9;L.gm.opacity=.5+br*.35;L.gs.material.opacity=Math.min(1,br*1.1);L.gs.scale.setScalar(0.5+3.2*br);L.pl.intensity=br*1.8;L.fil.material.emissiveIntensity=br*3;});
+    const II={S:r.Is,P:r.Ip,Pn:r.Ip/r.n};
+    T.paths.forEach(p=>{const I=II[p.I];if(I<0.003)return;const sp=0.3+2.6*Math.min(1,I/0.5);p.u=(p.u+dt*sp/p.len)%1;
+      for(let j=0;j<p.n&&k<500;j++){const u=((p.u+j/p.n)%1)*p.len;let s2=1;while(s2<p.cum.length-1&&p.cum[s2]<u)s2++;const fr=(u-p.cum[s2-1])/Math.max(1e-6,p.cum[s2]-p.cum[s2-1]);tmp.copy(p.pts[s2-1]).lerp(p.pts[s2],Math.min(1,fr));mtx.makeTranslation(tmp.x,tmp.y,tmp.z);T.dots.setMatrixAt(k++,mtx);}});
+    if(S.tab==='bat') drawBottleBat();
+  }
+  T.dots.count=k;T.dots.instanceMatrix.needsUpdate=true;
+  T.renderer.render(T.scene,T.camera);
+  const w=T.viewer.clientWidth,h=T.viewer.clientHeight,v=V3(0,0,0);
+  T.pins.forEach(p=>{v.copy(p.p).project(T.camera);if(v.z>1){p.el.style.opacity=0;return;}p.el.style.opacity=1;p.el.style.transform=`translate(${(v.x+1)/2*w}px,${(1-v.y)/2*h}px) translate(-50%,-100%)`;});
+  requestAnimationFrame(loop);
+}
+
+/* ================= ANALOGI BOTOL ================= */
+let wheelA=0, wheelAC=0, lastBT=performance.now();
+function bottle(g,x,y,w,h,level,label,opt){
+  opt=opt||{};
+  const neck=w*0.36, sh=h*0.16, capH=h*0.07, bodyTop=y+capH+sh*0.6;
+  g.save();
+  g.beginPath();
+  g.moveTo(x+w/2-neck/2,y+capH);g.lineTo(x+w/2-neck/2,y+capH+sh*0.3);
+  g.quadraticCurveTo(x,y+capH+sh*0.5,x,y+capH+sh);g.lineTo(x,y+h-6);g.quadraticCurveTo(x,y+h,x+6,y+h);g.lineTo(x+w-6,y+h);g.quadraticCurveTo(x+w,y+h,x+w,y+h-6);
+  g.lineTo(x+w,y+capH+sh);g.quadraticCurveTo(x+w,y+capH+sh*0.5,x+w/2+neck/2,y+capH+sh*0.3);g.lineTo(x+w/2+neck/2,y+capH);g.closePath();
+  g.fillStyle='rgba(220,238,250,.55)';g.fill();
+  g.save();g.clip();
+  const wl=y+h-(h-capH-sh*0.6)*Math.max(0,Math.min(1,level));
+  const grd=g.createLinearGradient(0,wl,0,y+h);grd.addColorStop(0,'#5fb4ec');grd.addColorStop(1,'#2a7fc4');g.fillStyle=grd;g.fillRect(x-2,wl,w+4,y+h-wl+2);
+  g.fillStyle='rgba(255,255,255,.25)';g.fillRect(x+w*0.12,y+capH+sh,w*0.1,h-capH-sh-8);
+  g.restore();
+  g.strokeStyle='#7aa7c7';g.lineWidth=2;g.stroke();
+  for(let k=1;k<4;k++){const yy=y+capH+sh+(h-capH-sh)*k/4;g.beginPath();g.moveTo(x+2,yy);g.lineTo(x+w-2,yy);g.strokeStyle='rgba(122,167,199,.45)';g.stroke();}
+  g.fillStyle=opt.capColor||'#2a6fb5';g.fillRect(x+w/2-neck/2-2,y,neck+4,capH);
+  if(label){g.fillStyle=opt.rev?'#bb3a2c':'#0a3d66';g.font=`600 ${Math.max(9,Math.min(13,w/4.6))}px "IBM Plex Mono",monospace`;g.textAlign='center';g.fillText(label,x+w/2,y+h*0.62);}
+  g.restore();
+}
+function wheel(g,cx,cy,r,ang,col2){
+  g.save();g.translate(cx,cy);g.rotate(ang);g.strokeStyle=col2||'#6b4f2a';g.lineWidth=3;g.beginPath();g.arc(0,0,r,0,7);g.stroke();
+  for(let i=0;i<8;i++){g.rotate(Math.PI/4);g.fillStyle='#b48a5a';g.fillRect(-3,-r-6,6,12);g.beginPath();g.moveTo(0,0);g.lineTo(0,-r);g.stroke();}
+  g.fillStyle='#6b4f2a';g.beginPath();g.arc(0,0,5,0,7);g.fill();g.restore();
+}
+let wheelB=0;
+function drawBottleBat(){
+  const cv=$('#botBat'); if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  const now=performance.now(),dt=Math.min(0.05,(now-lastBT)/1000);lastBT=now;
+  g.clearRect(0,0,W,H);
+  const b=S.bat,r=batSolve(),n=b.n,half=W/2, baseY=H-58;
+  g.strokeStyle='#cfe2f1';g.lineWidth=2;g.beginPath();g.moveTo(half,10);g.lineTo(half,H-10);g.stroke();
+  g.fillStyle='#0a3d66';g.font='700 15px "IBM Plex Sans",Arial';g.textAlign='left';
+  g.fillText('SERI — botol ditumpuk',12,22);g.fillText('PARALEL — botol berjajar',half+12,22);
+  const draw=(x0,stackN,cols,socArr,revArr,V,I,isS)=>{
+    const bh=Math.min(88,(H-100)/stackN+6), bw=bh*0.55;
+    for(let c=0;c<cols;c++)for(let k=0;k<stackN;k++){const idx=isS?k:c;const y=baseY-(k+1)*bh+6*k;bottle(g,x0+c*(bw+10),y,bw,bh,socArr[idx],revArr&&revArr[idx]?'terbalik':'1,5 V',{rev:revArr&&revArr[idx],capColor:revArr&&revArr[idx]?'#bb3a2c':'#2a6fb5'});}
+    const right=x0+cols*(bw+10)-10;
+    g.fillStyle='#7aa7c7';g.fillRect(x0+bw/2,baseY-5,right-x0-bw/2+18,9);
+    const ox=right+18, oy=baseY;
+    const h=Math.abs(V)/1.5, L=20+h*22;
+    if(I>0.003){g.strokeStyle='rgba(42,127,196,.85)';g.lineWidth=2+Math.min(5,I*10);g.beginPath();g.moveTo(ox,oy);g.quadraticCurveTo(ox+L*0.6,oy-6,ox+L,oy+24);g.stroke();}
+    return {wx:ox+L+6,wy:oy+22};
+  };
+  const a=draw(18,n,1,b.socS,b.rev,r.Vs,r.Is,true);
+  const p=draw(half+14,1,n,b.socP,null,r.Vp,r.Ip,false);
+  wheelA+=dt*Math.min(16,r.Is*28); wheelB+=dt*Math.min(16,r.Ip*28);
+  wheel(g,Math.min(half-24,a.wx),Math.min(H-30,a.wy),18,wheelA); wheel(g,Math.min(W-24,p.wx),Math.min(H-30,p.wy),18,wheelB);
+  g.fillStyle='#24506f';g.font='600 12.5px "IBM Plex Sans",Arial';g.textAlign='left';
+  g.fillText(`Tinggi air ${n}× → ${nf(Math.abs(r.Vs),1)} V`,12,42);g.fillText(`Air ${n}× lebih banyak → ${r.capP} mAh`,half+12,42);
+}
+function drawBottleAC(){
+  const cv=$('#botAC'); if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.clearRect(0,0,W,H);
+  const ac=S.ac, isAC=ac.src==='ac', s=isAC?Math.sin(ac.phase*2*Math.PI):ac.pol;
+  const slowView=!isAC||ac.slow>1;
+  const sq=isAC?(slowView?s:0):0;
+  // botol diremas (AC) atau botol bocor (DC)
+  const bw=70+(isAC?-sq*14:0), bh=130, bx=60-(bw-70)/2, by=40;
+  bottle(g,bx,by,bw,bh,isAC?0.75:0.75,isAC?'diremas':'1 arah',{capColor:'#2a6fb5'});
+  if(isAC){g.fillStyle='rgba(20,32,43,.5)';g.font='22px Arial';g.textAlign='center';g.fillText(sq>0.2?'✊':'✋',bx+bw/2,by-6);}
+  // selang U
+  const ty=by+bh-14;
+  g.strokeStyle='#7aa7c7';g.lineWidth=10;g.beginPath();g.moveTo(bx+bw,ty);g.lineTo(W-60,ty);g.lineTo(W-60,ty-90);g.stroke();
+  g.strokeStyle='#5fb4ec';g.lineWidth=6;g.beginPath();g.moveTo(bx+bw,ty);g.lineTo(W-60,ty);g.lineTo(W-60,ty-90);g.stroke();
+  // partikel air
+  const n=12; for(let i=0;i<n;i++){let u=i/n; let off=isAC?(slowView?s*0.06:0):((performance.now()/1000*0.25*ac.pol)%1); let p=((u+off)%1+1)%1; const x=bx+bw+p*(W-60-bx-bw); g.fillStyle='#ffffff';g.beginPath();g.arc(x,ty,2.5,0,7);g.fill();}
+  // kincir di selang
+  const wx=(bx+bw+W-60)/2;
+  if(isAC){wheelAC=slowView?s*0.9:wheelAC+0.0;} else wheelAC+=0.06*ac.pol;
+  wheel(g,wx,ty-28,24,wheelAC);
+  g.fillStyle='#24506f';g.font='600 13px "IBM Plex Sans",Arial';g.textAlign='left';
+  g.fillText(isAC?(slowView?'Air maju-mundur → kincir bergoyang bolak-balik':'50 kali/detik — terlalu cepat untuk dilihat mata'):'Air mengalir satu arah → kincir berputar terus searah',10,H-10);
+}
+function drawScope(){
+  const cv=$('#scopeA'); if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.fillStyle='#06110d';g.fillRect(0,0,W,H);g.strokeStyle='rgba(120,180,150,.18)';g.lineWidth=1;
+  for(let i=1;i<10;i++){g.beginPath();g.moveTo(i*W/10,0);g.lineTo(i*W/10,H);g.stroke();}for(let j=1;j<8;j++){g.beginPath();g.moveTo(0,j*H/8);g.lineTo(W,j*H/8);g.stroke();}
+  g.strokeStyle='rgba(140,200,170,.45)';g.beginPath();g.moveTo(0,H/2);g.lineTo(W,H/2);g.stroke();
+  const ac=S.ac,isAC=ac.src==='ac',vp=isAC?17:12,pxV=(H/8)/5;
+  g.strokeStyle='#f5d000';g.lineWidth=3;g.shadowColor='#f5d000';g.shadowBlur=8;g.beginPath();
+  for(let i=0;i<=200;i++){const x=i/200*W, t=i/200*0.04, v=isAC?vp*Math.sin(2*Math.PI*50*t):12*ac.pol; const y=H/2-v*pxV; if(i===0)g.moveTo(x,y);else g.lineTo(x,y);} g.stroke();g.shadowBlur=0;
+  if(isAC&&ac.slow>1){const x=(ac.phase*0.02)/0.04*W;g.strokeStyle='rgba(255,255,255,.45)';g.setLineDash([6,6]);g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();g.setLineDash([]);
+    const x2=x+W/2;g.beginPath();g.moveTo(x2,0);g.lineTo(x2,H);g.strokeStyle='rgba(255,255,255,.2)';g.stroke();}
+  g.fillStyle='#f5d000';g.font='600 22px "IBM Plex Mono",monospace';g.textBaseline='top';g.fillText('CH1 5 V/div',10,8);g.textAlign='right';g.fillStyle='#9fb8aa';g.fillText('4 ms/div',W-10,8);g.textAlign='left';
+  g.textBaseline='alphabetic';g.fillStyle='#9fb8aa';g.font='600 20px "IBM Plex Mono",monospace';g.fillText('0 V',8,H/2-6);
+}
+
+/* ================= UI ================= */
+const TABS=[['pre','Tes Awal'],['bat','Baterai'],['ac','AC vs DC'],['sort','Sortir'],['post','Tes Akhir']];
+function toast(sev,t,m){const box=$('#toast');const d=document.createElement('div');d.className='tst '+(sev||'');d.innerHTML=`<b>${t}</b>${m||''}`;box.appendChild(d);while(box.children.length>2)box.removeChild(box.firstChild);setTimeout(()=>d.remove(),5200);}
+function renderTabs(){
+  const done={pre:S.test.pre.done,bat:S.visited.bat,ac:S.visited.ac,sort:Object.keys(S.sort).length>=SORT.length,post:S.test.post.done};
+  $('#tabs').innerHTML=TABS.map(([k,t],i)=>`<button data-t="${k}" class="${S.tab===k?'active':''} ${done[k]?'done':''}"><span class="n">${i+1}</span>${t}</button>`).join('');
+}
+function setTab(t){
+  const prev=S.tab; S.tab=t; if(t==='bat'||t==='ac'){S.visited[t]=true;save();}
+  if(T&&((prev==='ac')!==(t==='ac'))) buildScene(); else if(T) setPins();
+  renderTabs(); render(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function grade(kind){
+  const st=S.test[kind], order=kind==='post'&&st.order?st.order:null;
+  return QUEST.map((q,i)=>{const a=st.ans[i];if(a==null)return null;const opt=q.o[a];const right=opt[1]===1;const sure=st.conf[i]==='y';
+    return {right,sure,cat:right?(sure?'ok':'rg'):(sure?'sp':'bt'),misc:right?null:opt[1]};});
+}
+function miscSummary(kind){
+  const g=grade(kind),m={};g.forEach(x=>{if(x&&x.misc){m[x.misc]=m[x.misc]||{n:0,sure:0};m[x.misc].n++;if(x.sure)m[x.misc].sure++;}});return m;
+}
+function testHTML(kind){
+  const st=S.test[kind], isPost=kind==='post';
+  if(!isPost&&!S.started&&!st.done&&st.ans.length===0){
+    return `<div class="card"><h2>Tes awal: cek pemahamanmu</h2><div class="goal">10 soal singkat tentang AC, DC, dan baterai. Tidak dinilai untuk rapor — hasilnya membantu menemukan bagian yang belum kamu pahami.</div>
+      <p class="muted">Setiap soal ada dua langkah: pilih jawaban, lalu pilih <b>Yakin</b> atau <b>Menebak</b>. Jawab jujur — pilihan “Menebak” tidak mengurangi nilai.</p>
+      <div class="field"><label class="lbl2" for="fNama" style="margin:6px 0 0">Nama murid</label><input id="fNama" value="${esc(S.name)}" placeholder="Nama lengkap"></div>
+      <div class="field"><label class="lbl2" for="fKelas" style="margin:6px 0 0">Kelas</label><input id="fKelas" value="${esc(S.kelas)}" placeholder="mis. X TOI 1"></div>
+      <div class="row"><button class="btn primary" id="bStart">Mulai tes</button></div></div>`;
+  }
+  if(st.done) return resultHTML(kind);
+  const order=isPost?(st.order||(st.order=shuffle([...Array(QUEST.length).keys()]))):[...Array(QUEST.length).keys()];
+  const qi=order[st.i], q=QUEST[qi];
+  if(!st.optOrder) st.optOrder={};
+  const oo=isPost?(st.optOrder[qi]||(st.optOrder[qi]=shuffle([0,1,2,3]))):[0,1,2,3];
+  const a=st.ans[qi], cf=st.conf[qi];
+  return `<div class="card"><h2>${isPost?'Tes akhir':'Tes awal'} · soal ${st.i+1} dari ${QUEST.length}</h2>
+    <div class="qnav">${order.map((x,k)=>`<span class="${k===st.i?'cur':(st.ans[x]!=null?'ans':'')}">${k+1}</span>`).join('')}</div>
+    <div class="qtext">${q.q}</div>
+    <div class="opts" id="qOpts">${oo.map((oi,k)=>`<button class="opt ${a===oi?'on':''}" data-o="${oi}"><span class="k">${'ABCD'[k]}</span><span>${q.o[oi][0]}</span></button>`).join('')}</div>
+    <span class="lbl2">Seberapa yakin kamu?</span>
+    <div class="conf" id="qConf"><button data-c="y" class="${cf==='y'?'on':''}">Yakin</button><button data-c="n" class="${cf==='n'?'on':''}">Menebak / ragu</button></div>
+    <div class="row"><button class="btn" id="bPrev" ${st.i===0?'disabled':''}>← Sebelumnya</button><button class="btn primary" id="bNextQ" ${a==null||!cf?'disabled':''}>${st.i===QUEST.length-1?'Selesai':'Berikutnya →'}</button></div></div>`;
+}
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);}
+function resultHTML(kind){
+  const g=grade(kind).map(x=>x||{right:false,sure:false,cat:'bt',misc:null}), score=g.filter(x=>x.right).length, cats={ok:0,rg:0,bt:0,sp:0};g.forEach(x=>x&&cats[x.cat]++);
+  const ms=miscSummary(kind), isPost=kind==='post';
+  let h=`<div class="card"><h2>Hasil ${isPost?'tes akhir':'tes awal'}${S.name?' · '+esc(S.name):''}</h2>
+    <div class="kv"><div><dt>Skor</dt><dd>${score} / ${QUEST.length}</dd></div><div><dt>Paham</dt><dd>${cats.ok}</dd></div><div><dt>Benar tapi ragu</dt><dd>${cats.rg}</dd></div><div><dt>Belum tahu</dt><dd>${cats.bt}</dd></div><div><dt>Salah paham</dt><dd class="${cats.sp?'bad':''}">${cats.sp}</dd></div></div>
+    <p class="muted"><b>Salah paham</b> = jawaban salah tapi yakin — inilah yang paling perlu diluruskan. <b>Belum tahu</b> = salah sambil menebak.</p>`;
+  const keys=Object.keys(ms);
+  if(keys.length){h+=`<h3>Yang perlu diluruskan</h3><ul class="prof">${keys.map(k=>`<li><span>${MISC[k].t}<br><button class="go" data-go="${MISC[k].go}">Pelajari di tab ${TABS.find(x=>x[0]===MISC[k].go)[1]} →</button></span><span class="tag ${ms[k].sure?'sp':'bt'}">${ms[k].sure?'salah paham':'belum tahu'}</span></li>`).join('')}</ul>`;}
+  else h+=`<div class="fb ok">Tidak ditemukan salah paham. Mantap!</div>`;
+  h+=`<h3>Rincian per soal</h3><ul class="prof">${QUEST.map((q,i)=>{const x=g[i];return `<li><span style="font-size:13px">${i+1}. ${q.q}${!x.right?`<br><span style="color:var(--ok);font-size:12.5px">Jawaban benar: ${q.o.find(o=>o[1]===1)[0]}</span>`:''}</span><span class="tag ${x.cat}">${PROFILE[x.cat]}</span></li>`;}).join('')}</ul>`;
+  if(!isPost) h+=`<div class="row"><button class="btn primary" data-go="${keys.length?MISC[keys[0]].go:'bat'}">Mulai belajar →</button><button class="btn" id="bRedo">Ulangi tes awal</button></div>`;
+  h+='</div>';
+  if(isPost&&S.test.pre.done) h+=compareHTML();
+  if(isPost) h+=`<div class="row" style="margin:-4px 0 12px"><button class="btn" id="bRedoPost">Ulangi tes akhir</button></div>`;
+  return h;
+}
+function compareHTML(){
+  const gp=grade('pre').map(x=>x||{right:false,cat:'bt'}),gq=grade('post').map(x=>x||{right:false,cat:'bt'}),sp=gp.filter(x=>x.right).length,sq=gq.filter(x=>x.right).length;
+  const mp=miscSummary('pre'),mq=miscSummary('post');
+  const fixed=Object.keys(mp).filter(k=>!mq[k]), still=Object.keys(mq);
+  const cp=c=>gp.filter(x=>x.cat===c).length, cq=c=>gq.filter(x=>x.cat===c).length;
+  const bar=(lab,a,b)=>`<span>${lab}</span><i><b style="width:${a*10}%"></b></i><span style="font-family:var(--f-mono)">${a}</span><span></span><i><b class="post" style="width:${b*10}%"></b></i><span style="font-family:var(--f-mono)">${b}</span>`;
+  const txt=`REKAP LISTRIK DASAR (AC–DC & Baterai)\nNama  : ${S.name||'-'}\nKelas : ${S.kelas||'-'}\nTes awal : ${sp}/10 (paham ${cp('ok')}, ragu ${cp('rg')}, belum tahu ${cp('bt')}, salah paham ${cp('sp')})\nTes akhir: ${sq}/10 (paham ${cq('ok')}, ragu ${cq('rg')}, belum tahu ${cq('bt')}, salah paham ${cq('sp')})\nSalah paham yang sudah lurus: ${fixed.length?fixed.map(k=>MISC[k].t).join('; '):'-'}\nMasih perlu bimbingan: ${still.length?still.map(k=>MISC[k].t).join('; '):'-'}\nSortir AC/DC: ${Object.values(S.sort).filter(v=>v.ok).length}/${SORT.length} benar`;
+  return `<div class="card"><h2>Perbandingan tes awal → tes akhir</h2>
+    <div class="bars"><span style="font-weight:600">Skor</span><i><b style="width:${sp*10}%"></b></i><span style="font-family:var(--f-mono)">${sp}</span><span></span><i><b class="post" style="width:${sq*10}%"></b></i><span style="font-family:var(--f-mono)">${sq}</span>
+    ${bar('Salah paham',cp('sp'),cq('sp'))}</div>
+    <p class="muted">Batang biru = tes awal, hijau = tes akhir.</p>
+    ${fixed.length?`<div class="fb ok"><b>Sudah diluruskan:</b><br>${fixed.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    ${still.length?`<div class="fb warn"><b>Masih perlu dibahas dengan guru:</b><br>${still.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    <h3>Rekap untuk guru</h3><p class="muted">Salin lalu kirim ke Google Classroom atau grup kelas.</p>
+    <textarea class="rekap" id="rekap" readonly>${esc(txt)}</textarea>
+    <div class="row"><button class="btn primary" id="bCopy">Salin rekap</button></div></div>`;
+}
+function batHTML(){
+  const b=S.bat,r=batSolve(),n=b.n;
+  const bar=v=>`<span style="display:inline-block;width:70px;height:10px;border-radius:5px;background:var(--line);vertical-align:middle;overflow:hidden"><span style="display:block;height:100%;width:${Math.round(v*100)}%;background:#f3b52f"></span></span>`;
+  const jam=v=>v>0?nf(v,1)+' jam':'padam';
+  let note;
+  if(n===1) note='Dengan 1 baterai, kedua senter sama persis. Tambah baterai untuk melihat bedanya.';
+  else if(r.rev) note=`Satu baterai seri <b>terbalik</b>: baterai itu <b>melawan</b>, bukan sekadar tidak ikut. ${n} × 1,5 V − 2 × 1,5 V = <b>${nf(Math.abs(r.Vs),1)} V</b>. Lampu jadi redup.`;
+  else note=`<b>Seri</b>: tegangan dijumlahkan (${n} × 1,5 V = ${nf(n*1.5,1)} V) → lampu lebih <b>terang</b>, tetapi lama nyalanya sama seperti 1 baterai.<br><b>Paralel</b>: tegangan tetap 1,5 V → lampu redup, tetapi kapasitas dijumlahkan → <b>${n}× lebih awet</b>.`;
+  return `<div class="card"><h2>Baterai seri vs paralel</h2><div class="goal">Dua senter dengan lampu 6 V dan jumlah baterai yang sama. Kiri disusun <b>seri</b>, kanan disusun <b>paralel</b>. Bandingkan!</div>
+    <span class="lbl2">Jumlah baterai di setiap senter</span><div class="seg" id="bN">${[1,2,3,4].map(k=>`<button data-v="${k}" class="${n===k?'on':''}">${k}</button>`).join('')}</div>
+    <table class="tb" style="width:100%;border-collapse:collapse;font-size:14px;margin-top:12px">
+      <tr><th style="text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)"></th><th style="text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)">Seri</th><th style="text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)">Paralel</th></tr>
+      ${[['Cara sambung','+ ke − berderet','semua + jadi satu, semua − jadi satu'],
+         ['Tegangan',`<b>${nf(Math.abs(r.Vs),1)} V</b>`,`<b>${nf(r.Vp,1)} V</b>`],
+         ['Terang lampu',bar(r.brS),bar(r.brP)],
+         ['Kapasitas',`${r.capS} mAh`,`${r.capP} mAh`],
+         ['Lama nyala ±',jam(r.runS),jam(r.runP)]].map(([a,x,y])=>`<tr><td style="padding:7px 4px;border-bottom:1px solid var(--line);color:var(--muted);font-size:13px">${a}</td><td style="padding:7px 4px;border-bottom:1px solid var(--line)">${x}</td><td style="padding:7px 4px;border-bottom:1px solid var(--line)">${y}</td></tr>`).join('')}
+    </table>
+    <div class="fb ${r.rev?'warn':'ok'}">${note}</div>
+    <div class="row"><button class="btn primary" id="bRun">${b.run?'⏸ Hentikan':'▶ Nyalakan kedua senter'}</button><button class="btn" id="bFresh">Baterai baru</button><span class="muted" id="bHours">${b.hours?'Waktu: '+nf(b.hours,1)+' jam':''}</span></div>
+    <p class="muted">1 detik = 2,5 jam. Lihat senter mana yang padam lebih dulu.</p>
+    <div class="analog"><canvas id="botBat" width="640" height="320"></canvas>
+    <div class="cap"><b>Analogi botol:</b> tinggi air = tegangan, banyak air = kapasitas, pancaran yang memutar kincir = arus. Botol ditumpuk → air lebih tinggi, pancaran kuat. Botol berjajar → tinggi sama, airnya lebih banyak, lebih lama habis.</div></div>
+    ${n>1?`<div class="row"><button class="btn" id="bRev">${r.rev?'Pasang baterai dengan benar':'Coba: balik satu baterai di senter seri'}</button></div>`:''}</div>
+    <div class="card"><h2>Di dunia kerja</h2><div class="map"><b>Aki motor 12 V</b><span>6 sel × 2 V disusun seri</span><b>Remote / jam dinding</b><span>butuh 1,5–3 V; baterai cadangan paralel membuatnya lebih awet</span><b>Power bank</b><span>beberapa sel lithium 3,7 V diparalel</span><b>Baterai sepeda listrik 48 V</b><span>13S4P: 13 sel seri (tegangan) × 4 jalur paralel (kapasitas) — gabungan keduanya</span><b>UPS panel</b><span>2 aki 12 V diseri → 24 VDC</span></div></div>`;
+}
+function acHTML(){
+  const ac=S.ac,isAC=ac.src==='ac';
+  return `<div class="card"><h2>AC vs DC</h2><div class="goal">Bandingkan sumber DC dan AC dengan dua LED yang dipasang berlawanan arah: LED merah menyala bila arus mengalir “maju”, LED hijau bila arus mengalir “mundur”.</div>
+    <span class="lbl2">Sumber</span><div class="seg" id="aSrc"><button data-v="dc" class="${!isAC?'on':''}">Adaptor 12 VDC</button><button data-v="ac" class="${isAC?'on':''}">Trafo 12 VAC</button></div>
+    ${!isAC?`<span class="lbl2">Kabel adaptor</span><div class="seg" id="aPol"><button data-v="1" class="${ac.pol>0?'on':''}">Normal</button><button data-v="-1" class="${ac.pol<0?'on':''}">Dibalik</button></div>`:
+    `<span class="lbl2">Perlambat waktu</span><div class="seg" id="aSlow">${[[1,'Normal 50 Hz'],[10,'10× lambat'],[50,'50× lambat'],[100,'100× lambat']].map(([v,t])=>`<button data-v="${v}" class="${ac.slow===v?'on':''}">${t}</button>`).join('')}</div>`}
+    <canvas id="scopeA" width="800" height="400"></canvas>
+    <div class="fb ${isAC?'warn':'ok'}">${isAC?(ac.slow>1?'Diperlambat: LED merah dan hijau menyala <b>bergantian</b>. Arus berganti arah setiap 10 ms — 50 kali maju dan 50 kali mundur setiap detik.':'Kecepatan normal: kedua LED tampak menyala bersamaan (agak redup), padahal sebenarnya bergantian 50 kali per detik — mata kita terlalu lambat untuk melihatnya. Coba <b>perlambat waktu</b>.'):(ac.pol>0?'DC: arus mengalir <b>satu arah</b> dari + ke −. LED merah (D1) searah dengan arus → menyala. LED hijau (D2) terbalik → <b>menahan</b> arus, padam. Osiloskop datar di +12 V.':'Kabel dibalik: kabel merah (+) dan hitam (−) bertukar tempat, arus masuk dari bawah. Sekarang LED merah yang terbalik → <b>menahan arus, padam</b>. Arus lewat LED hijau (D2) yang searah → menyala. Osiloskop −12 V.')}</div>
+    <div class="kv"><div><dt>Multimeter V⎓</dt><dd>${isAC?'0,0':(ac.pol>0?'12,0':'−12,0')} V</dd></div><div><dt>Multimeter V~</dt><dd>${isAC?'12,0':'0,0'} V</dd></div><div><dt>Tegangan puncak</dt><dd>${isAC?'±17,0':'12,0'} V</dd></div><div><dt>Frekuensi</dt><dd>${isAC?'50 Hz':'0 Hz'}</dd></div></div>
+    <div class="card" style="background:var(--soft);border:0;margin:10px 0 0;padding:10px 12px">
+      <svg viewBox="0 0 360 150" style="width:100%;height:auto;display:block" role="img" aria-label="Skema dua LED dipasang berlawanan arah">
+        <g stroke="#14202b" stroke-width="2" fill="none"><polyline points="20,20 90,20"/><rect x="90" y="12" width="50" height="16" fill="#fff"/><polyline points="140,20 300,20"/><polyline points="20,130 300,130"/>
+        <polyline points="200,20 200,58"/><polyline points="200,92 200,130"/><polyline points="290,20 290,58"/><polyline points="290,92 290,130"/></g>
+        <polygon points="186,58 214,58 200,90" fill="${!isAC&&ac.pol>0||isAC?'#ff3b30':'#f3c6c2'}" stroke="#14202b" stroke-width="2"/><line x1="186" y1="92" x2="214" y2="92" stroke="#14202b" stroke-width="3"/>
+        <polygon points="276,92 304,92 290,60" fill="${!isAC&&ac.pol<0||isAC?'#2fd35a':'#c4ecd0'}" stroke="#14202b" stroke-width="2"/><line x1="276" y1="58" x2="304" y2="58" stroke="#14202b" stroke-width="3"/>
+        <text x="115" y="45" font-size="12" text-anchor="middle" font-family="IBM Plex Mono">R 1 kΩ</text>
+        <text x="222" y="80" font-size="12.5" font-weight="700" font-family="IBM Plex Sans">D1</text><text x="312" y="80" font-size="12.5" font-weight="700" font-family="IBM Plex Sans">D2</text>
+        <text x="8" y="26" font-size="15" font-weight="700" fill="${!isAC&&ac.pol<0?'#2b62c9':'#bb3a2c'}">${isAC?'~':(ac.pol>0?'+':'−')}</text><text x="8" y="136" font-size="15" font-weight="700" fill="${!isAC&&ac.pol<0?'#bb3a2c':'#2b62c9'}">${isAC?'~':(ac.pol>0?'−':'+')}</text>
+      </svg>
+      <p class="muted" style="margin-top:4px"><b>Mengapa LED yang terbalik tidak rusak?</b> LED hanya menghantar satu arah (dari A ke K). Saat terbalik, ia menahan arus — tetapi tegangan baliknya hanya ±2 V karena “ditahan” oleh LED pasangannya yang sedang menyala. Kalau LED dipasang <b>sendirian</b> lalu dibalik pada 12 V, tegangan baliknya melewati batas ±5 V dan LED bisa rusak. Karena itu dua LED dipasang berlawanan arah.</p></div>
+    <div class="analog"><canvas id="botAC" width="640" height="260"></canvas>
+    <div class="cap"><b>Analogi botol:</b> DC = botol bocor — air mengalir terus ke satu arah. AC = botol yang diremas lalu dilepas bergantian — air di selang hanya maju-mundur, tetapi tetap bisa menggerakkan kincir.</div></div></div>
+    <div class="card"><h2>Ingat ini</h2><div class="map"><b>AC</b><span>bolak-balik · stopkontak PLN 220 V 50 Hz, genset, keluaran trafo &amp; inverter · untuk motor dan lampu gedung</span><b>DC</b><span>searah · baterai, aki, panel surya, charger HP, PSU 24 VDC · untuk elektronika, PLC, sensor</span><b>Pengubah</b><span>AC → DC: adaptor/charger/PSU (penyearah). DC → AC: inverter.</span></div>
+    <p class="muted">Besar kecilnya tegangan <b>tidak</b> menentukan AC atau DC. Ada DC 1000 V (kereta listrik) dan ada AC 12 V (trafo).</p></div>`;
+}
+function sortHTML(){
+  const n=Object.values(S.sort).filter(v=>v.ok).length, d=Object.keys(S.sort).length;
+  return `<div class="card"><h2>Sortir: AC atau DC?</h2><div class="goal">Tentukan jenis listrik yang dipakai atau dihasilkan setiap benda.</div>
+    <div class="kv"><div><dt>Benar</dt><dd>${n} / ${SORT.length}</dd></div><div><dt>Dijawab</dt><dd>${d} / ${SORT.length}</dd></div></div>
+    <div class="sgrid" id="sGrid">${SORT.map(([ic,nm,ans,why],i)=>{const s=S.sort[i];return `<div class="sc ${s?(s.ok?'right':'wrong'):''}"><div class="ic">${ic}</div><div class="nm">${nm}</div>${s?`<div class="why"><b>${ans}</b> — ${why}</div>`:`<div class="bb"><button data-i="${i}" data-v="AC">AC</button><button data-i="${i}" data-v="DC">DC</button></div>`}</div>`;}).join('')}</div>
+    <div class="row"><button class="btn" id="bSortReset">Ulangi sortir</button>${d===SORT.length?'<button class="btn primary" data-go="post">Lanjut ke tes akhir →</button>':''}</div></div>`;
+}
+function render(){
+  let h='';
+  if(S.tab==='pre') h=testHTML('pre');
+  else if(S.tab==='post'){ h=S.test.pre.done||S.test.post.done?testHTML('post'):`<div class="card"><h2>Tes akhir</h2><div class="fb warn">Kerjakan dulu tes awal supaya hasilnya bisa dibandingkan.</div><div class="row"><button class="btn primary" data-go="pre">Ke tes awal</button></div></div>`;
+    if(S.test.pre.done&&!S.test.post.done&&S.test.post.ans.length===0&&!S.postStarted) h=`<div class="card"><h2>Tes akhir</h2><div class="goal">Soal yang sama dengan tes awal, tetapi urutannya diacak. Bandingkan hasilnya untuk melihat apa yang sudah kamu pahami.</div><p class="muted">Sudah menjelajah: ${['bat','ac'].filter(k=>S.visited[k]).length}/2 tab materi, sortir ${Object.keys(S.sort).length}/${SORT.length}.</p><div class="row"><button class="btn primary" id="bStartPost">Mulai tes akhir</button></div></div>`; }
+  else if(S.tab==='bat') h=batHTML();
+  else if(S.tab==='ac') h=acHTML();
+  else h=sortHTML();
+  $('#pane').innerHTML=h;
+  updateChip();
+}
+function updateChip(){
+  const c=$('#vchip');
+  if(S.tab==='ac'){c.innerHTML=`<span>${S.ac.src==='ac'?'AC':'DC'} <b>12 V</b></span><span>${S.ac.src==='ac'?'50 Hz':'searah'}</span>`;}
+  else {const r=batSolve();c.innerHTML=`<span>Seri <b>${nf(Math.abs(r.Vs),1)} V</b></span><span>Paralel <b>${nf(r.Vp,1)} V</b></span><span>${S.bat.n} baterai</span>`;}
+}
+function batChanged(){
+  if(T&&S.tab!=='ac'){buildBat();setPins();}
+  render();
+}
+function flipCell(i){if(S.bat.n<2)return;S.bat.rev[i]=!S.bat.rev[i];batChanged();}
+
+/* ---------- event ---------- */
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.t);});
+$('#pane').addEventListener('input',e=>{if(e.target.id==='fNama'){S.name=e.target.value;save();}if(e.target.id==='fKelas'){S.kelas=e.target.value;save();}});
+$('#pane').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return; const p=b.parentElement&&b.parentElement.id;
+  if(b.dataset.go){setTab(b.dataset.go);return;}
+  if(b.id==='bStart'){S.started=true;S.test.pre={ans:[],conf:[],i:0,done:false};render();return;}
+  if(b.id==='bStartPost'){S.postStarted=true;S.test.post={ans:[],conf:[],i:0,done:false,order:null};render();return;}
+  const kind=S.tab==='post'?'post':'pre', st=S.test[kind];
+  const order=kind==='post'&&st.order?st.order:[...Array(QUEST.length).keys()];
+  if(p==='qOpts'||b.closest('#qOpts')){const qi=order[st.i];st.ans[qi]=+b.dataset.o;save();render();return;}
+  if(p==='qConf'){const qi=order[st.i];st.conf[qi]=b.dataset.c;save();render();return;}
+  if(b.id==='bPrev'){st.i=Math.max(0,st.i-1);render();return;}
+  if(b.id==='bNextQ'){if(st.i<QUEST.length-1)st.i++;else{st.done=true;toast('ok','Tes selesai','');renderTabs();}save();render();return;}
+  if(b.id==='bRedo'){S.test.pre={ans:[],conf:[],i:0,done:false};S.started=true;save();renderTabs();render();return;}
+  if(b.id==='bRedoPost'){S.test.post={ans:[],conf:[],i:0,done:false,order:null};S.postStarted=true;save();renderTabs();render();return;}
+  if(b.id==='bCopy'){const ta=$('#rekap');const txt=ta.value;(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('ok','Rekap tersalin','')).catch(()=>{ta.select();toast('warn','Teks sudah dipilih','<br>Tekan Ctrl+C / tahan lalu Salin.');});return;}
+  if(p==='bN'){S.bat.n=+b.dataset.v;S.bat.rev=[false,false,false,false];S.bat.run=false;S.bat.socS=[1,1,1,1];S.bat.socP=[1,1,1,1];S.bat.hours=0;S.bat.doneS=S.bat.doneP=false;batChanged();return;}
+  if(b.id==='bRev'){const on=S.bat.rev.slice(0,S.bat.n).some(x=>x);S.bat.rev=[false,false,false,false];if(!on)S.bat.rev[S.bat.n-1]=true;batChanged();return;}
+  if(b.id==='bFresh'){S.bat.socS=[1,1,1,1];S.bat.socP=[1,1,1,1];S.bat.hours=0;S.bat.run=false;S.bat.doneS=S.bat.doneP=false;batChanged();return;}
+  if(b.id==='bRun'){S.bat.run=!S.bat.run;render();return;}
+  if(p==='aSrc'){S.ac.src=b.dataset.v;S.ac.phase=0;if(T)buildScene();render();return;}
+  if(p==='aPol'){S.ac.pol=+b.dataset.v;if(T)buildScene();render();return;}
+  if(p==='aSlow'){S.ac.slow=+b.dataset.v;render();return;}
+  if(b.closest('#sGrid')&&b.dataset.i!=null){const i=+b.dataset.i;S.sort[i]={v:b.dataset.v,ok:b.dataset.v===SORT[i][2]};save();renderTabs();render();return;}
+  if(b.id==='bSortReset'){S.sort={};save();renderTabs();render();return;}
+});
+// waktu berjalan (pengosongan baterai): 1 detik = 2,5 jam
+let lastDrain=performance.now();
+setInterval(()=>{
+  const now=performance.now(), el=Math.min(0.5,(now-lastDrain)/1000); lastDrain=now;
+  const b=S.bat; if(!b.run||S.tab!=='bat') return;
+  const r=batSolve(), dh=el*2.5;
+  if(r.Is<0.003&&r.Ip<0.003){b.run=false;render();return;}
+  b.hours+=dh;
+  for(let i=0;i<b.n;i++){b.socS[i]=Math.max(0,b.socS[i]-r.Is*1000*dh/CAP); b.socP[i]=Math.max(0,b.socP[i]-(r.Ip/b.n)*1000*dh/CAP);}
+  const r2=batSolve();
+  if(!b.doneS&&r2.Is<0.003){b.doneS=true;toast('warn','Senter SERI padam',`<br>setelah ±${nf(b.hours,1)} jam.`);}
+  if(!b.doneP&&r2.Ip<0.003){b.doneP=true;toast('ok','Senter PARALEL padam',`<br>setelah ±${nf(b.hours,1)} jam — ${b.n>1?'jauh lebih awet!':'sama dengan seri.'}`);}
+  if(b.doneS&&b.doneP) b.run=false;
+  const hb=$('#bHours'); if(hb) hb.textContent='Waktu: '+nf(b.hours,1)+' jam';
+  b.tick=(b.tick||0)+1; if(b.tick%4===0||!b.run){render();if(T)setPins();}
+},100);
+
+/* ---------- mulai ---------- */
+try{init3D();}catch(err){$('#loading').textContent='Model 3D tidak dapat dimuat di perangkat ini. Tes dan latihan tetap bisa digunakan.';console.error(err);
+  setInterval(()=>{if(S.tab==='ac'){S.ac.phase=(S.ac.phase+0.05*50/S.ac.slow)%1;drawScope();drawBottleAC();}else if(S.tab==='bat')drawBottleBat();},50);}
+renderTabs(); render();
+})();
+</script>
+</body>
+</html>

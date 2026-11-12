@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi 3D Power Supply 24 VDC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e3e8ec; --surface:#fbfcfd; --ink:#14202b; --muted:#56636e; --line:#d2dae0; --soft:#eef2f5;
+  --accent:#0a62a8; --yellow:#f3b52f; --ok:#24834b; --okbg:#eef8f1; --bad:#bb3a2c; --badbg:#fdf0ee; --warn:#b8650f; --warnbg:#fff5e6;
+  --ch1:#f5d000; --ch2:#3fd0ff;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+header.top{background:#171f28;color:#e6ebf0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #2d3946}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand img{width:44px;height:44px;flex:none}
+.eyebrow2{font:600 12px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+h1{margin:2px 0 0;font:700 24px/1.1 var(--f-display);letter-spacing:.01em}
+.meta{display:grid;justify-items:end;gap:4px;text-align:right;flex:none}
+.dims{font:500 12px var(--f-mono);color:var(--yellow);border:1px solid #4a3d18;border-radius:4px;padding:3px 7px;white-space:nowrap}
+.guru{font-size:12.5px;color:#c3ccd5}
+.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(380px,1fr);gap:16px;padding:16px;max-width:1440px;margin:0 auto;align-items:start}
+.stage{position:sticky;top:12px}
+.viewer{position:relative;height:min(78vh,700px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(#eef2f5,#c9d2da)}
+#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;font:600 12px/1 var(--f-body);background:rgba(20,32,43,.88);color:#fff;border-radius:999px;padding:4px 8px;white-space:nowrap}
+.lbl.tp{background:#c42b22}.lbl.tp.on{background:var(--ch1);color:#111}
+.hud{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.tool{border:1px solid var(--line);background:rgba(251,252,253,.94);padding:6px 11px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.tool[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chipout{position:absolute;left:10px;bottom:10px;background:rgba(20,32,43,.92);color:#e6ebf0;border-radius:8px;padding:7px 11px;font:600 13px var(--f-mono);display:flex;gap:14px}
+.chipout b{color:var(--yellow);font-size:16px}
+.gesture{position:absolute;left:10px;top:10px;font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.75);border-radius:6px;padding:4px 8px}
+#toast{position:absolute;right:10px;top:52px;z-index:5;width:min(calc(100% - 20px),380px);display:grid;gap:6px;pointer-events:none}
+.tst{background:var(--ink);color:#fff;padding:9px 13px;border-radius:8px;font-size:13.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.22);border-left:4px solid #4aa3e0;animation:tin .25s ease-out}
+.tst b{display:block}.tst.bad{border-left-color:#ff5a45}.tst.ok{border-left-color:#4cc47e}.tst.warn{border-left-color:#f3b52f}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#dfe5ea;color:var(--muted);font-weight:600;text-align:center;padding:20px}
+.panel{min-width:0}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#d6dde4;border-radius:10px;padding:4px;margin-bottom:12px}
+.steps button{border:0;background:transparent;border-radius:7px;padding:7px 2px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.2}
+.steps button .n{display:block;font:600 11.5px var(--f-mono);color:#8a97a2}
+.steps button.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,32,43,.12)}
+.steps button.done .n::after{content:" ✓";color:var(--ok)}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.card h2{font:700 21px/1.1 var(--f-display);letter-spacing:.02em;margin:0 0 6px}
+.card h3{font:700 16px/1.2 var(--f-display);letter-spacing:.03em;margin:12px 0 6px;color:var(--accent);text-transform:uppercase}
+.muted{color:var(--muted);font-size:13.5px;margin:4px 0 0;line-height:1.5}
+.goal{background:var(--soft);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;font-size:14px;margin:6px 0 4px}
+.blocks{display:flex;align-items:stretch;gap:0;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.blocks::-webkit-scrollbar{display:none}
+.blk{flex:1;min-width:66px;text-align:center;border:1.5px solid var(--line);border-radius:8px;padding:6px 4px;font-size:12.5px;font-weight:600;background:#fff;color:var(--muted)}
+.blk.on{border-color:var(--accent);color:var(--ink);background:#eef5fc}
+.blk small{display:block;font:500 11px var(--f-mono);color:var(--muted)}
+.arr{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:34px}
+.arr button{border:0;border-radius:999px;background:#c42b22;color:#fff;font:600 10.5px var(--f-mono);padding:3px 6px;cursor:pointer}
+.arr button.on{background:var(--ch1);color:#111;box-shadow:0 0 0 2px #14202b}
+.arr i{display:block;height:2px;width:100%;background:#aab6bf;margin-top:4px}
+.scope{background:#0d1418;border-radius:10px;padding:10px;border:1px solid #26323a}
+#scope{display:block;width:100%;height:auto;aspect-ratio:10/6.4;border-radius:6px;background:#06110d}
+.sread{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.sread div{background:#16222a;border-radius:6px;padding:6px 7px;color:#c9d5dd}
+.sread dt{font-size:11px;color:#8ea0ab}
+.sread dd{margin:0;font:600 14px var(--f-mono);color:var(--ch1)}
+.scopebar{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.sbtn{border:1px solid #33424c;background:#16222a;color:#c9d5dd;border-radius:6px;padding:5px 9px;font:600 12.5px var(--f-mono);cursor:pointer}
+.sbtn.on{background:var(--ch2);color:#062028;border-color:var(--ch2)}
+.sbtn.on1{background:var(--ch1);color:#111;border-color:var(--ch1)}
+.scap{color:#8ea0ab;font:500 12px var(--f-mono);margin-left:auto}
+.seg{display:flex;flex-wrap:wrap;background:var(--soft);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:8px 8px;border-radius:6px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+.lbl2{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+.formula{background:#f6f8fa;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font:500 14px/1.6 var(--f-mono);margin-top:10px}
+.formula b{color:var(--accent)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin-top:10px}
+.kv div{background:var(--soft);border-radius:6px;padding:7px 9px}
+.kv dt{font-size:11.5px;color:var(--muted)}
+.kv dd{margin:0;font:600 15px var(--f-mono)}
+.kv dd.hot{color:var(--bad)}
+.quiz{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+.quiz .q{font-weight:600;font-size:14.5px}
+.opts{display:grid;gap:6px;margin-top:8px}
+.opt{text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 12px;font-size:14px;cursor:pointer}
+.opt.right{background:var(--okbg);border-color:#9fd0b2}
+.opt.wrong{background:var(--badbg);border-color:#e4a59c}
+.fb{border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5;background:var(--soft);margin-top:10px}
+.fb:empty{display:none}.fb.ok{background:var(--okbg)}.fb.bad{background:var(--badbg)}.fb.warn{background:var(--warnbg)}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:6px 0}
+.stat b{display:block;font:700 24px/1.1 var(--f-display)}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px;line-height:1.6}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:0;gap:0}
+  .stage{top:0;z-index:20}
+  .viewer{height:38vh;min-height:240px;border-radius:0;border:none;border-bottom:1px solid var(--line)}
+  .panel{padding:12px}
+  header.top{padding:8px 12px}
+  .brand img{width:36px;height:36px}
+  h1{font-size:19px}.eyebrow2{font-size:10.5px}
+  .meta .guru,.dims .full{display:none}
+  .gesture{display:none}
+  .chipout{font-size:11.5px;gap:10px;padding:5px 8px}.chipout b{font-size:14px}
+  .steps button{font-size:12px}
+  .sread{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "zasgkur533");
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <img src="data:image/webp;base64,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" alt="Logo Teknik Otomasi Industri">
+    <div>
+      <div class="eyebrow2">SMK 2 Triple J · Teknik Otomasi Industri</div>
+      <h1>Simulasi 3D Power Supply 24 VDC</h1>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="dims"><span class="full">DK2 · Komponen Elektronika · </span>Fase E</span>
+    <span class="guru">Guru pengampu: Ade Irma Suryani, S.T., Gr.</span>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="stage">
+    <div class="viewer" id="viewer">
+      <canvas id="c" aria-label="Model 3D rangkaian power supply 24 VDC dan osiloskop"></canvas>
+      <div id="labels"></div>
+      <div class="hud">
+        <button class="tool" id="btnSlow" aria-pressed="true">Animasi arus</button>
+        <button class="tool" id="btnReset">⌂</button>
+      </div>
+      <div id="toast"></div>
+      <div class="chipout" id="chipout"></div>
+      <div class="gesture">Geser = putar · scroll/cubit = zoom · ketuk TP untuk pindah probe</div>
+      <div id="loading">Memuat model 3D…</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <nav class="steps" id="steps"></nav>
+    <div class="card">
+      <div class="blocks" id="blocks"></div>
+    </div>
+    <div class="card scope">
+      <canvas id="scope" width="800" height="512" aria-label="Layar osiloskop"></canvas>
+      <div class="sread" id="sread"></div>
+      <div class="scopebar">
+        <button class="sbtn on1" id="bCh1">CH1: TP1</button>
+        <button class="sbtn" id="bCh2">CH2: TP1</button>
+        <button class="sbtn" id="bAC">Kopling AC</button>
+        <span class="scap" id="scap"></span>
+      </div>
+    </div>
+    <div class="card" id="stepCard"></div>
+  </section>
+</main>
+<footer>Media pembelajaran interaktif · Program Keahlian Teknik Elektronika · Konsentrasi Teknik Otomasi Industri · SMKS 2 Triple J<br>Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const nf=(x,d=1)=>Number(x).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+
+/* ================= STATE ================= */
+const LOADS=[{id:'led',nama:'LED indikator',I:0.02},{id:'fan',nama:'Kipas 24 V',I:0.15},{id:'lamp',nama:'Lampu 24 V 10 W',I:0.42},{id:'sol',nama:'Solenoid valve',I:1.0}];
+const CAPS=[0,100,470,1000,2200,4700];
+const S={step:0,vsec:24,rect:'full',C:2200,reg:true,load:'lamp',tp:1,ch2:false,ac:false,anim:true,
+  done:{},quiz:{},fault:null,fq:{score:0,total:0,answered:false,pick:null},sim:null};
+
+/* ================= SIMULASI LISTRIK ================= */
+const F=50, VD=0.75;
+function simulate(){
+  const fault=S.step===4?S.fault:null;
+  let vsec=S.vsec; if(fault==='trafo') vsec=12;
+  const ld=LOADS.find(l=>l.id===S.load), I=ld.I;
+  let Vp=vsec*Math.SQRT2*(1.019-0.045*I); if(fault==='fuse') Vp=0;
+  let Cf=S.C*1e-6; if(fault==='cap') Cf*=0.08;
+  const rect=S.rect, useC=rect!=='none'&&Cf>0, useReg=rect!=='none'&&S.reg;
+  const dt=2e-5, Tset=0.16, Twin=0.05, n=Math.round((Tset+Twin)/dt);
+  const tp=[[],[],[],[]]; let vc=0;
+  const Rl=24/I;
+  for(let k=0;k<n;k++){
+    const t=k*dt, vs=Vp*Math.sin(2*Math.PI*F*t);
+    let vr;
+    if(rect==='none') vr=vs;
+    else if(rect==='half') vr=Math.max(0,vs-VD);
+    else vr=fault==='diode'?Math.max(0,vs-2*VD):Math.max(0,Math.abs(vs)-2*VD);
+    let v3;
+    if(useC){
+      const Iload=useReg?(vc>2.2?I+0.005:0.005):vc/Rl;
+      if(vr>vc) vc+= (vr-vc)*Math.min(1,dt/(0.35*Cf)); else vc-=Iload*dt/Cf;
+      vc=Math.max(0,vc); v3=vc;
+    } else v3=vr;
+    let v4=useReg?Math.max(0,Math.min(24,v3-2.0)):v3;
+    if(t>=Tset){tp[0].push(vs);tp[1].push(vr);tp[2].push(v3);tp[3].push(v4);}
+  }
+  const st=tp.map(a=>{let mx=-1e9,mn=1e9,s=0,s2=0;a.forEach(v=>{if(v>mx)mx=v;if(v<mn)mn=v;s+=v;s2+=v*v;});const avg=s/a.length,rms=Math.sqrt(s2/a.length),acr=Math.sqrt(Math.max(0,rms*rms-avg*avg));return {mx,mn,pp:mx-mn,avg,rms,acr};});
+  const fr=(rect==='half'||fault==='diode')?50:100;
+  const Pd=useReg?Math.max(0,(st[2].avg-st[3].avg))*I:0;
+  return {tp,st,Vp,vsecEff:vsec,I,fr,Pd,Tj:30+Pd*7,useC,useReg,ld,dt};
+}
+
+/* ================= DATA LANGKAH ================= */
+const STEPS=[
+  {nama:'Trafo',tp:1},{nama:'Penyearah',tp:2},{nama:'Filter',tp:3},{nama:'Regulator',tp:4},{nama:'Gangguan',tp:4}
+];
+const QUIZ=[
+  {q:'Multimeter ACV di TP1 menunjukkan 24 V. Berapa tegangan puncak (Vp) yang terlihat di osiloskop?',o:['24 V','≈ 17 V','≈ 33,9 V','48 V'],a:2,e:'Multimeter AC menampilkan nilai efektif (rms). Vp = Vrms × √2 = 24 × 1,414 ≈ 33,9 V.'},
+  {q:'Pada penyearah gelombang penuh dari jala-jala 50 Hz, berapa frekuensi denyut di TP2?',o:['25 Hz','50 Hz','100 Hz','200 Hz'],a:2,e:'Kedua setengah gelombang diubah menjadi positif, jadi ada 2 denyut tiap periode: 2 × 50 = 100 Hz.'},
+  {q:'Beban tetap 0,42 A. Jika kapasitor diganti dari 1000 µF menjadi 2200 µF, tegangan riak akan…',o:['Membesar ±2 kali','Mengecil ±2 kali','Tetap','Menjadi nol'],a:1,e:'Vr ≈ I / (f × C). C naik 2,2 kali → riak turun ±2,2 kali. Riak tidak pernah benar-benar nol selama ada beban.'},
+  {q:'Regulator 7824 memiliki dropout ±2 V. Agar keluaran tetap 24 V, tegangan TERENDAH di TP3 (lembah riak) harus minimal…',o:['24 V','26 V','33,9 V','12 V'],a:1,e:'Vin(min) ≥ Vout + Vdropout = 24 + 2 = 26 V. Yang menentukan adalah titik terendah riak, bukan rata-ratanya.'}
+];
+const FAULTS={
+  diode:{nama:'Satu dioda jembatan putus',jelas:'Di TP2 hanya muncul setengah gelombang (denyut 50 Hz). Riak di TP3 membesar 2 kali, tetapi keluaran TP4 bisa tetap 24 V selama lembah riak masih ≥ 26 V — gangguan ini mudah terlewat kalau hanya mengukur keluaran!'},
+  cap:{nama:'Kapasitor filter kering (kapasitansi turun)',jelas:'TP2 normal (gelombang penuh 100 Hz), tetapi riak di TP3 sangat besar karena kapasitansinya tinggal ±8%. Lembah riak jatuh di bawah 26 V sehingga keluaran TP4 ikut bergelombang.'},
+  trafo:{nama:'Kabel sekunder di tap 12 V (salah tap)',jelas:'Bentuk gelombang semua normal, tetapi tegangannya rendah: Vp TP1 hanya ±17 V. Masukan regulator jauh di bawah 26 V sehingga keluaran hanya ±13 V.'},
+  fuse:{nama:'Sekering primer putus',jelas:'Semua titik uji 0 V — tidak ada tegangan dari trafo sama sekali. Periksa sekering, kabel daya, dan stopkontak.'}
+};
+
+/* ================= 3D ================= */
+let T=null;
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+const M=(h,o)=>new THREE.MeshStandardMaterial(Object.assign({color:col(h),roughness:.55,metalness:0},o||{}));
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.userData={c,g,draw};return t;}
+function redraw(t){const {c,g,draw}=t.userData;g.clearRect(0,0,c.width,c.height);draw(g,c.width,c.height);t.needsUpdate=true;}
+function textPlane(w,h,draw,px){px=px||110;const t=canvasTex(Math.round(w*px),Math.round(h*px),draw);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,roughness:.7,transparent:true}));m.userData.tex=t;return m;}
+function cylX(r,h,mat,seg){const g=new THREE.CylinderGeometry(r,r,h,seg||24);g.rotateZ(Math.PI/2);return new THREE.Mesh(g,mat);}
+function cylZ(r,h,mat,seg){const g=new THREE.CylinderGeometry(r,r,h,seg||24);g.rotateX(Math.PI/2);return new THREE.Mesh(g,mat);}
+function tube(pts,r,mat){return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p=>V3(...p))),Math.max(20,pts.length*12),r,8,false),mat);}
+function glowSprite(rgb){const t=canvasTex(128,128,g=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,`rgba(${rgb},.95)`);gr.addColorStop(.35,`rgba(${rgb},.45)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,128,128);});return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));}
+function shadowAll(o){o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});}
+const TPPOS={1:V3(-3.7,0.3,3.3),2:V3(-0.3,0.3,3.3),3:V3(2.7,0.3,3.3),4:V3(6.2,0.3,3.3)};
+const GNDPOS=V3(0.9,0.3,-3.5);
+
+function init3D(){
+  if(typeof THREE==='undefined') throw new Error('three');
+  const canvas=$('#c'), viewer=$('#viewer');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(34,1,0.1,300);
+  const pmrem=new THREE.PMREMGenerator(renderer), env=new THREE.Scene();
+  const sky=new THREE.SphereGeometry(50,32,16), pa=sky.attributes.position, cols=[];
+  const lo=new THREE.Color(0x2c3540), hi=new THREE.Color(0xf2f5f8);
+  for(let i=0;i<pa.count;i++){const t=(pa.getY(i)/50+1)/2;const c=lo.clone().lerp(hi,Math.pow(t,.8));cols.push(c.r,c.g,c.b);}
+  sky.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  env.add(new THREE.Mesh(sky,new THREE.MeshBasicMaterial({side:THREE.BackSide,vertexColors:true})));
+  const pm=new THREE.MeshBasicMaterial({color:new THREE.Color(3,3,3),side:THREE.DoubleSide});
+  [[0,32,12,40,12],[-34,8,22,14,30],[30,-4,-20,10,24]].forEach(([x,y,z,w,h])=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),pm);m.position.set(x,y,z);m.lookAt(0,0,0);env.add(m);});
+  scene.environment=pmrem.fromScene(env,0.03).texture;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x7a8590,0.35));
+  const key=new THREE.DirectionalLight(0xffffff,0.85); key.position.set(6,18,12); key.castShadow=true;
+  key.shadow.mapSize.set(2048,2048); Object.assign(key.shadow.camera,{left:-16,right:16,top:16,bottom:-16,near:1,far:60}); key.shadow.bias=-0.0006; scene.add(key);
+  const fill=new THREE.DirectionalLight(0xd6e4ff,0.3); fill.position.set(-10,6,-6); scene.add(fill);
+  const bench=new THREE.Mesh(new THREE.BoxGeometry(46,0.6,30),M('#5f7c70',{roughness:.85})); bench.position.y=-0.3; bench.receiveShadow=true; scene.add(bench);
+
+  const steel=M('#cfd3d8',{metalness:.95,roughness:.25}), copper=M('#c8793e',{metalness:.9,roughness:.3});
+  const board=new THREE.Group(); scene.add(board);
+  const pcb=new THREE.Mesh(new THREE.BoxGeometry(18,0.25,8.6),M('#1f6b45',{roughness:.55})); pcb.position.set(0.5,0.125,0); board.add(pcb);
+  // jalur tembaga
+  const tr=(x1,z1,x2,z2,w)=>{const len=Math.hypot(x2-x1,z2-z1)+0.3;const m=new THREE.Mesh(new THREE.BoxGeometry(len,0.04,w||0.32),copper);m.position.set((x1+x2)/2,0.27,(z1+z2)/2);m.rotation.y=-Math.atan2(z2-z1,x2-x1);board.add(m);};
+  tr(-4.3,1.2,-3.7,3.3,.25);tr(-3.7,1.2,-3.0,1.2);tr(-4.3,-1.2,-3.0,-1.2);
+  tr(-0.9,0,-0.3,3.3,.25);tr(-0.9,0,1.6,0);tr(1.6,0,2.7,3.3,.25);tr(2.7,0,4.2,0);tr(5.6,0,6.2,3.3,.25);tr(5.6,0,7.6,0);
+  tr(-2.2,-2.6,9.2,-2.6,.5);tr(0.9,-2.6,0.9,-3.5,.25);
+  // sekering & kabel daya
+  const fuseG=new THREE.Group(); fuseG.position.set(-8.0,0.6,2.6);
+  const fh=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.4,0.6),M('#22262a')); fuseG.add(fh);
+  const fglass=cylX(0.2,1.4,new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.35,roughness:.05}),20); fglass.position.y=0.4; fuseG.add(fglass);
+  [-0.65,0.65].forEach(x=>{const c=cylX(0.21,0.18,steel,20);c.position.set(x,0.4,0);fuseG.add(c);});
+  const fwire=cylX(0.025,1.1,M('#d0d0d0',{metalness:.9}),8); fwire.position.y=0.4; fuseG.add(fwire);
+  const fwireB=new THREE.Group(); [-1,1].forEach(s=>{const w=cylX(0.025,0.45,M('#3a3a3a'),8);w.position.set(s*0.35,0.4,0);w.rotation.z=s*0.3;fwireB.add(w);}); fwireB.visible=false; fuseG.add(fwireB);
+  board.add(fuseG);
+  board.add(tube([[-14,0.35,3.4],[-11.5,0.35,3.0],[-9.6,0.45,2.6],[-9.0,0.6,2.6]],0.22,M('#1d1f22')));
+  board.add(tube([[-7.0,0.6,2.6],[-6.6,0.9,2.0],[-6.9,1.6,1.4]],0.07,M('#2b62c9')));
+  const plug=new THREE.Mesh(new THREE.BoxGeometry(1.6,1.0,2.0),M('#1d1f22')); plug.position.set(-14.4,0.5,3.4); board.add(plug);
+  // trafo
+  const trafo=new THREE.Group(); trafo.position.set(-6.2,0.25,0);
+  const lam=M('#8b9097',{metalness:.6,roughness:.45});
+  const core=new THREE.Mesh(new THREE.BoxGeometry(3.4,3.4,3.0),lam); core.position.y=1.9; trafo.add(core);
+  const coil=new THREE.Mesh(new THREE.BoxGeometry(2.0,2.6,3.5),M('#d9a128',{roughness:.6})); coil.position.y=1.9; trafo.add(coil);
+  const tape=new THREE.Mesh(new THREE.BoxGeometry(2.02,2.62,1.2),M('#f1e7c9',{roughness:.8})); tape.position.set(0,1.9,0); trafo.add(tape);
+  const bk=new THREE.Mesh(new THREE.BoxGeometry(4.2,0.2,3.4),steel); bk.position.y=0.15; trafo.add(bk);
+  const tlab=textPlane(2.0,1.2,(c,w,h)=>{c.fillStyle='#f1e7c9';c.fillRect(0,0,w,h);c.fillStyle='#14202b';c.textAlign='center';c.font=`700 ${h*.3}px "Barlow Condensed",Arial`;c.fillText('TRAFO 2 A',w/2,h*.34);c.font=`600 ${h*.2}px "IBM Plex Mono",monospace`;c.fillText('P: 220 V',w/2,h*.6);c.fillText('S: 0-12-18-24 V',w/2,h*.85);});
+  tlab.rotation.x=-Math.PI/2; tlab.position.set(0,3.22,0); trafo.add(tlab);
+  // tap sekunder
+  const taps={}; [['0',-0.9],['12',-0.3],['18',0.3],['24',0.9]].forEach(([t,z])=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.35,12),copper);p.position.set(1.9,2.6,z);trafo.add(p);taps[t]=p;});
+  board.add(trafo);
+  const secWire={m:new THREE.Mesh(new THREE.BufferGeometry(),M('#c62a22'))}; board.add(secWire.m);
+  board.add(tube([[-4.3,2.85,-0.9],[-3.9,1.6,-1.2],[-3.4,0.4,-1.2]],0.07,M('#1d1f22')));
+  // dioda jembatan
+  const dmat=()=>M('#16181b',{roughness:.35,emissive:new THREE.Color(0xffa020),emissiveIntensity:0});
+  const diodes=[]; [[-2.8,-0.9,0.785],[-1.2,-0.9,-0.785],[-2.8,0.9,-0.785],[-1.2,0.9,0.785]].forEach(([x,z,r],i)=>{
+    const g=new THREE.Group(); g.position.set(x,0.6,z); g.rotation.y=r;
+    const mat=dmat(); const b=cylX(0.24,1.0,mat,20); g.add(b);
+    const band=cylX(0.245,0.16,M('#cfd3d8',{metalness:.6,roughness:.3}),20); band.position.x=0.36; g.add(band);
+    const l=cylX(0.03,1.9,steel,8); g.add(l);
+    g.userData.tap='diode'; board.add(g); diodes.push({g,mat});
+  });
+  const dlab=textPlane(1.6,0.45,(c,w,h)=>{c.fillStyle='rgba(0,0,0,0)';c.fillRect(0,0,w,h);c.fillStyle='#eaf2ec';c.textAlign='center';c.textBaseline='middle';c.font=`600 ${h*.6}px "IBM Plex Mono",monospace`;c.fillText('D1–D4',w/2,h/2);});
+  dlab.rotation.x=-Math.PI/2; dlab.position.set(-2.0,0.29,-2.0); board.add(dlab);
+  // kapasitor
+  const cap=new THREE.Group(); cap.position.set(1.6,0.25,-0.6); cap.userData.tap='cap'; board.add(cap);
+  // regulator + heatsink
+  const reg=new THREE.Group(); reg.position.set(4.9,0.25,-0.8); reg.userData.tap='reg';
+  const hsM=M('#b9c0c7',{metalness:.85,roughness:.35,emissive:new THREE.Color(0xff3010),emissiveIntensity:0});
+  const hsb=new THREE.Mesh(new THREE.BoxGeometry(2.6,2.8,0.3),hsM); hsb.position.set(0,1.6,-0.3); reg.add(hsb);
+  for(let i=0;i<7;i++){const f=new THREE.Mesh(new THREE.BoxGeometry(0.12,2.8,1.4),hsM);f.position.set(-1.2+i*0.4,1.6,-1.1);reg.add(f);}
+  const rb=new THREE.Mesh(new THREE.BoxGeometry(1.0,1.5,0.45),M('#16181b')); rb.position.set(0,1.25,0.08); reg.add(rb);
+  const rtab=new THREE.Mesh(new THREE.BoxGeometry(1.0,0.9,0.12),steel); rtab.position.set(0,2.3,-0.1); reg.add(rtab);
+  [-0.33,0,0.33].forEach(x=>{const l=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.7,0.05),steel);l.position.set(x,0.35,0.15);reg.add(l);});
+  const rl=textPlane(0.9,0.5,(c,w,h)=>{c.fillStyle='#16181b';c.fillRect(0,0,w,h);c.fillStyle='#e7e7e7';c.textAlign='center';c.textBaseline='middle';c.font=`700 ${h*.42}px "IBM Plex Mono",monospace`;c.fillText('7824',w/2,h*.4);c.font=`500 ${h*.25}px "IBM Plex Mono",monospace`;c.fillText('L7824CV',w/2,h*.78);});
+  rl.position.set(0,1.35,0.31); reg.add(rl);
+  board.add(reg);
+  const regBypass=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.1,0.14),M('#d6b25e',{metalness:.85,roughness:.3})); regBypass.position.set(4.9,0.5,0.9); board.add(regBypass);
+  // keluaran
+  const tb=new THREE.Mesh(new THREE.BoxGeometry(1.0,0.8,2.0),M('#2a6fb5')); tb.position.set(8.6,0.65,-1.3); board.add(tb);
+  [-1.8,-0.8].forEach(z=>{const s=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.12,16),steel);s.position.set(8.6,1.1,z);board.add(s);});
+  const oledM=M('#27d36b',{emissive:new THREE.Color(0x27d36b),emissiveIntensity:0}); const oled=new THREE.Mesh(new THREE.SphereGeometry(0.22,16,10),oledM); oled.position.set(8.0,0.55,1.6); board.add(oled);
+  const oledG=glowSprite('60,230,120'); oledG.position.copy(oled.position); board.add(oledG);
+  const olab=textPlane(2.2,0.5,(c,w,h)=>{c.fillStyle='#eaf2ec';c.textAlign='center';c.textBaseline='middle';c.font=`600 ${h*.55}px "IBM Plex Mono",monospace`;c.fillText('OUT 24 VDC',w/2,h/2);});
+  olab.rotation.x=-Math.PI/2; olab.position.set(8.4,0.29,0.6); board.add(olab);
+  // titik uji
+  const tpMesh={};
+  Object.entries(TPPOS).forEach(([k,p])=>{const g=new THREE.Group();g.position.copy(p);const post=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1.0,10),steel);post.position.y=0.5;g.add(post);const loop=new THREE.Mesh(new THREE.TorusGeometry(0.22,0.05,8,20),steel);loop.position.y=1.15;g.add(loop);const cap2=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.3,16),M('#c42b22'));cap2.position.y=0.3;g.add(cap2);g.userData.tap='tp'+k;board.add(g);tpMesh[k]=g;});
+  {const g=new THREE.Group();g.position.copy(GNDPOS);const post=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1.0,10),steel);post.position.y=0.5;g.add(post);const c2=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.3,16),M('#1d1f22'));c2.position.y=0.3;g.add(c2);board.add(g);}
+  // beban
+  const loads={};
+  {const g=new THREE.Group();g.position.set(11.4,0,-1.2);const fr=new THREE.Mesh(new THREE.BoxGeometry(3.2,3.2,1.0),M('#22262a'));fr.position.y=1.7;g.add(fr);const hole=cylZ(1.4,1.02,M('#0f1113'),40);hole.position.y=1.7;g.add(hole);
+    const rot=new THREE.Group();rot.position.set(0,1.7,0.2);const hub=cylZ(0.45,0.5,M('#2c3035'),24);rot.add(hub);for(let i=0;i<7;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(0.5,1.2,0.06),M('#3a3f45'));b.position.y=0.8;const p=new THREE.Group();p.rotation.z=i/7*Math.PI*2;b.rotation.y=0.5;p.add(b);rot.add(p);}g.add(rot);
+    const lb=textPlane(0.8,0.8,(c,w,h)=>{c.fillStyle='#f3b52f';c.beginPath();c.arc(w/2,h/2,w/2,0,7);c.fill();c.fillStyle='#111';c.textAlign='center';c.textBaseline='middle';c.font=`700 ${h*.28}px "IBM Plex Sans",Arial`;c.fillText('24V',w/2,h/2);});lb.position.set(0,1.7,0.48);rot.add(lb);
+    const ft=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.3,1.4),M('#22262a'));ft.position.y=0.15;g.add(ft);loads.fan={g,rot};}
+  {const g=new THREE.Group();g.position.set(11.4,0,-1.2);const hb=new THREE.Mesh(new THREE.CylinderGeometry(0.9,1.0,0.6,32),M('#22262a'));hb.position.y=0.3;g.add(hb);const hs=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.9,24),M('#d9dcdf',{metalness:.7,roughness:.3}));hs.position.y=1.05;g.add(hs);
+    const gm=new THREE.MeshStandardMaterial({color:col('#fff6dc'),roughness:.1,transparent:true,opacity:.5,emissive:new THREE.Color(0xffc561),emissiveIntensity:0});const bulb=new THREE.Mesh(new THREE.SphereGeometry(1.15,32,20),gm);bulb.position.y=2.55;g.add(bulb);
+    const gs=glowSprite('255,200,110');gs.position.y=2.55;g.add(gs);const pl=new THREE.PointLight(0xffc56b,0,16);pl.position.set(0,3,1);g.add(pl);loads.lamp={g,gm,gs,pl};}
+  {const g=new THREE.Group();g.position.set(11.4,0,-1.2);const body=new THREE.Mesh(new THREE.BoxGeometry(2.6,1.4,1.6),M('#b9c0c7',{metalness:.7,roughness:.35}));body.position.y=0.7;g.add(body);const coilS=new THREE.Mesh(new THREE.BoxGeometry(1.4,1.6,1.4),M('#16181b'));coilS.position.y=2.2;g.add(coilS);
+    const ind=new THREE.Mesh(new THREE.SphereGeometry(0.15,12,8),M('#ffcc33',{emissive:new THREE.Color(0xffaa00),emissiveIntensity:0}));ind.position.set(0,2.6,0.72);g.add(ind);
+    [-1.6,1.6].forEach(x=>{const p=cylX(0.3,0.6,steel,16);p.position.set(x,0.7,0);g.add(p);});loads.sol={g,ind,coil:coilS};}
+  {const g=new THREE.Group();g.position.set(11.4,0,-1.2);loads.led={g};}
+  Object.values(loads).forEach(l=>{scene.add(l.g);});
+  scene.add(tube([[8.6,1.1,-1.8],[9.4,1.0,-2.4],[10.2,0.4,-1.9],[10.8,0.5,-1.2]],0.08,M('#c62a22')));
+  scene.add(tube([[8.6,1.1,-0.8],[9.4,1.0,-0.2],[10.2,0.4,-0.6],[10.8,0.5,-1.0]],0.08,M('#1d1f22')));
+  // osiloskop
+  const scope=new THREE.Group(); scope.position.set(-1.0,0,-9.0);
+  const sb=new THREE.Mesh(new THREE.BoxGeometry(11,6.4,5),M('#d5dade',{roughness:.5})); sb.position.y=3.4; scope.add(sb);
+  const bez=new THREE.Mesh(new THREE.BoxGeometry(7.0,5.0,0.2),M('#2a2f35')); bez.position.set(-1.7,3.5,2.55); scope.add(bez);
+  const scrTex=canvasTex(800,560,(g,w,h)=>drawScope(g,w,h,true));
+  const scr=new THREE.Mesh(new THREE.PlaneGeometry(6.6,4.62),new THREE.MeshBasicMaterial({map:scrTex,toneMapped:false})); scr.position.set(-1.7,3.5,2.67); scope.add(scr);
+  for(let i=0;i<3;i++)for(let j=0;j<2;j++){const k=cylZ(0.32,0.4,M('#3a3f45'),24);k.position.set(2.7+j*1.3,5.2-i*1.25,2.7);scope.add(k);}
+  [[2.7,1.05,'#f5d000'],[4.0,1.05,'#3fd0ff']].forEach(([x,y,c])=>{const b=cylZ(0.28,0.35,M('#1d1f22'),20);b.position.set(x,y,2.7);scope.add(b);const r=cylZ(0.34,0.1,M(c),20);r.position.set(x,y,2.58);scope.add(r);});
+  const sl=textPlane(3.2,0.5,(c,w,h)=>{c.fillStyle='#d5dade';c.fillRect(0,0,w,h);c.fillStyle='#14202b';c.textAlign='left';c.textBaseline='middle';c.font=`700 ${h*.6}px "Barlow Condensed",Arial`;c.fillText('OSILOSKOP 2 CH · 20 MHz',4,h/2);});
+  sl.position.set(-2.6,6.25,2.52); scope.add(sl);
+  scene.add(scope);
+  // probe osiloskop
+  const probe=new THREE.Group();
+  const pm2=M('#2a2f35',{roughness:.45}); const ph=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.24,2.4,20),pm2); ph.position.y=1.6; probe.add(ph);
+  const ring=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.26,0.25,20),M('#f5d000')); ring.position.y=2.6; probe.add(ring);
+  const hook=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.5,10),steel); hook.position.y=0.25; probe.add(hook);
+  scene.add(probe);
+  const probeLead=new THREE.Mesh(new THREE.BufferGeometry(),M('#2a2f35')); scene.add(probeLead);
+  const gndLead=tube([[GNDPOS.x,1.0,GNDPOS.z],[GNDPOS.x-0.3,1.4,-4.6],[-0.5,0.4,-6.2],[2.7,1.05,-6.2]],0.06,M('#1d1f22')); scene.add(gndLead);
+  T={renderer,scene,camera,canvas,viewer,board,diodes,cap,capVis:null,hsM,reg,regBypass,trafo,taps,secWire,fuseWire:fwire,fuseBroken:fwireB,oledM,oledG,loads,scrTex,probe,probeLead,
+     probeP:TPPOS[1].clone().add(V3(0,1.15,0)),tpMesh,cam:{yaw:0.05,pitch:0.5,zoom:1,t:V3(0.5,2.4,-1.8),d:34},leadDirty:true,phase:0};
+  shadowAll(board); shadowAll(scope);
+  bindPointer(); new ResizeObserver(resize).observe(viewer); resize();
+  apply3D();
+  $('#loading').style.display='none';
+  requestAnimationFrame(loop);
+}
+function buildCap(){
+  const g=T.cap; while(g.children.length){const c=g.children.pop();c.traverse(m=>{if(m.isMesh){m.geometry.dispose();if(m.material.map)m.material.map.dispose();m.material.dispose();}});}
+  if(S.C===0) return;
+  const r=0.45+Math.sqrt(S.C/4700)*0.85, h=1.4+Math.sqrt(S.C/4700)*1.9;
+  const bulge=S.step===4&&S.fault==='cap';
+  const sleeve=canvasTex(512,256,(c,w,h2)=>{c.fillStyle='#1b2c5a';c.fillRect(0,0,w,h2);c.fillStyle='#c8d2e6';c.fillRect(w*.72,0,w*.16,h2);c.fillStyle='#1b2c5a';c.font=`700 ${h2*.22}px Arial`;c.textAlign='center';for(let y=.2;y<1;y+=.25)c.fillText('−',w*.8,h2*y+10);c.fillStyle='#fff';c.font=`700 ${h2*.16}px "IBM Plex Sans",Arial`;c.fillText(S.C+'µF',w*.36,h2*.42);c.font=`500 ${h2*.12}px "IBM Plex Sans",Arial`;c.fillText('50V 105°C',w*.36,h2*.62);});
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,40,1,true),new THREE.MeshStandardMaterial({map:sleeve,roughness:.35}));
+  body.position.y=h/2+0.05; g.add(body);
+  const top=new THREE.Mesh(bulge?new THREE.SphereGeometry(r,32,12,0,Math.PI*2,0,Math.PI/2):new THREE.CircleGeometry(r,40),M('#b9c0c7',{metalness:.8,roughness:.35}));
+  if(bulge){top.scale.y=0.28;top.position.y=h+0.05;} else {top.rotation.x=-Math.PI/2;top.position.y=h+0.051;}
+  g.add(top);
+  const k=new THREE.Mesh(new THREE.BoxGeometry(r*1.4,0.03,0.06),M('#5a6068'));k.position.y=h+(bulge?0.33*r:0.06);g.add(k);
+  shadowAll(g);
+}
+function buildSecWire(){
+  const tap=S.step===4&&S.fault==='trafo'?'12':String(S.vsec);
+  const p=T.taps[tap].getWorldPosition(V3(0,0,0)); p.y+=0.15;
+  const pts=[p,p.clone().add(V3(0.5,-0.3,0.2)),V3(-3.6,1.0,1.2),V3(-3.2,0.4,1.2)];
+  T.secWire.m.geometry.dispose(); T.secWire.m.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),40,0.07,8,false);
+}
+function apply3D(){
+  if(!T) return;
+  buildCap(); buildSecWire();
+  const half=S.rect==='half', none=S.rect==='none';
+  T.diodes.forEach((d,i)=>{d.g.visible=!none&&(!half||i===0);});
+  T.reg.visible=S.reg&&!none; T.regBypass.visible=!S.reg||none;
+  const ff=S.step===4&&S.fault==='fuse'; T.fuseWire.visible=!ff; T.fuseBroken.visible=ff;
+  Object.entries(T.loads).forEach(([k,l])=>l.g.visible=k===S.load);
+  setPins();
+}
+function bindPointer(){
+  const cv=T.canvas,pts=new Map();let start=null,pinch=null,moved=false;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===1){start={x:e.clientX,y:e.clientY};moved=false;}if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:T.cam.zoom};moved=true;}});
+  cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const pr=pts.get(e.pointerId),cu={x:e.clientX,y:e.clientY};pts.set(e.pointerId,cu);
+    if(pts.size===1){T.cam.yaw=Math.max(-1.3,Math.min(1.3,T.cam.yaw-(cu.x-pr.x)*0.006));T.cam.pitch=Math.max(0.1,Math.min(1.35,T.cam.pitch+(cu.y-pr.y)*0.005));if(Math.hypot(cu.x-start.x,cu.y-start.y)>6)moved=true;}
+    else if(pts.size===2&&pinch){const [a,b]=[...pts.values()];T.cam.zoom=Math.min(1.8,Math.max(0.4,pinch.z*pinch.d/Math.hypot(a.x-b.x,a.y-b.y)));}});
+  const up=e=>{if(!pts.has(e.pointerId))return;if(pts.size===1&&!moved&&e.type==='pointerup')pick(e);pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{e.preventDefault();T.cam.zoom=Math.min(1.8,Math.max(0.4,T.cam.zoom*Math.exp(e.deltaY*0.0012)));},{passive:false});
+  const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+  function pick(e){const r=cv.getBoundingClientRect();ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,T.camera);
+    const hit=ray.intersectObject(T.board,true)[0]; if(!hit)return; let o=hit.object,tap=null;while(o&&!tap){tap=o.userData.tap;o=o.parent;}
+    if(!tap)return;
+    if(tap.startsWith('tp')) setTP(+tap.slice(2));
+    else if(tap==='diode') toast('','Dioda 1N4007','<br>1 A / 1000 V. Empat dioda membentuk jembatan: tiap setengah gelombang, dua dioda menghantar bergantian.');
+    else if(tap==='cap') toast('','Kapasitor elektrolit '+S.C+' µF','<br>Menyimpan muatan saat puncak tegangan dan melepasnya ke beban di antara puncak. Kaki bertanda (−) harus ke GND.');
+    else if(tap==='reg') toast('','Regulator 7824','<br>Menjaga keluaran tetap 24 V. Selisih tegangan × arus berubah menjadi panas, jadi perlu heatsink.');
+  }
+  $('#btnReset').addEventListener('click',()=>{T.cam.yaw=0.05;T.cam.pitch=0.5;T.cam.zoom=1;});
+}
+function resize(){if(!T)return;const w=T.viewer.clientWidth,h=T.viewer.clientHeight;T.renderer.setSize(w,h,false);T.camera.aspect=w/h;T.camera.updateProjectionMatrix();}
+let pins=[];
+function setPins(){
+  const L=$('#labels');L.innerHTML='';pins=[];
+  const add=(txt,p,cls)=>{const el=document.createElement('div');el.className='lbl'+(cls?' '+cls:'');el.textContent=txt;L.appendChild(el);pins.push({el,p});};
+  [1,2,3,4].forEach(k=>add('TP'+k,TPPOS[k].clone().add(V3(0,1.55,0)),'tp'+(S.tp===k?' on':'')));
+  add('GND',GNDPOS.clone().add(V3(0,1.2,0)));
+  add('Trafo',V3(-6.2,4.0,0)); if(S.rect!=='none') add(S.rect==='half'?'Dioda':'Jembatan',V3(-2.0,1.4,0));
+  if(S.C>0&&S.rect!=='none') add('C',V3(1.6,4.6,-0.6)); if(S.reg&&S.rect!=='none') add('7824',V3(4.9,3.5,-0.8));
+  add(LOADS.find(l=>l.id===S.load).nama,V3(11.4,S.load==='led'?1.2:4.3,-1.2));
+}
+let last=performance.now(),scrT=0;
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000);last=t;
+  const c=T.cam, tt=Math.tan(THREE.MathUtils.degToRad(T.camera.fov/2)), a=T.camera.aspect;
+  const gd=Math.max(13.5/(tt*a),8.2/tt)*c.zoom; c.d+=(gd-c.d)*(1-Math.exp(-dt*5));
+  T.camera.position.set(c.t.x+c.d*Math.cos(c.pitch)*Math.sin(c.yaw),c.t.y+c.d*Math.sin(c.pitch),c.t.z+c.d*Math.cos(c.pitch)*Math.cos(c.yaw)); T.camera.lookAt(c.t);
+  const sim=S.sim;
+  // fase animasi lambat (0,5 Hz)
+  if(S.anim) T.phase=(T.phase+dt*0.45)%1;
+  const ang=T.phase*2*Math.PI, pos=Math.sin(ang)>0, vsNow=Math.sin(ang)*sim.Vp;
+  const cond=[0,0,0,0];
+  if(S.anim&&sim.Vp>0){
+    if(S.rect==='half'){ if(vsNow>VD) cond[0]=1; }
+    else if(S.rect==='full'){ const fd=S.step===4&&S.fault==='diode'; if(vsNow>2*VD){cond[0]=1;cond[3]=1;} else if(vsNow<-2*VD&&!fd){cond[1]=1;cond[2]=1;} }
+  }
+  T.diodes.forEach((d,i)=>{d.mat.emissiveIntensity=cond[i]?0.9:0;});
+  // keluaran & beban
+  const o=sim.st[3], vo=Math.max(0,o.avg), rip=o.pp, rel=Math.min(1.1,vo/24);
+  const wob=rip>0.3?Math.sin(t/1000*2*Math.PI*sim.fr/40)*Math.min(0.5,rip/Math.max(1,vo)):0;
+  T.oledM.emissiveIntensity=rel*1.6; T.oledG.material.opacity=Math.min(1,rel); T.oledG.scale.setScalar(0.8+1.4*rel);
+  const L=T.loads[S.load];
+  if(S.load==='fan') L.rot.rotation.z-=dt*rel*rel*14*(1+wob*0.6);
+  if(S.load==='lamp'){const b=Math.max(0,Math.min(1,rel*rel*(1+wob*0.8)));L.gm.emissiveIntensity=b*1.9;L.gm.opacity=.5+b*.35;L.gs.material.opacity=b;L.gs.scale.setScalar(1+4.5*b);L.pl.intensity=b*2.2;}
+  if(S.load==='sol'){const on=vo>17;L.ind.material.emissiveIntensity=on?1.5:0;L.coil.position.y=2.2+(on&&rip>2?Math.sin(t/12)*0.02:0);}
+  T.hsM.emissiveIntensity=Math.max(0,Math.min(0.6,(sim.Tj-45)/120));
+  // probe osiloskop
+  const tgt=TPPOS[S.tp].clone().add(V3(0,1.15,0)); const before=T.probeP.clone(); T.probeP.lerp(tgt,1-Math.exp(-dt*6));
+  T.probe.position.copy(T.probeP); T.probe.rotation.set(-0.35,0,0.15);
+  if(T.leadDirty||before.distanceTo(T.probeP)>0.001){T.leadDirty=false;const top=T.probe.localToWorld(V3(0,2.8,0));const pts=[top,top.clone().add(V3(0,1.5,-1.2)),V3(T.probeP.x*0.6,0.4,-5.8),V3(1.6,1.05,-6.0),V3(1.7,1.05,-6.25)];T.probeLead.geometry.dispose();T.probeLead.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),60,0.07,8,false);}
+  scrT-=dt; if(scrT<=0){scrT=0.1;redraw(T.scrTex);}
+  T.renderer.render(T.scene,T.camera);
+  const w=T.viewer.clientWidth,h=T.viewer.clientHeight,v=V3(0,0,0);
+  pins.forEach(p=>{v.copy(p.p).project(T.camera);if(v.z>1){p.el.style.opacity=0;return;}p.el.style.opacity=1;p.el.style.transform=`translate(${(v.x+1)/2*w}px,${(1-v.y)/2*h}px) translate(-50%,-100%)`;});
+  drawScopePanelThrottled(dt);
+  requestAnimationFrame(loop);
+}
+let panelT=0;
+function drawScopePanelThrottled(dt){panelT-=dt;if(panelT<=0){panelT=0.08;drawScopePanel();}}
+
+/* ================= OSILOSKOP ================= */
+const VDIVS=[0.05,0.1,0.2,0.5,1,2,5,10,20];
+function scopeScale(){
+  const sim=S.sim, st=sim.st[S.tp-1];
+  if(S.ac){const span=Math.max(st.pp,0.02); return {vdiv:VDIVS.find(v=>v*7>=span*1.15)||20, off:st.avg};}
+  const chans=[S.tp-1]; if(S.ch2&&S.tp!==1) chans.push(0);
+  let mx=0; chans.forEach(c=>{const s=sim.st[c];mx=Math.max(mx,Math.abs(s.mx),Math.abs(s.mn));});
+  const anyNeg=chans.some(c=>sim.st[c].mn<-0.5);
+  const divs=anyNeg?3.6:6.6; return {vdiv:VDIVS.find(v=>v*divs>=mx*1.02)||20, off:0, neg:anyNeg};
+}
+function drawScope(g,w,h,small){
+  if(!S.sim) return;
+  const sim=S.sim, sc=scopeScale(), gx=10, gy=8, cw=w/gx, chh=h/gy;
+  g.fillStyle='#06110d'; g.fillRect(0,0,w,h);
+  g.strokeStyle='rgba(120,180,150,.18)'; g.lineWidth=1;
+  for(let i=1;i<gx;i++){g.beginPath();g.moveTo(i*cw,0);g.lineTo(i*cw,h);g.stroke();}
+  for(let j=1;j<gy;j++){g.beginPath();g.moveTo(0,j*chh);g.lineTo(w,j*chh);g.stroke();}
+  g.strokeStyle='rgba(140,200,170,.4)'; g.beginPath(); g.moveTo(w/2,0); g.lineTo(w/2,h); g.moveTo(0,h/2); g.lineTo(w,h/2); g.stroke();
+  const y0=S.ac?h/2:(sc.neg?h/2:h-chh*0.7);
+  const pxV=chh/sc.vdiv;
+  const plot=(arr,color,off,lw)=>{g.strokeStyle=color;g.lineWidth=lw;g.shadowColor=color;g.shadowBlur=small?6:8;g.beginPath();const n=arr.length;for(let i=0;i<n;i+=2){const x=i/(n-1)*w, y=y0-(arr[i]-off)*pxV; if(i===0)g.moveTo(x,y); else g.lineTo(x,y);}g.stroke();g.shadowBlur=0;};
+  if(S.ch2&&S.tp!==1&&!S.ac) plot(sim.tp[0],'#3fd0ff',0,small?2.5:2);
+  plot(sim.tp[S.tp-1],'#f5d000',sc.off,small?3.5:2.6);
+  // penanda GND
+  g.fillStyle='#f5d000'; g.beginPath(); g.moveTo(0,y0-7); g.lineTo(10,y0); g.lineTo(0,y0+7); g.fill();
+  // kursor fase
+  if(S.anim&&T&&!S.ac){const x=(T.phase*0.02)/0.05*w; g.strokeStyle='rgba(255,255,255,.35)'; g.setLineDash([6,6]); g.beginPath(); g.moveTo(x,0); g.lineTo(x,h); g.stroke(); g.setLineDash([]);}
+  g.font=`600 ${small?26:20}px "IBM Plex Mono",monospace`; g.textBaseline='top';
+  g.fillStyle='#f5d000'; g.fillText(`CH1 TP${S.tp}  ${fmtDiv(sc.vdiv)}/div ${S.ac?'AC':'DC'}`,10,8);
+  g.fillStyle='#9fb8aa'; g.textAlign='right'; g.fillText('5 ms/div',w-10,8); g.textAlign='left';
+  if(S.ch2&&S.tp!==1&&!S.ac){g.fillStyle='#3fd0ff'; g.fillText(`CH2 TP1  ${fmtDiv(sc.vdiv)}/div`,10,small?40:34);}
+}
+function fmtDiv(v){return v<1?(v*1000)+' mV':v+' V';}
+function drawScopePanel(){const c=$('#scope');drawScope(c.getContext('2d'),c.width,c.height,false);}
+
+/* ================= UI ================= */
+function toast(sev,title,msg){const box=$('#toast');const d=document.createElement('div');d.className='tst '+(sev||'');d.innerHTML=`<b>${title}</b>${msg||''}`;box.appendChild(d);while(box.children.length>2)box.removeChild(box.firstChild);setTimeout(()=>d.remove(),5200);}
+function renderSteps(){
+  $('#steps').innerHTML=STEPS.map((s,i)=>`<button class="${i===S.step?'active':''} ${S.done[i]?'done':''}" data-s="${i}"><span class="n">${i+1}</span>${s.nama}</button>`).join('');
+}
+function renderBlocks(){
+  const none=S.rect==='none';
+  const bl=[
+    {n:'Trafo',s:`220→${S.step===4&&S.fault==='trafo'?'?':S.vsec} VAC`,on:true},
+    {n:S.rect==='half'?'Setengah gel.':S.rect==='full'?'Jembatan':'Penyearah',s:none?'tidak ada':S.rect==='half'?'1 dioda':'4 dioda',on:!none},
+    {n:'Filter C',s:!none&&S.C?S.C+' µF':'tidak ada',on:!none&&S.C>0},
+    {n:'Regulator',s:!none&&S.reg?'7824':'tidak ada',on:!none&&S.reg},
+    {n:'Beban',s:LOADS.find(l=>l.id===S.load).I+' A',on:true}];
+  let h='';
+  bl.forEach((b,i)=>{h+=`<div class="blk ${b.on?'on':''}">${b.n}<small>${b.s}</small></div>`; if(i<4) h+=`<div class="arr"><button data-tp="${i+1}" class="${S.tp===i+1?'on':''}">TP${i+1}</button><i></i></div>`;});
+  $('#blocks').innerHTML=h;
+}
+function renderScopeUI(){
+  const sim=S.sim, st=sim.st[S.tp-1];
+  const isAC=S.tp===1||S.rect==='none';
+  $('#sread').innerHTML=[
+    ['V maks',nf(st.mx,1)+' V'],['V min',nf(st.mn,1)+' V'],['V p-p',st.pp<1?nf(st.pp*1000,0)+' mV':nf(st.pp,2)+' V'],
+    isAC?['Multimeter V~',nf(st.rms,1)+' V']:['Multimeter V⎓',nf(st.avg,1)+' V']
+  ].map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('');
+  $('#bCh1').textContent='CH1: TP'+S.tp;
+  $('#bCh2').classList.toggle('on',S.ch2); $('#bCh2').disabled=S.tp===1;
+  $('#bAC').classList.toggle('on1',S.ac);
+  const sc=scopeScale(); $('#scap').textContent=`${fmtDiv(sc.vdiv)}/div · 5 ms/div`;
+  const o=sim.st[3];
+  $('#chipout').innerHTML=`<span>OUT <b>${nf(Math.max(0,o.avg),1)} V</b></span><span>riak <b>${o.pp<1?nf(o.pp*1000,0)+' mV':nf(o.pp,1)+' V'}</b></span><span>${sim.ld.nama} ${sim.I} A</span>`;
+}
+function seg(id,opts,cur,dis){return `<div class="seg" id="${id}">${opts.map(([v,t])=>`<button data-v="${v}" class="${String(v)===String(cur)?'on':''}" ${dis&&dis(v)?'disabled':''}>${t}</button>`).join('')}</div>`;}
+function loadSeg(){return `<span class="lbl2">Beban</span>`+seg('sLoad',LOADS.map(l=>[l.id,`${l.nama} (${l.I} A)`]),S.load);}
+function quizHTML(i){
+  const q=QUIZ[i], st=S.quiz[i];
+  return `<div class="quiz"><div class="q">Cek pemahaman: ${q.q}</div><div class="opts" data-q="${i}">${q.o.map((o,k)=>`<button class="opt ${st!=null?(k===q.a?'right':(k===st?'wrong':'')):''}" data-k="${k}">${o}</button>`).join('')}</div>${st!=null?`<div class="fb ${st===q.a?'ok':'bad'}">${st===q.a?'Tepat! ':'Belum tepat. '}${q.e}</div>`:''}</div>`;
+}
+function renderStep(){
+  const sim=S.sim, st=sim.st, i=S.step; let h='';
+  if(i===0){
+    h=`<h2>1 · Trafo step-down</h2><div class="goal">Turunkan tegangan PLN 220 VAC menjadi tegangan AC rendah yang aman, lalu amati bentuk gelombangnya di TP1.</div>
+    <p class="muted">Trafo bekerja dengan induksi elektromagnetik: perbandingan lilitan primer dan sekunder menentukan perbandingan tegangan. Keluarannya masih <b>AC</b> — bergantian positif dan negatif 50 kali per detik.</p>
+    <span class="lbl2">Tap sekunder trafo</span>${seg('sVsec',[[12,'12 V'],[18,'18 V'],[24,'24 V']],S.vsec)}
+    <div class="formula">Np : Ns = 220 : ${S.vsec} ≈ <b>${nf(220/S.vsec,1)} : 1</b><br>Vp = Vrms × √2 = ${S.vsec} × 1,414 = <b>${nf(S.vsec*Math.SQRT2,1)} V</b></div>
+    <div class="kv"><div><dt>Osiloskop Vp (TP1)</dt><dd>${nf(st[0].mx,1)} V</dd></div><div><dt>Multimeter V~</dt><dd>${nf(st[0].rms,1)} V</dd></div><div><dt>Periode</dt><dd>20 ms</dd></div></div>
+    <p class="muted">Vp di osiloskop sedikit lebih kecil dari hitungan karena tegangan trafo turun sedikit saat dibebani.</p>`+quizHTML(0);
+  } else if(i===1){
+    const vdc=S.rect==='half'?0.318*(sim.Vp-VD):S.rect==='full'?0.637*(sim.Vp-2*VD):0;
+    h=`<h2>2 · Penyearah</h2><div class="goal">Ubah AC menjadi DC berdenyut dengan dioda. Bandingkan penyearah setengah gelombang dan jembatan (gelombang penuh) di TP2.</div>
+    <span class="lbl2">Jenis penyearah</span>${seg('sRect',[['none','Tanpa'],['half','Setengah gelombang (1 dioda)'],['full','Jembatan (4 dioda)']],S.rect)}
+    <p class="muted">${S.rect==='none'?'Tanpa penyearah, TP2 masih AC — sama dengan TP1.':S.rect==='half'?'Dioda hanya menghantar saat setengah gelombang <b>positif</b>. Setengah gelombang negatif dibuang, sehingga ada celah kosong.':'Setengah gelombang positif: <b>D1 &amp; D4</b> menghantar. Setengah gelombang negatif: <b>D2 &amp; D3</b> menghantar. Kedua setengah gelombang menjadi positif. Perhatikan dioda yang menyala di model 3D.'}</p>
+    ${S.rect!=='none'?`<div class="formula">${S.rect==='half'?`Vdc ≈ 0,318 × (Vp − 0,7) = <b>${nf(vdc,1)} V</b><br>Frekuensi denyut = <b>50 Hz</b>`:`Vdc ≈ 0,637 × (Vp − 1,4) = <b>${nf(vdc,1)} V</b><br>Frekuensi denyut = 2 × 50 = <b>100 Hz</b>`}</div>
+    <div class="kv"><div><dt>Vp TP2</dt><dd>${nf(st[1].mx,1)} V</dd></div><div><dt>Multimeter V⎓ TP2</dt><dd>${nf(st[1].avg,1)} V</dd></div><div><dt>Drop dioda</dt><dd>${S.rect==='half'?'±0,7':'±1,4'} V</dd></div></div>
+    <p class="muted">Sudah DC (selalu positif), tetapi belum rata — belum layak untuk PLC, sensor, atau relay.</p>`:''}
+    ${S.rect==='none'?'<div class="fb warn">Kapasitor elektrolit dan regulator tidak boleh mendapat tegangan AC — keduanya dinonaktifkan selama tidak ada penyearah.</div>':''}`+quizHTML(1);
+  } else if(i===2){
+    const f=sim.fr, I=sim.I, Cf=S.C*1e-6, vr=Cf>0?I/(f*Cf):0;
+    h=`<h2>3 · Filter kapasitor</h2><div class="goal">Ratakan tegangan berdenyut dengan kapasitor elektrolit. Amati riak (ripple) di TP3 saat kapasitansi dan beban diubah.</div>
+    <span class="lbl2">Kapasitor filter</span>${seg('sC',CAPS.map(c=>[c,c?c+' µF':'Tanpa']),S.C,()=>S.rect==='none')}
+    ${loadSeg()}
+    <p class="muted">Kapasitor terisi sampai puncak tegangan, lalu melepas muatan ke beban sampai puncak berikutnya datang. Turunnya tegangan di antara puncak disebut <b>riak</b>. Gunakan tombol <b>Kopling AC</b> pada osiloskop untuk memperbesar riak.</p>
+    ${S.C>0&&S.rect!=='none'?`<div class="formula">Vr ≈ I / (f × C) = ${I} / (${f} × ${S.C}µ) = <b>${nf(vr,2)} V</b></div>`:''}
+    <div class="kv"><div><dt>Riak TP3 (sim.)</dt><dd>${nf(st[2].pp,2)} V</dd></div><div><dt>Lembah TP3</dt><dd>${nf(st[2].mn,1)} V</dd></div><div><dt>Multimeter V⎓</dt><dd>${nf(st[2].avg,1)} V</dd></div></div>
+    <p class="muted">Rumus di atas adalah pendekatan; simulasi menghitung pengisian dan pengosongan kapasitor setiap 0,02 ms.</p>`+quizHTML(2);
+  } else if(i===3){
+    const dropOK=st[2].mn>=26-0.05;
+    h=`<h2>4 · Regulator 7824</h2><div class="goal">Stabilkan keluaran tepat 24 VDC dengan IC regulator. Pastikan lembah riak masih di atas batas dropout.</div>
+    <span class="lbl2">Regulator</span>${seg('sReg',[[1,'Pakai 7824'],[0,'Tanpa regulator']],S.reg?1:0,()=>S.rect==='none')}
+    <span class="lbl2">Kapasitor filter</span>${seg('sC',CAPS.map(c=>[c,c?c+'':'0']),S.C,()=>S.rect==='none')}
+    ${loadSeg()}
+    <div class="formula">Vin(min) ≥ Vout + Vdropout = 24 + 2 = <b>26 V</b><br>P = (Vin rata-rata − Vout) × I = (${nf(st[2].avg,1)} − ${nf(st[3].avg,1)}) × ${sim.I} = <b>${nf(sim.Pd,1)} W</b></div>
+    <div class="kv"><div><dt>Lembah TP3</dt><dd>${nf(st[2].mn,1)} V</dd></div><div><dt>OUT TP4</dt><dd>${nf(st[3].avg,2)} V</dd></div><div><dt>Riak TP4</dt><dd>${st[3].pp<1?nf(st[3].pp*1000,0)+' mV':nf(st[3].pp,1)+' V'}</dd></div><div><dt>Suhu heatsink ±</dt><dd class="${sim.Tj>80?'hot':''}">${nf(sim.Tj,0)} °C</dd></div></div>
+    ${S.reg&&S.rect!=='none'?(dropOK?'<div class="fb ok">Lembah riak ≥ 26 V → regulator bekerja, keluaran rata 24 V.</div>':'<div class="fb bad">Lembah riak di bawah 26 V → regulator <b>dropout</b>: riak ikut keluar. Perbesar kapasitor, kurangi beban, atau gunakan trafo yang lebih tinggi.</div>'):''}
+    ${sim.Tj>80?'<div class="fb warn">Heatsink panas. Pada arus besar, regulator linier membuang banyak daya menjadi panas — di panel industri biasanya dipakai power supply switching (SMPS).</div>':''}`+quizHTML(3);
+  } else {
+    const fq=S.fq;
+    h=`<h2>5 · Cari gangguan</h2><div class="goal">Power supply ini sudah dirakit lengkap (trafo 24 V, jembatan, 2200 µF, 7824, beban lampu 0,42 A), tetapi ada satu gangguan tersembunyi. Ukur TP1–TP4 dengan osiloskop, lalu tentukan penyebabnya.</div>
+    <div class="stat"><div><b>${fq.score}</b><span>benar</span></div><div><b>${fq.total}</b><span>kasus</span></div><div><b>${fq.total?Math.round(fq.score/fq.total*100):0}%</b><span>skor</span></div></div>
+    <p class="muted">Langkah teknisi: mulai dari keluaran (TP4), lalu mundur ke TP3, TP2, TP1 sampai menemukan titik pertama yang tidak normal.</p>
+    <div class="opts" id="fOpts">${Object.entries(FAULTS).map(([k,f])=>`<button class="opt ${fq.answered?(k===S.fault?'right':(k===fq.pick?'wrong':'')):''}" data-f="${k}">${f.nama}</button>`).join('')}</div>
+    ${fq.answered?`<div class="fb ${fq.pick===S.fault?'ok':'bad'}"><b>${fq.pick===S.fault?'Diagnosis tepat!':'Belum tepat.'}</b> Gangguannya: ${FAULTS[S.fault].nama}. ${FAULTS[S.fault].jelas}</div>`:''}
+    <div class="row"><button class="btn primary" id="bNewFault">${fq.answered?'Kasus berikutnya':'Ganti kasus'}</button></div>`;
+  }
+  $('#stepCard').innerHTML=h;
+}
+function refresh(rebuild){
+  S.sim=simulate();
+  renderBlocks(); renderScopeUI(); renderStep(); renderSteps();
+  if(rebuild) apply3D(); else if(T) setPins();
+}
+function setTP(k){S.tp=k; if(k===1) S.ch2=false; refresh(false); if(T) T.leadDirty=true;}
+function newFault(){
+  const ks=Object.keys(FAULTS); let k; do{k=rnd(ks);}while(k===S.fault&&ks.length>1);
+  S.fault=k; S.fq.answered=false; S.fq.pick=null; S.tp=4;
+}
+function goStep(i){
+  S.step=i; S.ac=false;
+  if(i===4){ S.vsec=24; S.rect='full'; S.C=2200; S.reg=true; S.load='lamp'; newFault(); }
+  else {
+    if(i>=2&&S.rect==='none') S.rect='full';
+    if(i===3&&S.C===0) S.C=2200;
+    S.tp=STEPS[i].tp;
+  }
+  if(S.tp===1) S.ch2=false; else if(i===1) S.ch2=true;
+  refresh(true);
+}
+
+/* ---------- event ---------- */
+$('#steps').addEventListener('click',e=>{const b=e.target.closest('button');if(b)goStep(+b.dataset.s);});
+$('#blocks').addEventListener('click',e=>{const b=e.target.closest('button[data-tp]');if(b)setTP(+b.dataset.tp);});
+$('#bCh2').addEventListener('click',()=>{if(S.tp===1)return;S.ch2=!S.ch2;S.ac=false;refresh(false);});
+$('#bAC').addEventListener('click',()=>{S.ac=!S.ac;refresh(false);});
+$('#bCh1').addEventListener('click',()=>setTP(S.tp%4+1));
+$('#btnSlow').addEventListener('click',e=>{S.anim=!S.anim;e.currentTarget.setAttribute('aria-pressed',S.anim);});
+$('#stepCard').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const sg=b.parentElement&&b.parentElement.id;
+  if(sg==='sVsec'){S.vsec=+b.dataset.v;refresh(true);return;}
+  if(sg==='sRect'){S.rect=b.dataset.v;refresh(true);return;}
+  if(sg==='sC'){S.C=+b.dataset.v;refresh(true);return;}
+  if(sg==='sLoad'){S.load=b.dataset.v;refresh(true);return;}
+  if(sg==='sReg'){S.reg=b.dataset.v==='1';refresh(true);return;}
+  const q=b.closest('.opts[data-q]');
+  if(q&&b.dataset.k!=null){const i=+q.dataset.q;if(S.quiz[i]!=null)return;S.quiz[i]=+b.dataset.k;if(S.quiz[i]===QUIZ[i].a){S.done[i]=true;toast('ok','Langkah '+(i+1)+' selesai','');}else toast('bad','Belum tepat','<br>Baca penjelasannya, lalu lanjutkan.');renderStep();renderSteps();return;}
+  if(b.dataset.f){const fq=S.fq;if(fq.answered)return;fq.answered=true;fq.pick=b.dataset.f;fq.total++;if(fq.pick===S.fault){fq.score++;if(fq.score>=3)S.done[4]=true;}renderStep();renderSteps();return;}
+  if(b.id==='bNewFault'){newFault();refresh(true);}
+});
+
+/* ---------- mulai ---------- */
+S.sim=simulate();
+try{init3D();}catch(err){$('#loading').textContent='Model 3D tidak dapat dimuat di perangkat ini. Osiloskop dan latihan tetap bisa digunakan.';console.error(err);setInterval(drawScopePanel,120);}
+goStep(0);
+})();
+</script>
+</body>
+</html>
