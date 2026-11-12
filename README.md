@@ -39,7 +39,7 @@ Situs ini bisa dipasang seperti aplikasi, tanpa Play Store:
 2. Ketuk tombol **Pasang Aplikasi Guru Vokasi** di bagian atas, atau menu **⋮ → Instal aplikasi / Tambahkan ke layar utama**.
 3. Ikon **Guru Vokasi** muncul di layar HP. Setelah dibuka sekali saat online, semua simulasi tetap bisa dibuka **tanpa internet**.
 
-Aplikasi otomatis memakai versi terbaru setiap kali HP terhubung ke internet.
+Aplikasi otomatis memakai versi terbaru setiap kali dibuka saat HP terhubung ke internet, dan simulasi baru langsung ikut tersimpan untuk dipakai offline.
 
 ## Tentang Pembuat
 
@@ -63,7 +63,7 @@ Kritik, saran, dan masukan silakan dikirim ke: **lukman.hakim5830@guru.smk.belaj
    { judul:"Power Supply 24 VDC", folder:"simulasi-3d-power-supply-24vdc", kelompok:"Dasar Kelistrikan & Elektronika", ket:"Catu daya 24 VDC untuk panel kontrol." },
    ```
 3. Tambahkan juga barisnya di tabel **Daftar Simulasi** pada README ini.
-4. Agar simulasi baru ikut tersedia offline: buka `sw.js`, tambahkan `"./nama-folder/"` (dan file `.js` pendukungnya, jika ada) ke daftar `PRECACHE`, lalu naikkan `VERSI` (mis. `guruvokasi-v1` → `guruvokasi-v2`). Jika terlewat, simulasi tetap tersimpan offline setelah dibuka sekali.
+4. Tidak perlu mengubah `sw.js`: aplikasi di HP murid otomatis membaca daftar `SIMULASI` di menu dan mengunduh simulasi baru (beserta file pendukungnya) untuk mode offline begitu dibuka saat online. File yang diubah juga otomatis diperbarui (dicek maksimal tiap 6 jam).
 5. Commit & push — GitHub Pages akan memperbarui situs dalam 1–2 menit.
 
 > Nama folder di URL **peka huruf besar/kecil**: `Simulasi_3D_Panel_DOL` ≠ `simulasi_3d_panel_dol`.
