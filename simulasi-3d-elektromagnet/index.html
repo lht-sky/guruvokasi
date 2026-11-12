@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi 3D Elektromagnet: dari Klakson ke Kontaktor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#e3e8ec; --ink:#14202b; --muted:#56636e; --line:#d2dae0; --soft:#eef2f5;
+  --accent:#0a62a8; --yellow:#f3b52f; --ok:#24834b; --okbg:#eef8f1; --bad:#bb3a2c; --badbg:#fdf0ee; --warn:#b8650f; --warnbg:#fff5e6;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+header.top{background:#171f28;color:#e6ebf0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #2d3946}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand img{width:44px;height:44px;flex:none}
+.eyebrow2{font:600 12px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+h1{margin:2px 0 0;font:700 24px/1.1 var(--f-display);letter-spacing:.01em}
+.meta{display:grid;justify-items:end;gap:4px;text-align:right;flex:none}
+.dims{font:500 12px var(--f-mono);color:var(--yellow);border:1px solid #4a3d18;border-radius:4px;padding:3px 7px;white-space:nowrap}
+.guru{font-size:12.5px;color:#c3ccd5}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(380px,1fr);gap:16px;padding:16px;max-width:1440px;margin:0 auto;align-items:start}
+.stage{position:sticky;top:12px}
+.viewer{position:relative;height:min(74vh,660px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(#eef2f5,#c9d2da)}
+#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;font:600 12px/1.25 var(--f-body);background:rgba(20,32,43,.88);color:#fff;border-radius:7px;padding:3px 7px;white-space:nowrap;text-align:center}
+.lbl small{display:block;font:500 11px var(--f-mono);color:#f3d36a}
+.lbl.pos{background:#c42b22}.lbl.neg{background:#23272c}.lbl.big{font-size:14px;padding:5px 10px;background:#0a62a8}
+.lbl.hot{background:#b8321f}
+.hud{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.tool{border:1px solid var(--line);background:rgba(251,252,253,.94);padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+#toast{position:absolute;right:10px;top:52px;z-index:5;width:min(calc(100% - 20px),380px);display:grid;gap:6px;pointer-events:none}
+.tst{background:var(--ink);color:#fff;padding:9px 13px;border-radius:8px;font-size:13.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.22);border-left:4px solid #4aa3e0;animation:tin .25s ease-out}
+.tst b{display:block}.tst.bad{border-left-color:#ff5a45}.tst.ok{border-left-color:#4cc47e}.tst.warn{border-left-color:#f3b52f}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+.vchip{position:absolute;left:10px;bottom:10px;background:rgba(20,32,43,.92);color:#e6ebf0;border-radius:8px;padding:7px 11px;font:600 13px var(--f-mono);display:flex;gap:14px;flex-wrap:wrap}
+.vchip b{color:var(--yellow);font-size:16px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#dfe5ea;color:var(--muted);font-weight:600;text-align:center;padding:20px}
+.panel{min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#d6dde4;border-radius:10px;padding:4px;margin-bottom:12px}
+.tabs button{border:0;background:transparent;border-radius:7px;padding:7px 2px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.2}
+.tabs button .n{display:block;font:600 11px var(--f-mono);color:#8a97a2}
+.tabs button.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,32,43,.12)}
+.tabs button.done .n::after{content:" ✓";color:var(--ok)}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.card h2{font:700 21px/1.1 var(--f-display);letter-spacing:.02em;margin:0 0 6px}
+.card h3{font:700 15px/1.2 var(--f-display);letter-spacing:.04em;margin:12px 0 4px;color:var(--accent);text-transform:uppercase}
+.muted{color:var(--muted);font-size:13.5px;margin:4px 0 0;line-height:1.5}
+.goal{background:var(--soft);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;font-size:14px;margin:6px 0 4px}
+.seg{display:flex;flex-wrap:wrap;background:var(--soft);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:7px 8px;border-radius:6px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.lbl2{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.fb{border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5;background:var(--soft);margin-top:10px}
+.fb:empty{display:none}.fb.ok{background:var(--okbg)}.fb.bad{background:var(--badbg)}.fb.warn{background:var(--warnbg)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px;margin-top:10px}
+.kv div{background:var(--soft);border-radius:6px;padding:7px 9px}
+.kv dt{font-size:11.5px;color:var(--muted)}
+.kv dd{margin:0;font:600 15px var(--f-mono)}
+.kv dd.bad{color:var(--bad)}
+.analog{background:#f4f9fd;border:1px solid #cfe2f1;border-radius:10px;margin-top:10px;padding:8px}
+.analog canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.analog .cap{font-size:13px;color:#24506f;padding:4px 4px 0;line-height:1.45}
+.map{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px;margin-top:6px}
+.map b{color:var(--accent)}
+.cells{display:flex;gap:6px;flex-wrap:wrap}
+.cells button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;font:600 13px var(--f-mono);cursor:pointer}
+.cells button.rev{background:var(--badbg);border-color:#e4a59c;color:var(--bad)}
+#scopeA{display:block;width:100%;height:auto;aspect-ratio:10/5;background:#06110d;border-radius:8px;margin-top:10px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.slider{display:flex;align-items:center;gap:10px}
+.slider output{font:600 14px var(--f-mono);min-width:72px;text-align:right;color:var(--accent)}
+/* tes */
+.qnav{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0 10px}
+.qnav span{width:26px;height:26px;border-radius:6px;background:var(--soft);display:grid;place-items:center;font:600 12px var(--f-mono);color:var(--muted)}
+.qnav span.cur{background:var(--ink);color:#fff}.qnav span.ans{background:#d6e6f5;color:var(--accent)}
+.qtext{font-weight:600;font-size:16px;line-height:1.45}
+.opts{display:grid;gap:7px;margin-top:10px}
+.opt{text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:10px 12px;font-size:14.5px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.opt .k{font:700 13px var(--f-mono);background:var(--soft);border-radius:5px;padding:1px 7px;flex:none}
+.opt.on{border-color:var(--accent);background:#eef5fc}
+.opt.on .k{background:var(--accent);color:#fff}
+.conf{display:flex;gap:6px;margin-top:10px}
+.conf button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:8px;font-weight:600;font-size:13.5px;cursor:pointer}
+.conf button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.field{display:grid;gap:4px;margin-top:8px}
+.field input{border:1.5px solid var(--line);border-radius:8px;padding:9px 12px}
+.prof{list-style:none;margin:8px 0 0;padding:0}
+.prof li{border-top:1px solid var(--line);padding:8px 0;font-size:14px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.prof li:first-child{border-top:0}
+.tag{font:600 11.5px var(--f-mono);padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag.sp{background:var(--badbg);color:var(--bad)}.tag.bt{background:var(--warnbg);color:var(--warn)}.tag.ok{background:var(--okbg);color:var(--ok)}.tag.rg{background:#eef5fc;color:var(--accent)}
+.prof .go{font-size:12.5px;color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:0;padding:0}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:13.5px;margin-top:8px}
+.bars i{display:block;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.bars i b{display:block;height:100%;background:var(--accent)}
+.bars i b.post{background:var(--ok)}
+textarea.rekap{width:100%;min-height:150px;border:1px solid var(--line);border-radius:8px;padding:9px;font:500 12.5px/1.5 var(--f-mono);background:#fbfcfd;margin-top:8px}
+/* sortir */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+.sc{border:1.5px solid var(--line);border-radius:10px;padding:9px;background:#fff;display:grid;gap:6px}
+.sc .ic{font-size:26px;line-height:1}
+.sc .nm{font-weight:600;font-size:13.5px;line-height:1.3}
+.sc .bb{display:flex;gap:4px}
+.sc .bb button{flex:1;border:1px solid var(--line);background:var(--soft);border-radius:6px;padding:5px;font:700 12.5px var(--f-mono);cursor:pointer}
+.sc.right{border-color:#9fd0b2;background:var(--okbg)}.sc.wrong{border-color:#e4a59c;background:var(--badbg)}
+.sc .why{font-size:12px;color:var(--muted);line-height:1.35}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px;line-height:1.6}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:0;gap:0}
+  .stage{top:0;z-index:20}
+  .viewer{height:36vh;min-height:230px;border-radius:0;border:none;border-bottom:1px solid var(--line)}
+  .panel{padding:12px}
+  header.top{padding:8px 12px}
+  .brand img{width:36px;height:36px}
+  h1{font-size:18px}.eyebrow2{font-size:10.5px}
+  .meta .guru,.dims .full{display:none}
+  .tabs button{font-size:12px}
+  .vchip{font-size:11.5px;gap:10px;padding:5px 8px}.vchip b{font-size:14px}
+}
+
+.tabs{grid-template-columns:repeat(6,1fr)}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:4px 0 8px}
+.stat b{display:block;font:700 24px/1.1 var(--f-display)}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+.hold{width:100%;border:0;border-radius:12px;padding:16px;font:700 20px/1 var(--f-display);letter-spacing:.05em;background:#1f9a4b;color:#fff;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.25);touch-action:none;user-select:none;-webkit-user-select:none;margin-top:10px}
+.hold.down{transform:translateY(3px);box-shadow:none;filter:brightness(1.12)}
+.hold small{display:block;font:500 12px var(--f-body);letter-spacing:0;margin-top:4px;opacity:.9}
+.steps4{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.steps4 li{border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13.5px;display:flex;gap:8px;align-items:flex-start;transition:background .1s,border-color .1s}
+.steps4 li b{font:700 13px var(--f-mono);background:var(--soft);border-radius:5px;padding:0 6px}
+.steps4 li.on{border-color:#e9a90b;background:#fff8e6}
+.steps4 li.on b{background:#e9a90b;color:#fff}
+#wave{display:block;width:100%;height:auto;aspect-ratio:10/3.4;background:#06110d;border-radius:8px;margin-top:10px}
+.tb2{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+.tb2 th,.tb2 td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tb2 th{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.tb2 td:first-child{font:600 13px var(--f-mono);white-space:nowrap}
+.tchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tchips button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 9px;font:600 13px var(--f-mono);cursor:pointer}
+.tchips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tchips button.ok{background:var(--okbg);border-color:#9fd0b2}
+.tchips button.no{background:var(--badbg);border-color:#e4a59c}
+.pad{position:absolute;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:4px;z-index:4;user-select:none;-webkit-user-select:none}
+.pad button{border:1px solid var(--line);background:rgba(251,252,253,.92);border-radius:8px;font-size:14px;font-weight:700;color:#14202b;cursor:pointer;padding:0;touch-action:none;box-shadow:0 2px 6px rgba(20,32,43,.12)}
+.pad button:active{background:#14202b;color:#fff}
+.pad .c{font-size:11px}
+@media (max-width:900px){.pad{grid-template-columns:repeat(3,30px);grid-template-rows:repeat(3,30px);gap:3px;right:8px;bottom:8px}}
+</style>
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "zasgkur533");
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <img src="data:image/webp;base64,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" alt="Logo Teknik Otomasi Industri">
+    <div>
+      <div class="eyebrow2">SMK 2 Triple J · Teknik Otomasi Industri</div>
+      <h1>Simulasi 3D Elektromagnet: dari Klakson ke Kontaktor</h1>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="dims"><span class="full">DK2 · Konsep Dasar Kelistrikan · </span>Fase E</span>
+  </div>
+</header>
+<main class="layout">
+  <section class="stage">
+    <div class="viewer" id="viewer">
+      <canvas id="c" aria-label="Model 3D elektromagnet, klakson, relay, atau kontaktor"></canvas>
+      <div id="labels"></div>
+      <div class="pad" id="pad" aria-label="Geser dan zoom tampilan"><button data-p="zi" title="Perbesar">+</button><button data-p="u" title="Geser ke atas">▲</button><button data-p="zo" title="Perkecil">−</button><button data-p="l" title="Geser ke kiri">◀</button><button data-p="c" class="c" title="Kembali ke tengah">⌂</button><button data-p="r" title="Geser ke kanan">▶</button><span></span><button data-p="d" title="Geser ke bawah">▼</button><span></span></div>
+      <div class="hud"><button class="tool" id="bReset">⌂</button></div>
+      <div id="toast"></div>
+      <div class="vchip" id="vchip"></div>
+      <div id="loading">Memuat model 3D…</div>
+    </div>
+  </section>
+  <section class="panel">
+    <nav class="tabs" id="tabs"></nav>
+    <div id="pane"></div>
+  </section>
+</main>
+<footer>Media pembelajaran interaktif · Program Keahlian Teknik Elektronika · Konsentrasi Teknik Otomasi Industri · SMKS 2 Triple J<br>Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+/* ===== geser (pan) tampilan: 2 jari di HP, klik kanan/Shift+geser di laptop, atau tombol panah ===== */
+const PAN={v:null,drag:false,did:false};
+function panBy(dx,dy){
+  if(!T||!PAN.v) return; const cam=T.camera, h=T.viewer.clientHeight||1;
+  const tg=T.cam.t.clone().add(PAN.v), dist=cam.position.distanceTo(tg), s=2*dist*Math.tan(THREE.MathUtils.degToRad(cam.fov/2))/h;
+  const right=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,0), up=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,1);
+  PAN.v.addScaledVector(right,-dx*s).addScaledVector(up,dy*s); if(PAN.v.length()>30) PAN.v.setLength(30);
+}
+function setupPan(){
+  PAN.v=new THREE.Vector3();
+  const cv=T.canvas, P=new Map(); let mid=null,last=null;
+  const midp=()=>{const [a,b]=[...P.values()];return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};};
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  cv.addEventListener('pointerdown',e=>{P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1){PAN.did=false;PAN.drag=(e.button===2||e.button===1||e.shiftKey);last={x:e.clientX,y:e.clientY};}
+    if(P.size===2){mid=midp();PAN.did=true;}});
+  cv.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1&&PAN.drag){const dx=e.clientX-last.x,dy=e.clientY-last.y;if(Math.abs(dx)+Math.abs(dy)>0)PAN.did=true;panBy(dx,dy);last={x:e.clientX,y:e.clientY};}
+    else if(P.size===2){const m=midp();if(mid)panBy(m.x-mid.x,m.y-mid.y);mid=m;}});
+  const up=e=>{P.delete(e.pointerId);if(P.size<2)mid=null;if(P.size===0)PAN.drag=false;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  // tombol panah (tahan untuk terus bergeser)
+  const pad=document.getElementById('pad'); let rep=null;
+  const act=k=>{const st=Math.max(10,T.viewer.clientHeight*0.03);
+    if(k==='u')panBy(0,st);else if(k==='d')panBy(0,-st);else if(k==='l')panBy(st,0);else if(k==='r')panBy(-st,0);
+    else if(k==='zi')T.cam.zoom=Math.max(0.35,T.cam.zoom*0.92);else if(k==='zo')T.cam.zoom=Math.min(1.8,T.cam.zoom*1.08);else if(k==='c'){PAN.v.set(0,0,0);T.cam.zoom=1;}};
+  const stop=()=>{clearInterval(rep);rep=null;};
+  pad.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();const k=b.dataset.p;act(k);stop();if(k!=='c')rep=setInterval(()=>act(k),45);});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>pad.addEventListener(ev,stop));
+}
+
+const $=s=>document.querySelector(s);
+const nf=(x,d=1)=>Number(x).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+
+/* ================= TES DIAGNOSTIK ================= */
+const MISC={
+  m1:{t:'Elektromagnet dianggap tetap menjadi magnet setelah arus diputus',go:'em'},
+  m2:{t:'Belum tahu cara memperkuat elektromagnet (lilitan dan arus)',go:'em'},
+  m3:{t:'Bahan inti dianggap tidak berpengaruh (kayu = besi)',go:'em'},
+  m4:{t:'Bunyi klakson/bel dianggap berasal dari speaker atau rekaman',go:'horn'},
+  m5:{t:'Relay dianggap penguat/pengubah listrik, bukan saklar yang digerakkan elektromagnet',go:'relay'},
+  m6:{t:'Kontak NO dan NC tertukar',go:'relay'},
+  m7:{t:'Rangkaian kumparan dan rangkaian kontak dianggap satu rangkaian yang sama',go:'relay'},
+  m8:{t:'Kontaktor dianggap bekerja dengan prinsip berbeda dari relay',go:'kont'},
+  m9:{t:'Fungsi terminal kontaktor (A1–A2, L–T, 13–14) belum dikenali',go:'kont'}
+};
+const QUEST=[
+  {q:'Paku dililit kawat lalu dialiri arus dari baterai. Saat saklar dimatikan, paku itu…',o:[['Tetap menjadi magnet selamanya','m1'],['Hampir tidak bersifat magnet lagi',1],['Menjadi magnet yang lebih kuat','m1'],['Menyimpan listrik di dalamnya','m1']]},
+  {q:'Cara membuat elektromagnet lebih kuat adalah…',o:[['Menambah jumlah lilitan atau memperbesar arus',1],['Memakai kawat lebih panjang tanpa menambah lilitan','m2'],['Mengganti inti besi dengan kayu','m3'],['Membalik arah arus','m2']]},
+  {q:'Bahan inti yang paling baik untuk elektromagnet adalah…',o:[['Kayu','m3'],['Plastik','m3'],['Besi lunak',1],['Tembaga','m3']]},
+  {q:'Klakson motor berbunyi “teeet” karena…',o:[['Ada speaker yang memutar rekaman suara','m4'],['Membran ditarik-lepas elektromagnet ratusan kali per detik',1],['Udara ditiup kompresor kecil','m4'],['Aki mengeluarkan bunyi','m4']]},
+  {q:'Di dalam klakson dan bel listrik ada kontak yang membuka-menutup sendiri. Gunanya…',o:[['Agar membran/palu bergetar terus selama tombol ditekan',1],['Agar aki lebih awet','m4'],['Sebagai sekering pengaman','m4'],['Untuk mengatur volume suara','m4']]},
+  {q:'Relay adalah…',o:[['Penguat arus seperti trafo','m5'],['Saklar yang digerakkan oleh elektromagnet',1],['Pengaman seperti sekering','m5'],['Pengubah listrik AC menjadi DC','m5']]},
+  {q:'Kontak NO (normally open) pada relay…',o:[['Selalu tertutup','m6'],['Terbuka saat kumparan tidak dialiri arus, tertutup saat dialiri',1],['Tertutup saat kumparan tidak dialiri arus','m6'],['Tidak pernah berubah','m6']]},
+  {q:'Kumparan relay 12 V mengendalikan lampu 220 V lewat kontaknya. Tegangan 220 V itu…',o:[['Ikut masuk ke kumparan relay','m7'],['Terpisah dari rangkaian kumparan',1],['Menurunkan tegangan kumparan','m7'],['Pasti membuat relay rusak','m7']]},
+  {q:'Kontaktor di panel motor bekerja dengan prinsip…',o:[['Sama dengan relay: elektromagnet menarik kontak',1],['Pompa hidrolik','m8'],['Pegas mekanik saja, tanpa listrik','m8'],['Berputar seperti motor listrik','m8']]},
+  {q:'Pada kontaktor, terminal A1–A2 adalah…',o:[['Masukan listrik 3 fasa','m9'],['Keluaran ke motor','m9'],['Kumparan (koil)',1],['Kontak bantu NO','m9']]}
+];
+const PROFILE={sp:'Salah paham',bt:'Belum tahu',rg:'Benar tapi ragu',ok:'Paham'};
+const TERMS={
+  'A1':{n:'A1',d:'Ujung kumparan (koil). Diberi tegangan kendali, mis. 220 VAC atau 24 VDC.'},
+  'A2':{n:'A2',d:'Ujung kumparan yang lain. A1–A2 dialiri arus → kontaktor menarik.'},
+  '1/L1':{n:'1/L1',d:'Masukan kontak utama fasa R (dari MCB).'},'3/L2':{n:'3/L2',d:'Masukan kontak utama fasa S.'},'5/L3':{n:'5/L3',d:'Masukan kontak utama fasa T.'},
+  '2/T1':{n:'2/T1',d:'Keluaran kontak utama ke motor (U).'},'4/T2':{n:'4/T2',d:'Keluaran kontak utama ke motor (V).'},'6/T3':{n:'6/T3',d:'Keluaran kontak utama ke motor (W).'},
+  '13':{n:'13 NO',d:'Kontak bantu NO (angka akhir 3–4 = NO). Dipakai untuk lampu indikator atau pengunci (holding).'},'14':{n:'14 NO',d:'Pasangan kontak bantu NO 13–14.'}
+};
+const CHAL=[['Kumparan (koil)',['A1','A2']],['Masukan fasa dari MCB',['1/L1','3/L2','5/L3']],['Keluaran ke motor',['2/T1','4/T2','6/T3']],['Kontak bantu NO',['13','14']]];
+
+/* ================= STATE ================= */
+const S={tab:'pre',name:'',kelas:'',
+  test:{pre:{ans:[],conf:[],i:0,done:false},post:{ans:[],conf:[],i:0,done:false,order:null}},
+  em:{on:false,V:3,N:40,core:'besi',dir:1,field:true},
+  horn:{mode:'klakson',press:false,lock:false,slow:200,sound:true,ph:0,x:0,coil:false,sparkT:0,step:0},
+  relay:{on:false,lock:false},
+  kont:{on:false,cut:true,sel:null,ch:null,score:{ok:0,tot:0}},
+  visited:{}};
+try{const sv=JSON.parse(localStorage.getItem('toi-elektromagnet-v1')||'null');if(sv){Object.assign(S.test,sv.test||{});S.name=sv.name||'';S.kelas=sv.kelas||'';S.visited=sv.visited||{};}}catch(e){}
+function save(){try{localStorage.setItem('toi-elektromagnet-v1',JSON.stringify({test:S.test,name:S.name,kelas:S.kelas,visited:S.visited}));}catch(e){}}
+
+/* ================= MODEL ELEKTROMAGNET ================= */
+const COREF={besi:1,kayu:0.05,udara:0.05};
+function emSolve(){const e=S.em;const R=0.5+e.N*0.012;const I=e.on?e.V/R:0;const NI=e.N*I;const F=NI*COREF[e.core];const clips=Math.max(0,Math.min(8,Math.floor(F/18)));return {R,I,NI,F,clips};}
+
+/* ================= 3D ================= */
+let T=null;
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+const M=(h,o)=>new THREE.MeshStandardMaterial(Object.assign({color:col(h),roughness:.55,metalness:0},o||{}));
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
+function glowSprite(rgb){const t=canvasTex(128,128,g=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,`rgba(${rgb},.95)`);gr.addColorStop(.35,`rgba(${rgb},.45)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,128,128);});return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));}
+function shadowAll(o){o.traverse(m=>{if(m.isMesh&&!m.userData.noShadow){m.castShadow=true;m.receiveShadow=true;}});}
+function disposeGroup(g){while(g.children.length){const c=g.children.pop();c.traverse(m=>{if(m.isMesh||m.isSprite){m.geometry&&m.geometry.dispose();if(m.material.map)m.material.map.dispose();m.material.dispose();}});}}
+function box(g,w,h,d,c,x,y,z,o){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(c,o));m.position.set(x,y,z);g.add(m);return m;}
+function cyl(g,r1,r2,h,c,x,y,z,o,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg||24),M(c,o));m.position.set(x,y,z);g.add(m);return m;}
+function tube(g,pts,r,c,o){const cu=new THREE.CatmullRomCurve3(pts.map(p=>V3(...p)),false,'centripetal');const m=new THREE.Mesh(new THREE.TubeGeometry(cu,Math.max(24,pts.length*14),r,8,false),M(c,o));g.add(m);return {m,cu};}
+function textPlane(w,h,draw){const t=canvasTex(Math.round(w*110),Math.round(h*110),draw);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,roughness:.7,transparent:true}));return m;}
+function lampModel(g,x,y,z,rgb,hex){const o={};cyl(g,0.35,0.4,0.3,'#22262a',x,y+0.15,z);cyl(g,0.18,0.18,0.3,'#d9dcdf',x,y+0.45,z,{metalness:.7});
+  o.gm=new THREE.MeshStandardMaterial({color:col(hex||'#fff6dc'),roughness:.1,transparent:true,opacity:.55,emissive:new THREE.Color(hex||0xffd27a),emissiveIntensity:0});
+  const b=new THREE.Mesh(new THREE.SphereGeometry(0.36,24,16),o.gm);b.position.set(x,y+0.9,z);g.add(b);o.gs=glowSprite(rgb||'255,214,130');o.gs.position.set(x,y+0.9,z);g.add(o.gs);
+  o.pl=new THREE.PointLight(new THREE.Color(hex||0xffd8a0),0,6);o.pl.position.set(x,y+1.3,z+0.3);g.add(o.pl);o.set=v=>{o.gm.emissiveIntensity=v*2.2;o.gs.material.opacity=v;o.gs.scale.setScalar(0.4+2*v);o.pl.intensity=v*1.4;};return o;}
+
+function init3D(){
+  if(typeof THREE==='undefined') throw new Error('three');
+  const canvas=$('#c'),viewer=$('#viewer');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,0.1,200);
+  const pmrem=new THREE.PMREMGenerator(renderer),env=new THREE.Scene();
+  const sky=new THREE.SphereGeometry(50,32,16),pa=sky.attributes.position,cols=[];const lo=new THREE.Color(0x2c3540),hi=new THREE.Color(0xf2f5f8);
+  for(let i=0;i<pa.count;i++){const t=(pa.getY(i)/50+1)/2;const c=lo.clone().lerp(hi,Math.pow(t,.8));cols.push(c.r,c.g,c.b);}
+  sky.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));env.add(new THREE.Mesh(sky,new THREE.MeshBasicMaterial({side:THREE.BackSide,vertexColors:true})));
+  const pm=new THREE.MeshBasicMaterial({color:new THREE.Color(3,3,3),side:THREE.DoubleSide});
+  [[0,32,12,40,12],[-34,8,22,14,30],[30,-4,-20,10,24]].forEach(([x,y,z,w,h])=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),pm);m.position.set(x,y,z);m.lookAt(0,0,0);env.add(m);});
+  scene.environment=pmrem.fromScene(env,0.03).texture;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x7a8590,0.4));
+  const key=new THREE.DirectionalLight(0xffffff,0.8);key.position.set(6,16,10);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-12,right:12,top:10,bottom:-10,near:1,far:50});key.shadow.bias=-0.0006;scene.add(key);
+  const fill=new THREE.DirectionalLight(0xd6e4ff,0.3);fill.position.set(-10,6,-6);scene.add(fill);
+  const bench=new THREE.Mesh(new THREE.BoxGeometry(40,0.6,24),M('#5f7c70',{roughness:.85}));bench.position.y=-0.3;bench.receiveShadow=true;scene.add(bench);
+  const G={em:new THREE.Group(),horn:new THREE.Group(),relay:new THREE.Group(),kont:new THREE.Group()};Object.values(G).forEach(g=>scene.add(g));
+  const dots=new THREE.InstancedMesh(new THREE.SphereGeometry(0.06,8,6),new THREE.MeshBasicMaterial({color:0xffd21a,toneMapped:false}),500);dots.count=0;dots.frustumCulled=false;scene.add(dots);
+  const spark=glowSprite('190,220,255');scene.add(spark);
+  T={renderer,scene,camera,canvas,viewer,G,dots,spark,pins:[],taps:[],O:{},cam:{yaw:0.25,pitch:0.55,zoom:1,t:V3(0,1,0),d:18}};
+  buildEM();buildHorn();buildRelay();buildKont();
+  bind();setupPan();new ResizeObserver(resize).observe(viewer);resize();
+  showScene();
+  $('#loading').style.display='none';
+  requestAnimationFrame(loop);
+}
+function prep(paths){paths.forEach(p=>{let L=0;const c=[0];for(let i=1;i<p.pts.length;i++){L+=p.pts[i].distanceTo(p.pts[i-1]);c.push(L);}p.len=L;p.cum=c;p.n=Math.max(1,Math.round(L/0.4));p.u=0;});return paths;}
+/* ---- elektromagnet ---- */
+function buildEM(){
+  const g=T.G.em;disposeGroup(g);const O=T.O.em={};
+  box(g,13,0.3,8,'#c9a678',0.5,0.15,0,{roughness:.8});
+  const e=S.em;
+  O.nail=new THREE.Group();g.add(O.nail);
+  const coreCol=e.core==='besi'?'#9aa1a8':'#b07a45';
+  if(e.core!=='udara'){const sh=cyl(O.nail,0.12,0.12,4.3,coreCol,0,0,0,e.core==='besi'?{metalness:.85,roughness:.3}:{});sh.rotation.z=Math.PI/2;sh.position.set(0.6,0,0);
+    if(e.core==='besi'){const hd=cyl(O.nail,0.3,0.3,0.08,coreCol,0,0,0,{metalness:.85,roughness:.3});hd.rotation.z=Math.PI/2;hd.position.set(-1.55,0,0);const tp=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.35,20),M(coreCol,{metalness:.85,roughness:.3}));tp.rotation.z=-Math.PI/2;tp.position.set(2.92,0,0);O.nail.add(tp);}}
+  O.nail.position.set(-0.5,0.9,0);
+  // lilitan heliks
+  const turns=Math.min(46,Math.round(e.N/2)+4), pts=[];const x0=-1.0,x1=2.0;
+  for(let i=0;i<=turns*16;i++){const t=i/(turns*16),a=t*turns*Math.PI*2;pts.push(V3(x0+(x1-x0)*t,Math.sin(a)*0.2,Math.cos(a)*0.2));}
+  const coilM=M('#c8793e',{metalness:.85,roughness:.3,emissive:new THREE.Color(0xff8a30),emissiveIntensity:0});
+  const coil=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),turns*16,0.035,6,false),coilM);O.nail.add(coil);O.coilM=coilM;
+  [[0,-0.6,2.2],[0,-0.6,2.6]];
+  // baterai & saklar
+  const n=Math.round(e.V/1.5);
+  for(let i=0;i<n;i++){const c=cyl(g,0.32,0.32,1.9,'#1b1f26',-4.6+0,0.65,1.6-i*0.7,{metalness:.3,roughness:.35});c.rotation.z=Math.PI/2;const tp=cyl(g,0.325,0.325,0.6,'#c8793e',-4.0,0.65,1.6-i*0.7,{metalness:.6});tp.rotation.z=Math.PI/2;}
+  box(g,2.2,0.3,0.75*n,'#202327',-4.6,0.35,1.6-(n-1)*0.35);
+  const swB=box(g,1.0,0.3,0.6,'#22262a',-2.6,0.45,2.6);O.lever=box(g,0.12,0.5,0.12,'#d0302a',-2.6,0.8,2.6);
+  const pT=O.nail.position;
+  const w1=tube(g,[[-3.55,0.65,1.6],[-3.2,0.6,2.4],[-2.9,0.6,2.6]],0.05,'#c62a22');
+  const w2=tube(g,[[-2.3,0.6,2.6],[-1.6,0.7,1.8],[pT.x-1.0,0.9,0.4],[pT.x-1.0,0.9,0.2]],0.05,'#c62a22');
+  const w3=tube(g,[[pT.x+2.0,0.9,0.2],[pT.x+2.1,0.6,1.4],[0.4,0.45,3.2],[-4.0,0.45,3.0],[-5.7,0.6,1.6-(n-1)*0.7],[-5.55,0.65,1.6-(n-1)*0.7]],0.05,'#1d1f22');
+  O.paths=prep([{pts:w1.cu.getSpacedPoints(30)},{pts:w2.cu.getSpacedPoints(40)},{pts:pts.filter((_,i)=>i%6===0).map(p=>p.clone().add(pT))},{pts:w3.cu.getSpacedPoints(70)}]);
+  // klip kertas
+  O.clips=[];for(let i=0;i<8;i++){const c=new THREE.Mesh(new THREE.TorusGeometry(0.16,0.025,6,16),M('#c7cdd3',{metalness:.9,roughness:.3}));c.scale.set(1.6,1,1);c.rotation.x=Math.PI/2;
+    const rest=V3(3.6+(i%4)*0.55,0.33,-1.2+Math.floor(i/4)*0.6+(i%2)*0.15);c.position.copy(rest);g.add(c);O.clips.push({m:c,rest,cur:rest.clone()});}
+  // kompas
+  const cp=new THREE.Group();cp.position.set(-2.9,0.35,-0.2);g.add(cp);cyl(cp,0.55,0.55,0.12,'#f2efe6',0,0,0);const rim=new THREE.Mesh(new THREE.TorusGeometry(0.55,0.04,8,32),M('#8a6a45'));rim.rotation.x=Math.PI/2;rim.position.y=0.06;cp.add(rim);
+  O.needle=new THREE.Group();O.needle.position.y=0.1;cp.add(O.needle);const nr=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.42,12),M('#d0302a'));nr.rotation.z=-Math.PI/2;nr.position.x=0.21;O.needle.add(nr);const nb=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.42,12),M('#e8e8e8'));nb.rotation.z=Math.PI/2;nb.position.x=-0.21;O.needle.add(nb);
+  // garis medan
+  O.field=new THREE.Group();g.add(O.field);const fm=new THREE.MeshBasicMaterial({color:0x4aa3ff,transparent:true,opacity:0,depthWrite:false});O.fm=fm;
+  [0.6,1.0,1.5].forEach((r,i)=>{[1,-1].forEach(s=>{const p2=[];for(let k=0;k<=40;k++){const a=k/40*Math.PI;p2.push(V3(pT.x+0.6-Math.cos(a)*2.4*(1+i*0.25),pT.y+s*Math.sin(a)*r,0));}const m=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p2),40,0.015,4,false),fm);m.userData.noShadow=true;O.field.add(m);
+    const p3=p2.map(p=>V3(p.x,pT.y,(p.y-pT.y)));const m2=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p3),40,0.015,4,false),fm);m2.userData.noShadow=true;O.field.add(m2);});});
+  O.pT=pT.clone();
+  shadowAll(g);
+}
+function lathe(pts,mat,ps,pl){const m=new THREE.Mesh(new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(p[0],p[1])),48,ps,pl),mat);return m;}
+function wireSet(g,list){const grp=new THREE.Group();g.add(grp);const paths=[];list.forEach(([pts,c])=>{const t=tube(grp,pts.map(p=>p.toArray?p.toArray():p),0.05,c);paths.push({pts:t.cu.getSpacedPoints(50)});});return {grp,paths:prep(paths)};}
+/* ---- klakson & bel ---- */
+function buildHorn(){
+  const g=T.G.horn;disposeGroup(g);const O=T.O.horn={};
+  box(g,13,0.3,8,'#c9a678',0.5,0.15,0,{roughness:.8});
+  const aki=new THREE.Group();aki.position.set(-4.8,0.3,1.4);g.add(aki);box(aki,1.8,1.5,1.0,'#1d1f22',0,0.75,0);cyl(aki,0.12,0.12,0.25,'#d0302a',-0.5,1.6,0);cyl(aki,0.12,0.12,0.25,'#2b62c9',0.5,1.6,0);
+  const al=textPlane(1.5,0.5,(c,w,h)=>{c.fillStyle='#f3b52f';c.font=`700 ${h*.6}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('AKI 12 V',w/2,h/2);});al.position.set(0,0.8,0.51);aki.add(al);
+  const btn=new THREE.Group();btn.position.set(-2.4,0.3,2.6);g.add(btn);box(btn,1.0,0.5,0.8,'#2a2f35',0,0.25,0);O.btnCap=cyl(btn,0.22,0.22,0.18,'#d0302a',0,0.58,0);O.btnCap.userData.tap='horn';T.taps.push(O.btnCap);
+  const DS=THREE.DoubleSide, PS=Math.PI/2, PL=Math.PI;
+  const steel=M('#9aa1a8',{metalness:.85,roughness:.3,side:DS}), dark=M('#3a4048',{metalness:.6,roughness:.4,side:DS});
+  O.coilM=M('#c8793e',{metalness:.8,roughness:.3,side:DS,emissive:new THREE.Color(0xff8a30),emissiveIntensity:0});
+  // ---- KLAKSON DISC: penampang setengah (bagian depan dipotong) ----
+  const hk=new THREE.Group();hk.position.set(1.2,2.6,0);hk.rotation.y=0.5;g.add(hk);O.hk=hk;
+  const AX=new THREE.Group();AX.rotation.z=-Math.PI/2;hk.add(AX);O.AX=AX; // sumbu lathe (y) = arah depan klakson (+x)
+  AX.add(lathe([[0.3,-1.0],[1.85,-1.0],[2.05,-0.8],[2.1,0.1],[2.3,0.12],[2.3,0.22],[2.0,0.22]],dark,PS,PL)); // rumah baja (cawan)
+  AX.add(lathe([[0.5,-0.92],[1.15,-0.92],[1.15,-0.3],[0.5,-0.3],[0.5,-0.92]],O.coilM,PS,PL)); // kumparan
+  AX.add(lathe([[0.0,-1.0],[0.4,-1.0],[0.4,-0.22],[0.0,-0.22]],steel,PS,PL)); // inti / kutub
+  AX.add(lathe([[0.0,-1.38],[0.11,-1.38],[0.11,-1.0],[0.0,-1.0]],M('#cfd3d8',{metalness:.95,side:DS}),PS,PL)); // sekrup setel
+  AX.add(lathe([[1.95,0.14],[2.3,0.14],[2.3,0.24],[1.95,0.24]],M('#5a6068',{metalness:.7,side:DS}),PS,PL)); // cincin penjepit membran
+  O.mov=new THREE.Group();AX.add(O.mov);
+  O.mov.add(lathe([[0.0,-0.12],[0.42,-0.12],[0.42,0.08],[0.0,0.08]],M('#5d646c',{metalness:.8,roughness:.35,side:DS}),PS,PL)); // jangkar
+  O.mov.add(lathe([[0.06,0.16],[2.0,0.16],[2.0,0.2],[0.06,0.2]],M('#c3cad1',{metalness:.75,roughness:.3,side:DS}),PS,PL)); // membran
+  O.mov.add(lathe([[0.0,-0.12],[0.07,-0.12],[0.07,0.86],[0.0,0.86]],M('#cfd3d8',{metalness:.95,side:DS}),PS,PL)); // poros
+  O.mov.add(lathe([[0.07,0.2],[0.3,0.2],[0.3,0.46],[0.07,0.46]],M('#8a9198',{metalness:.8,side:DS}),PS,PL)); // ring jarak
+  O.mov.add(lathe([[0.07,0.46],[1.6,0.46],[1.68,0.52],[1.6,0.6],[0.07,0.6]],M('#e3e7ea',{metalness:.95,roughness:.15,side:DS}),PS,PL)); // piringan nada
+  O.mov.add(lathe([[0.07,0.6],[0.17,0.6],[0.17,0.74],[0.07,0.74]],M('#9aa1a8',{metalness:.9,side:DS}),PS,PL)); // mur
+  // pemutus kontak (di bidang potong, sisi bawah)
+  const silver=M('#f2f2f2',{metalness:1,roughness:.2});
+  box(AX,0.12,0.6,0.1,'#cfd3d8',1.72,-0.7,-0.06,{metalness:.9});box(AX,0.42,0.08,0.1,'#cfd3d8',1.55,-0.4,-0.06,{metalness:.9}); // lengan tetap
+  const fb=new THREE.Mesh(new THREE.SphereGeometry(0.06,12,8),silver);fb.position.set(1.42,-0.46,-0.06);AX.add(fb);
+  box(AX,0.12,0.36,0.1,'#d6b25e',1.32,-0.82,-0.06,{metalness:.85});
+  O.leaf=new THREE.Group();O.leaf.position.set(1.32,-0.64,-0.06);AX.add(O.leaf);box(O.leaf,0.6,0.04,0.1,'#d6b25e',0.15,0,0,{metalness:.85}); // lengan pegas
+  O.bead=new THREE.Mesh(new THREE.SphereGeometry(0.06,12,8),silver);O.bead.position.set(0.1,0.06,0);O.leaf.add(O.bead);
+  const pus=box(O.mov,0.08,0.5,0.08,'#e8e4d0',0.95,-0.33,-0.06);pus.rotation.z=0;box(O.mov,0.55,0.06,0.08,'#e8e4d0',0.68,-0.1,-0.06); // pendorong berisolasi
+  // terminal belakang
+  [[0.8,'#d0302a'],[1.5,'#1d1f22']].forEach(([r,c])=>{const t=cyl(AX,0.09,0.09,0.4,'#cfd3d8',r,-1.2,-0.15,{metalness:.9});});
+  const tl=textPlane(3.6,0.45,(c,w,h)=>{c.fillStyle='#14202b';c.font=`700 ${h*.55}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('KLAKSON DISC — PENAMPANG',w/2,h/2);});tl.position.set(0,-2.55,0.02);hk.add(tl);
+  // ---- BEL LISTRIK (bel sekolah) ----
+  const bl=new THREE.Group();bl.position.set(1.4,0.3,0);g.add(bl);O.bl=bl;
+  box(bl,3.8,5.3,0.2,'#8a6a45',-0.3,2.65,-0.6);
+  O.bcoilM=M('#c8793e',{metalness:.8,roughness:.3,emissive:new THREE.Color(0xff8a30),emissiveIntensity:0});
+  [1.55,2.35].forEach(y=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.95,24),O.bcoilM);c.rotation.z=Math.PI/2;c.position.set(-0.55,y,-0.25);bl.add(c);
+    const cr=cyl(bl,0.13,0.13,1.2,'#9aa1a8',-0.5,y,-0.25,{metalness:.85});cr.rotation.z=Math.PI/2;});
+  box(bl,0.22,1.25,0.36,'#9aa1a8',-1.18,1.95,-0.25,{metalness:.85}); // yoke U
+  O.barm=new THREE.Group();O.barm.position.set(0.32,0.75,-0.25);bl.add(O.barm);
+  box(O.barm,0.04,0.55,0.32,'#d0d4d8',0,0.27,0,{metalness:.9}); // pegas daun
+  box(O.barm,0.18,2.25,0.38,'#6b7279',0,1.67,0,{metalness:.75}); // jangkar besi lunak
+  box(O.barm,0.05,0.85,0.05,'#888',0,3.2,0.12); const ham=new THREE.Mesh(new THREE.SphereGeometry(0.17,16,12),M('#555',{metalness:.7}));ham.position.set(0,3.68,0.12);O.barm.add(ham);
+  box(bl,0.5,0.15,0.4,'#3a3a3a',0.32,0.68,-0.25); // dudukan pegas
+  const gong=new THREE.Mesh(new THREE.SphereGeometry(0.85,32,16,0,Math.PI*2,0,Math.PI/2),M('#c9a64a',{metalness:.9,roughness:.25,side:THREE.DoubleSide}));gong.rotation.x=Math.PI/2;gong.position.set(-0.86,4.43,-0.1);bl.add(gong);
+  cyl(bl,0.06,0.06,0.5,'#888',-0.86,4.43,-0.35).rotation.x=Math.PI/2;
+  const post=box(bl,0.3,0.4,0.36,'#2a2f35',1.05,1.95,-0.25); // tiang sekrup berisolasi
+  const scr=cyl(bl,0.05,0.05,0.62,'#d6b25e',0.72,1.95,-0.25,{metalness:.9});scr.rotation.z=Math.PI/2;
+  O.bContactLocal=V3(0.42,1.95,-0.25);
+  [1.3,-0.9].forEach(x=>cyl(bl,0.12,0.12,0.2,'#cfd3d8',x,0.45,-0.35,{metalness:.9}).rotation.x=Math.PI/2);
+  [[[1.3,0.45],[1.32,1.0],[1.12,1.6],[1.05,1.75]],[[0.18,0.68],[-0.02,1.0],[-0.08,1.3]],[[-1.02,2.38],[-1.45,2.62],[-1.52,1.2],[-1.2,0.5],[-0.9,0.45]]].forEach(q=>tube(bl,q.map(([x,y])=>[x,y,-0.46]),0.035,'#b8732f'));
+  // ---- kabel ----
+  T.scene.updateMatrixWorld(true);
+  const wpK=(r,y)=>AX.localToWorld(V3(r,y,-0.15)), tA=wpK(0.8,-1.4), tB=wpK(1.5,-1.4);
+  O.wK=wireSet(g,[[[V3(-5.3,1.9,1.4),V3(-4.2,2.3,2.4),V3(-2.8,0.9,2.8),V3(-2.6,0.7,2.6)],'#c62a22'],[[V3(-2.2,0.7,2.6),V3(-1.0,1.2,2.2),tA.clone().add(V3(-0.6,-0.4,0.6)),tA],'#c62a22'],[[tB,tB.clone().add(V3(-0.3,-0.8,0.8)),V3(0,0.5,3.4),V3(-4.3,0.6,2.4),V3(-4.3,1.9,1.4)],'#1d1f22']]);
+  const t1=bl.localToWorld(V3(1.3,0.45,-0.25)), t2=bl.localToWorld(V3(-0.9,0.45,-0.25));
+  O.wB=wireSet(g,[[[V3(-5.3,1.9,1.4),V3(-4.2,2.3,2.4),V3(-2.8,0.9,2.8),V3(-2.6,0.7,2.6)],'#c62a22'],[[V3(-2.2,0.7,2.6),V3(0.5,0.6,2.4),t1.clone().add(V3(0.2,-0.1,0.7)),t1],'#c62a22'],[[t2,t2.clone().add(V3(-0.2,-0.1,0.6)),V3(-1.0,0.5,2.0),V3(-4.3,0.6,2.4),V3(-4.3,1.9,1.4)],'#1d1f22']]);
+  // jalur di dalam bel (untuk titik arus): T1→sekrup→pegas→jangkar→kumparan→T2
+  const L=v=>bl.localToWorld(v);
+  O.pInB=prep([{pts:new THREE.CatmullRomCurve3([L(V3(1.3,0.45,-0.4)),L(V3(1.3,1.0,-0.4)),L(V3(1.05,1.75,-0.4)),L(V3(0.75,1.95,-0.12)),L(V3(0.45,1.95,-0.12)),L(V3(0.36,1.3,-0.03)),L(V3(0.3,0.75,-0.03)),L(V3(0.05,0.95,-0.4)),L(V3(-0.1,1.4,0.08)),L(V3(-0.55,1.55,0.08)),L(V3(-1.0,1.6,0.08)),L(V3(-0.55,2.35,0.08)),L(V3(-1.02,2.38,-0.4)),L(V3(-1.48,2.5,-0.4)),L(V3(-1.5,1.2,-0.4)),L(V3(-0.9,0.45,-0.4))]).getSpacedPoints(90)}]);
+  shadowAll(g);
+}
+/* ---- relay ---- */
+function buildRelay(){
+  const g=T.G.relay;disposeGroup(g);const O=T.O.relay={};
+  box(g,15,0.3,8,'#c9a678',0.5,0.15,0,{roughness:.8});
+  const r=new THREE.Group();r.position.set(0,0.3,0);g.add(r);O.r=r;
+  box(r,3.2,0.35,1.6,'#1d1f22',0,0.18,0); // alas
+  const cov=new THREE.Mesh(new THREE.BoxGeometry(3.2,2.9,1.6),new THREE.MeshStandardMaterial({color:0xbfe0ff,transparent:true,opacity:.12,roughness:.1,depthWrite:false}));cov.position.y=1.8;cov.userData.noShadow=true;r.add(cov);
+  const iron=M('#9aa1a8',{metalness:.85,roughness:.3});
+  O.coilM=M('#c8793e',{metalness:.8,roughness:.3,emissive:new THREE.Color(0xff8a30),emissiveIntensity:0});
+  const coil=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,1.25,32),O.coilM);coil.position.set(-0.5,1.32,0);r.add(coil);
+  box(r,0.95,0.06,0.95,'#2a2f35',-0.5,0.68,0);box(r,0.95,0.06,0.95,'#2a2f35',-0.5,1.97,0); // bobbin
+  const core=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,1.55,24),iron);core.position.set(-0.5,1.3,0);r.add(core);
+  box(r,0.32,0.06,0.32,'#a7aeb5',-0.5,2.09,0,{metalness:.85}); // muka kutub
+  box(r,0.75,0.12,0.5,'#9aa1a8',-0.78,0.5,0,{metalness:.85}); // yoke L: kaki bawah
+  box(r,0.12,1.72,0.5,'#9aa1a8',-1.1,1.3,0,{metalness:.85}); // yoke L: kaki tegak
+  O.arm=new THREE.Group();O.arm.position.set(-1.1,2.2,0);r.add(O.arm);
+  box(O.arm,1.15,0.1,0.5,'#7d858d',0.5,0,0,{metalness:.8}); // jangkar
+  box(O.arm,0.35,0.1,0.18,'#7d858d',-0.15,0,0,{metalness:.8}); // ekor jangkar
+  box(O.arm,1.15,0.04,0.2,'#d6b25e',1.55,0.0,0,{metalness:.9}); // pegas kontak gerak (COM)
+  const mb=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,8),M('#f2f2f2',{metalness:1,roughness:.2}));mb.position.set(2.1,0,0);O.arm.add(mb);O.mb=mb;
+  // pegas pelepas (dari ekor jangkar ke alas)
+  const sp=[];for(let i=0;i<=120;i++){const t=i/120,a=t*14*Math.PI;sp.push(V3(-1.32+Math.cos(a)*0.06,0.42+t*1.72,Math.sin(a)*0.06));}O.spring=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sp),120,0.015,4,false),M('#cfd3d8',{metalness:.9}));r.add(O.spring);
+  // kontak tetap NC (atas) & NO (bawah) pada tiang kanan
+  box(r,0.12,2.25,0.4,'#2a2f35',1.4,1.48,0);
+  box(r,0.5,0.06,0.2,'#d6b25e',1.15,2.47,0,{metalness:.9});box(r,0.5,0.06,0.2,'#d6b25e',1.15,1.93,0,{metalness:.9});
+  const nc=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,8),M('#f2f2f2',{metalness:1}));nc.position.set(1.0,2.4,0);r.add(nc);
+  const no=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,8),M('#f2f2f2',{metalness:1}));no.position.set(1.0,2.0,0);r.add(no);
+  O.pins=[[-0.75,'A1'],[-0.25,'A2'],[-1.1,'COM'],[0.95,'NC'],[1.35,'NO']];
+  O.pins.forEach(([x])=>box(r,0.08,0.5,0.08,'#cfd3d8',x,-0.15,0.55,{metalness:.9}));
+  const lb=textPlane(2.8,0.34,(c,w,h)=>{c.fillStyle='#e9eef2';c.font=`600 ${h*.55}px "IBM Plex Mono",monospace`;c.textAlign='center';c.textBaseline='middle';c.fillText('RELAY 12 VDC · 10 A',w/2,h/2);});lb.position.set(0,0.18,0.81);r.add(lb);
+  // rangkaian kendali (kiri)
+  const bat=new THREE.Group();bat.position.set(-5.4,0.3,1.0);g.add(bat);box(bat,1.4,1.0,0.8,'#1d1f22',0,0.5,0);const bl=textPlane(1.2,0.4,(c,w,h)=>{c.fillStyle='#f3b52f';c.font=`700 ${h*.6}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('12 VDC',w/2,h/2);});bl.position.set(0,0.5,0.41);bat.add(bl);
+  const pb=new THREE.Group();pb.position.set(-3.4,0.3,2.4);g.add(pb);box(pb,0.9,0.45,0.7,'#2a2f35',0,0.22,0);O.btn=cyl(pb,0.2,0.2,0.16,'#1f9a4b',0,0.52,0);O.btn.userData.tap='relay';T.taps.push(O.btn);
+  const c1=tube(g,[[-5.0,1.05,1.0],[-4.4,1.0,2.4],[-3.6,0.6,2.4]],0.05,'#c62a22');
+  const c2=tube(g,[[-3.2,0.6,2.4],[-2.0,0.5,1.8],[-0.75,0.3,0.9],[-0.75,0.2,0.55]],0.05,'#c62a22');
+  const c3=tube(g,[[-0.25,0.2,0.55],[-0.3,0.35,2.2],[-4.0,0.4,3.0],[-5.8,0.6,1.5],[-5.8,1.05,1.0]],0.05,'#1d1f22');
+  // rangkaian beban (kanan)
+  const src=new THREE.Group();src.position.set(5.6,0.3,2.4);g.add(src);box(src,1.2,0.9,0.8,'#f2f2ee',0,0.45,0);const sl=textPlane(1.1,0.35,(c,w,h)=>{c.fillStyle='#bb3a2c';c.font=`700 ${h*.6}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('220 VAC',w/2,h/2);});sl.position.set(0,0.45,0.41);src.add(sl);
+  O.lNO=lampModel(g,3.6,0.3,-1.6,'60,230,90','#2fd35a');O.lNC=lampModel(g,5.6,0.3,-1.6,'255,70,50','#ff4a3a');
+  const d1=tube(g,[[5.2,0.8,2.4],[2.6,0.5,2.2],[-1.1,0.3,1.4],[-1.1,0.2,0.55]],0.06,'#8a4b22');
+  const dNO=tube(g,[[1.35,0.2,0.55],[1.8,0.35,0.0],[3.2,0.4,-1.0],[3.5,0.5,-1.5]],0.06,'#8a4b22');
+  const dNC=tube(g,[[0.95,0.2,0.55],[1.6,0.5,-0.6],[4.6,0.5,-1.2],[5.5,0.5,-1.5]],0.06,'#8a4b22');
+  tube(g,[[3.75,0.4,-1.6],[4.6,0.4,-0.6],[5.8,0.4,1.2],[5.9,0.8,2.4]],0.06,'#2b62c9');tube(g,[[5.75,0.4,-1.6],[6.0,0.4,0.2],[5.95,0.6,2.0]],0.06,'#2b62c9');
+  O.pCoil=prep([{pts:c1.cu.getSpacedPoints(30)},{pts:c2.cu.getSpacedPoints(40)},{pts:c3.cu.getSpacedPoints(60)}]);
+  O.pCom=prep([{pts:d1.cu.getSpacedPoints(60)}]);O.pNO=prep([{pts:dNO.cu.getSpacedPoints(40)}]);O.pNC=prep([{pts:dNC.cu.getSpacedPoints(50)}]);
+  shadowAll(g);
+}
+/* ---- kontaktor ---- */
+function helixY(g,x,y,z,r,len,turns,c){const sg=new THREE.Group();sg.position.set(x,y,z);g.add(sg);const hp=[];for(let j=0;j<=turns*12;j++){const t=j/(turns*12),a=t*turns*2*Math.PI;hp.push(V3(Math.cos(a)*r,t*len,Math.sin(a)*r));}
+  sg.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(hp),turns*12,0.025,5,false),M(c||'#cfd3d8',{metalness:.9,roughness:.3})));return sg;}
+function buildKont(){
+  const g=T.G.kont;disposeGroup(g);const O=T.O.kont={};
+  box(g,15,7,0.2,'#e7e9ec',0.3,3.5,-1.5); // pelat panel
+  box(g,4.2,0.35,0.3,'#cfd3d8',-3.6,2.7,-1.25,{metalness:.8}); // rel DIN
+  O.coilM=M('#c8793e',{metalness:.8,roughness:.3,emissive:new THREE.Color(0xff8a30),emissiveIntensity:0});
+  // ===== 1. KONTAKTOR UTUH (tampak luar) =====
+  const ex=new THREE.Group();ex.position.set(-3.6,0.9,-1.4);g.add(ex);O.ex=ex;
+  const shell='#b3bcc5';
+  box(ex,2.8,2.0,1.8,shell,0,1.8,0.9,{roughness:.55});box(ex,2.8,0.8,1.3,shell,0,3.2,0.65,{roughness:.55});box(ex,2.8,0.8,1.3,shell,0,0.4,0.65,{roughness:.55});
+  box(ex,2.2,0.9,0.04,'#ffffff',0,2.25,1.82);
+  const lab=textPlane(2.1,0.85,(c,w,h)=>{c.fillStyle='#14202b';c.textAlign='center';c.textBaseline='middle';c.font=`700 ${h*.26}px "Barlow Condensed",Arial`;c.fillText('KONTAKTOR 3P · 9 A',w/2,h*.28);c.font=`600 ${h*.18}px "IBM Plex Mono",monospace`;c.fillText('koil 220 VAC · AC-3',w/2,h*.58);c.fillText('1NO bantu',w/2,h*.82);});lab.position.set(0,2.25,1.85);ex.add(lab);
+  box(ex,0.7,0.36,0.04,'#2a2f35',0,1.3,1.81);O.ind=box(ex,0.55,0.26,0.3,'#e8b23a',0,1.3,1.88); // penanda posisi
+  O.terms={};
+  const tP={'A1':[-1.12,3.2],'1/L1':[-0.56,3.2],'3/L2':[0,3.2],'5/L3':[0.56,3.2],'13':[1.12,3.2],'A2':[-1.12,0.4],'2/T1':[-0.56,0.4],'4/T2':[0,0.4],'6/T3':[0.56,0.4],'14':[1.12,0.4]};
+  Object.entries(tP).forEach(([n,[x,y]])=>{box(ex,0.44,0.44,0.1,'#2a2f35',x,y,1.31);
+    const s=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.1,16),M('#cfd3d8',{metalness:.9,roughness:.25,emissive:new THREE.Color(0xffb020),emissiveIntensity:0}));s.rotation.x=Math.PI/2;s.position.set(x,y,1.38);s.userData.term=n;ex.add(s);T.taps.push(s);O.terms[n]=s;
+    box(ex,0.2,0.03,0.02,'#555',x,y,1.44);});
+  // ===== 2. PENAMPANG SATU KUTUB =====
+  const sc=new THREE.Group();sc.position.set(1.7,0.45,-1.0);g.add(sc);O.sc=sc;
+  box(sc,4.7,5.75,0.06,'#c3ccd4',0,2.85,-0.31);
+  const wall='#8e98a2';
+  box(sc,4.7,0.2,0.6,wall,0,0.1,0);box(sc,0.18,5.6,0.6,wall,-2.26,2.9,0);box(sc,0.18,5.6,0.6,wall,2.26,2.9,0);box(sc,4.7,0.18,0.6,wall,0,5.62,0);
+  box(sc,4.34,0.18,0.6,wall,0,0.55,0); // dudukan inti
+  const tt=textPlane(4.6,0.42,(c,w,h)=>{c.fillStyle='#14202b';c.font=`700 ${h*.42}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('PENAMPANG KONTAKTOR — SATU KUTUB (L1 → T1)',w/2,h/2);});tt.position.set(0,6.0,0);sc.add(tt);
+  const ironC='#8a929a';
+  // inti tetap E (kaki ke atas)
+  box(sc,2.6,0.35,0.5,ironC,0,0.82,0,{metalness:.85});
+  [[-1.1,0.4],[0,0.5],[1.1,0.4]].forEach(([x,w])=>box(sc,w,1.15,0.5,ironC,x,1.57,0,{metalness:.85}));
+  [-1.1,1.1].forEach(x=>box(sc,0.42,0.06,0.52,'#b8732f',x,2.12,0,{metalness:.8})); // cincin bayangan
+  // koil (penampang lilitan di kiri-kanan kaki tengah)
+  [-0.6,0.6].forEach(x=>{const c=new THREE.Mesh(new THREE.BoxGeometry(0.5,1.0,0.48),O.coilM);c.position.set(x,1.5,0);sc.add(c);
+    const d=textPlane(0.46,0.96,(cx,w,h)=>{cx.fillStyle='rgba(60,25,5,.55)';for(let i=0;i<4;i++)for(let j=0;j<8;j++){cx.beginPath();cx.arc(w*(0.14+i*0.24),h*(0.07+j*0.124),w*0.075,0,7);cx.fill();}});d.position.set(x,1.5,0.25);sc.add(d);});
+  box(sc,1.75,0.06,0.5,'#2a2f35',0,2.03,0);box(sc,1.75,0.06,0.5,'#2a2f35',0,0.98,0);
+  // bagian bergerak
+  O.mv=new THREE.Group();sc.add(O.mv);
+  box(O.mv,3.4,0.35,0.5,'#737b83',0,2.72,0,{metalness:.8});
+  [[-1.1,0.4],[0,0.5],[1.1,0.4]].forEach(([x,w])=>box(O.mv,w,0.36,0.5,'#737b83',x,2.37,0,{metalness:.8}));
+  box(O.mv,0.36,1.05,0.42,'#f7f3e6',0,3.4,0); // batang pembawa (isolator)
+  box(O.mv,1.3,0.12,0.5,'#eeeae0',0,3.9,0);box(O.mv,0.12,0.9,0.5,'#eeeae0',-0.59,4.35,0);box(O.mv,0.12,0.9,0.5,'#eeeae0',0.59,4.35,0);box(O.mv,1.3,0.12,0.5,'#eeeae0',0,4.8,0);
+  // jembatan kontak (bisa tertahan saat kontak menyentuh — pegas kontak tertekan)
+  O.br=new THREE.Group();sc.add(O.br);
+  box(O.br,2.9,0.14,0.36,'#d6b25e',0,4.15,0,{metalness:.9});
+  [-1.2,1.2].forEach(x=>box(O.br,0.32,0.06,0.3,'#f2f2f2',x,4.05,0,{metalness:1,roughness:.2}));
+  O.cs=helixY(sc,0,4.22,0,0.12,0.52,6);
+  // kontak tetap + terminal
+  [-1,1].forEach(sx=>{box(sc,0.9,0.12,0.36,'#d6b25e',sx*1.55,3.86,0,{metalness:.9});box(sc,0.32,0.06,0.3,'#f2f2f2',sx*1.2,3.95,0,{metalness:1,roughness:.2});
+    box(sc,0.5,0.5,0.5,'#cfd3d8',sx*2.1,3.86,0.1,{metalness:.85});const s=cyl(sc,0.14,0.14,0.1,'#e1e4e7',sx*2.1,3.86,0.4,{metalness:.9});s.rotation.x=Math.PI/2;
+    // pegas pembalik
+  });
+  O.rs=[-1.55,1.55].map(x=>helixY(sc,x,0.64,0,0.13,1.9,9));
+  // terminal koil
+  [[-1,'A1'],[1,'A2']].forEach(([sx])=>{box(sc,0.42,0.42,0.45,'#cfd3d8',sx*2.1,1.35,0.1,{metalness:.85});});
+  tube(sc,[[-2.0,1.35,0.2],[-1.4,1.25,0.28],[-0.85,1.4,0.27]],0.03,'#b8732f');tube(sc,[[0.85,1.4,0.27],[1.4,1.25,0.28],[2.0,1.35,0.2]],0.03,'#b8732f');
+  // kabel stub di penampang
+  const S2=v=>sc.localToWorld(V3(...v));
+  T.scene.updateMatrixWorld(true);
+  const sl=tube(g,[S2([-3.2,4.6,0.5]),S2([-2.7,3.9,0.5]),S2([-2.15,3.86,0.3])].map(v=>v.toArray()),0.05,'#8a4b22');
+  const sr=tube(g,[S2([2.15,3.86,0.3]),S2([2.7,3.9,0.5]),S2([3.2,4.6,0.5])].map(v=>v.toArray()),0.05,'#8a4b22');
+  const inside=new THREE.CatmullRomCurve3([S2([-2.1,3.86,0.3]),S2([-1.55,3.86,0.25]),S2([-1.2,4.0,0.25]),S2([-0.4,4.15,0.25]),S2([0.4,4.15,0.25]),S2([1.2,4.0,0.25]),S2([1.55,3.86,0.25]),S2([2.1,3.86,0.3])]);
+  O.pSec=prep([{pts:sl.cu.getSpacedPoints(20)},{pts:inside.getSpacedPoints(40)},{pts:sr.cu.getSpacedPoints(20)}]);
+  O.pSecCoil=prep([{pts:new THREE.CatmullRomCurve3([S2([-2.1,1.35,0.3]),S2([-1.4,1.25,0.3]),S2([-0.6,1.95,0.3]),S2([-0.6,1.05,0.3]),S2([0.6,1.95,0.3]),S2([0.6,1.05,0.3]),S2([1.4,1.25,0.3]),S2([2.1,1.35,0.3])]).getSpacedPoints(60)}]);
+  // ===== motor, tombol, kabel kontaktor utuh =====
+  const mo=new THREE.Group();mo.position.set(6.0,0,1.4);g.add(mo);const mb=cyl(mo,0.9,0.9,2.2,'#3a7d4a',0,1.1,0,{roughness:.45});mb.rotation.z=Math.PI/2;box(mo,1.8,0.25,1.3,'#2f6a3d',0,0.13,0);
+  for(let i=0;i<8;i++){const f=box(mo,2.0,0.08,0.12,'#356f43',0,1.1,0);f.rotation.x=i*Math.PI/4;f.position.set(0,1.1+Math.cos(i*Math.PI/4)*0.9,Math.sin(i*Math.PI/4)*0.9);}
+  O.shaft=new THREE.Group();O.shaft.position.set(-1.2,1.1,0);mo.add(O.shaft);const sh=cyl(O.shaft,0.11,0.11,0.6,'#cfd3d8',0,0,0,{metalness:.9});sh.rotation.z=Math.PI/2;box(O.shaft,0.5,0.06,0.3,'#d0302a',-0.15,0.12,0);
+  box(mo,0.6,0.4,0.6,'#2f6a3d',0,2.15,0);
+  const pb=new THREE.Group();pb.position.set(-6.0,0.3,2.2);g.add(pb);box(pb,1.0,0.5,0.8,'#2a2f35',0,0.25,0);O.btn=cyl(pb,0.22,0.22,0.18,'#1f9a4b',0,0.58,0);O.btn.userData.tap='kont';T.taps.push(O.btn);
+  const src=textPlane(2.4,0.45,(c,w,h)=>{c.fillStyle='#14202b';c.fillRect(0,0,w,h);c.fillStyle='#f3b52f';c.font=`700 ${h*.5}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('dari MCB 3P — R S T',w/2,h/2);});src.position.set(-3.6,6.6,-1.38);g.add(src);
+  const E=(x,y,z)=>[ex.position.x+x,ex.position.y+y,ex.position.z+z];const C=['#8a4b22','#1d1f22','#8f969c'];const pw=[];
+  [-0.56,0,0.56].forEach((x,i)=>{
+    pw.push(tube(g,[[-4.1+i*0.5,6.35,-1.35],[-3.6+x,5.4,-0.6],E(x,4.1,1.5),E(x,3.42,1.32)],0.05,C[i]));
+    pw.push(tube(g,[E(x,0.18,1.32),E(x,-0.2,1.9),[0.5,0.3,2.3+i*0.2],[5.0,0.3,2.3],[6.0+(i-1)*0.15,2.2,1.4]],0.05,C[i]));});
+  const ca=tube(g,[[-6.0,0.6,1.8],[-5.6,2.0,1.2],E(-1.4,4.0,1.6),E(-1.12,3.42,1.32)],0.04,'#c62a22');
+  const cb=tube(g,[E(-1.12,0.18,1.32),E(-1.3,-0.3,1.9),[-5.2,0.3,3.0],[-6.0,0.6,2.6]],0.04,'#2b62c9');
+  O.pPow=prep(pw.map(t=>({pts:t.cu.getSpacedPoints(50)})));O.pCoil=prep([{pts:ca.cu.getSpacedPoints(60)},{pts:cb.cu.getSpacedPoints(60)}]);
+  shadowAll(g);
+}
+function showScene(){
+  if(!T) return; if(typeof PAN!=='undefined'&&PAN.v)PAN.v.set(0,0,0); const t=S.tab, key={em:'em',horn:'horn',relay:'relay',kont:'kont'}[t]||'em';
+  Object.entries(T.G).forEach(([k,g])=>g.visible=k===key);
+  T.cur=key;
+  const cams={em:[V3(0,0.9,0.3),0.62,0.25],horn:[V3(-0.9,1.9,0.6),0.16,0.22],relay:[V3(0.2,1.5,0.4),0.3,0.12],kont:[V3(0,3.1,0.6),0.16,0.12]}[key];
+  T.cam.t=cams[0];T.cam.pitch=cams[1];T.cam.yaw=cams[2];
+  if(T.O.horn){T.O.horn.hk.visible=S.horn.mode==='klakson';T.O.horn.bl.visible=S.horn.mode==='bel';}
+  setPins();
+}
+function setPins(){
+  T.scene.updateMatrixWorld(true);
+  const L=$('#labels');L.innerHTML='';T.pins=[];
+  const add=(html,p,cls)=>{const el=document.createElement('div');el.className='lbl'+(cls?' '+cls:'');el.innerHTML=html;L.appendChild(el);T.pins.push({el,p});};
+  if(T.cur==='em'){const O=T.O.em;add('Baterai',V3(-4.6,1.5,1.2));add('Saklar',V3(-2.6,1.3,2.6));add('Lilitan + inti',V3(O.pT.x+0.5,1.7,0));add('Klip kertas',V3(4.4,0.9,-0.9));add('Kompas',V3(-2.9,1.0,-0.2));}
+  else if(T.cur==='horn'){add('Aki 12 V',V3(-4.8,2.4,1.4));add(S.horn.mode==='klakson'?'Tombol klakson':'Tombol bel',V3(-2.4,1.4,2.6));
+    if(S.horn.mode==='klakson'){const A=T.O.horn.AX,w=(r,y)=>A.localToWorld(V3(r,y,0));add('Kumparan',w(-0.85,-0.6));add('Inti',w(-0.15,-0.7));add('Jangkar',w(-0.42,0.0));add('Membran',w(-1.9,0.18));add('Piringan nada',w(-1.5,0.55));add('Kontak (platina)',w(1.45,-0.5));add('Sekrup setel',w(0,-1.35));}
+    else{const b=T.O.horn.bl,w=v=>b.localToWorld(v);add('Elektromagnet U',w(V3(-0.7,2.75,0)));add('Jangkar besi lunak',w(V3(0.45,2.9,0)));add('Pegas daun',w(V3(0.6,0.9,0)));add('Sekrup kontak',w(V3(1.05,2.25,0)));add('Palu',w(V3(0.32,4.65,0.1)));add('Gong',w(V3(-0.86,5.35,0)));add('T1',w(V3(1.3,0.7,0)));add('T2',w(V3(-0.9,0.7,0)));}}
+  else if(T.cur==='relay'){T.O.relay.pins.forEach(([x,l])=>add(l,V3(x,-0.1,0.65)));add('Kumparan + inti',V3(-0.5,1.5,0.6));add('Yoke (L)',V3(-1.1,2.0,0.3));add('Jangkar',V3(-0.6,2.75,0.2));add('Pegas pelepas',V3(-1.32,1.6,0.1));add('NC',V3(1.0,2.75,0.1));add('NO',V3(1.0,1.75,0.1));add('Kontak gerak',V3(1.0,2.35,0.4));add('Tombol',V3(-3.4,1.2,2.4));add('Lampu di NO',V3(3.6,2.0,-1.6));add('Lampu di NC',V3(5.6,2.0,-1.6));add('Rangkaian kendali 12 VDC',V3(-4.8,2.0,1.0));add('Rangkaian beban 220 VAC',V3(5.6,1.8,2.4));}
+  else {const O=T.O.kont;Object.keys(O.terms).forEach(n=>{const p=O.terms[n].getWorldPosition(V3(0,0,0));add(n,p.add(V3(0,n.match(/^(1|3|5)\/|^13|^A1/)?0.35:-0.0,0)),S.kont.sel===n?'big':'');});add('Motor 3 fasa',V3(6.0,2.7,1.4));add('Tombol koil',V3(-6.0,1.3,2.2));add('Kontaktor (tampak luar)',T.O.kont.ex.localToWorld(V3(0,4.15,1.3)));if(S.kont.cut){const sc=T.O.kont.sc,w=(x,y)=>sc.localToWorld(V3(x,y,0.3));const m=T.O.kont.mv.position.y;add('Koil',w(-0.6,1.75));add('Inti tetap',w(0,0.82));add('Cincin bayangan',w(1.1,2.12));add('Jangkar',w(0,2.72+m));add('Pegas pembalik',w(1.55,1.15));add('Pembawa kontak',w(0,3.35+m));add('Jembatan kontak',w(0,4.15+T.O.kont.br.position.y));add('Pegas kontak',w(0,4.95+m));add('Kontak tetap',w(-1.55,3.6));add('1/L1',w(-2.1,4.25));add('2/T1',w(2.1,4.25));add('A1',w(-2.1,0.95));add('A2',w(2.1,0.95));}}
+}
+function bind(){
+  const cv=T.canvas,pts=new Map();let pinch=null,start=null,moved=false;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===1){start={x:e.clientX,y:e.clientY};moved=false;}if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:T.cam.zoom};moved=true;}});
+  cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const pr=pts.get(e.pointerId),cu={x:e.clientX,y:e.clientY};pts.set(e.pointerId,cu);
+    if(pts.size===1&&!PAN.drag){T.cam.yaw=Math.max(-1.3,Math.min(1.3,T.cam.yaw-(cu.x-pr.x)*0.006));T.cam.pitch=Math.max(0.05,Math.min(1.4,T.cam.pitch+(cu.y-pr.y)*0.005));if(Math.hypot(cu.x-start.x,cu.y-start.y)>6)moved=true;}
+    else if(pts.size===2&&pinch){const [a,b]=[...pts.values()];T.cam.zoom=Math.min(1.8,Math.max(0.35,pinch.z*pinch.d/Math.hypot(a.x-b.x,a.y-b.y)));}});
+  const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+  const up=e=>{if(pts.size===1&&!moved&&!PAN.did&&e.type==='pointerup'){const r=cv.getBoundingClientRect();ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,T.camera);
+      const vis=T.taps.filter(t=>{let o=t;while(o.parent&&o.parent!==T.scene)o=o.parent;return o.visible;});
+      const h=ray.intersectObjects(vis,false)[0]; if(h){const u=h.object.userData;
+        if(u.tap==='relay'){S.relay.on=!S.relay.on;render();} else if(u.tap==='kont'){S.kont.on=!S.kont.on;render();} else if(u.tap==='horn'){S.horn.lock=!S.horn.lock;render();}
+        else if(u.term){pickTerm(u.term);}}}
+    pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{e.preventDefault();T.cam.zoom=Math.min(1.8,Math.max(0.35,T.cam.zoom*Math.exp(e.deltaY*0.0012)));},{passive:false});
+  $('#bReset').addEventListener('click',()=>{if(PAN.v)PAN.v.set(0,0,0);T.cam.zoom=1;showScene();});
+}
+function resize(){if(!T)return;const w=T.viewer.clientWidth,h=T.viewer.clientHeight;T.renderer.setSize(w,h,false);T.camera.aspect=w/h;T.camera.updateProjectionMatrix();}
+const mtx=new THREE.Matrix4(),tmp=V3(0,0,0);
+function flow(paths,dt,speed,k,dir){paths.forEach(p=>{p.u=((p.u+dt*speed*(dir||1)/Math.max(0.5,p.len)*1.6)%1+1)%1;for(let j=0;j<p.n&&k.v<500;j++){const u=((p.u+j/p.n)%1)*p.len;let s2=1;while(s2<p.cum.length-1&&p.cum[s2]<u)s2++;const fr=(u-p.cum[s2-1])/Math.max(1e-6,p.cum[s2]-p.cum[s2-1]);tmp.copy(p.pts[s2-1]).lerp(p.pts[s2],Math.min(1,fr));mtx.makeTranslation(tmp.x,tmp.y,tmp.z);T.dots.setMatrixAt(k.v++,mtx);}});}
+let last=performance.now(),waveT=0;
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000);last=t;
+  const c=T.cam,tt=Math.tan(THREE.MathUtils.degToRad(T.camera.fov/2)),a=T.camera.aspect;
+  const half={em:[6.2,3.4],horn:[5.4,3.6],relay:[6.8,3.4],kont:[7.6,3.8]}[T.cur];
+  const gd=Math.max(half[0]/(tt*a),half[1]/tt)*c.zoom;c.d+=(gd-c.d)*(1-Math.exp(-dt*5));
+  const tg=PAN.v?c.t.clone().add(PAN.v):c.t; T.camera.position.set(tg.x+c.d*Math.cos(c.pitch)*Math.sin(c.yaw),tg.y+c.d*Math.sin(c.pitch),tg.z+c.d*Math.cos(c.pitch)*Math.cos(c.yaw));T.camera.lookAt(tg);
+  const k={v:0}; if(T.cur!=='horn')T.spark.material.opacity=0;
+  if(T.cur==='em'){const O=T.O.em,r=emSolve(),e=S.em;
+    O.lever.rotation.z=e.on?-0.5:0.5;O.coilM.emissiveIntensity=e.on?Math.min(0.6,r.I/12):0;
+    if(e.on)flow(O.paths,dt,0.4+r.I*0.15,k,e.dir);
+    O.clips.forEach((cl,i)=>{const att=i<r.clips;const tip=O.pT.clone().add(V3(3.4,-0.2-i*0.28,(i%2?0.06:-0.06)));const tgt=att?tip:cl.rest;cl.cur.lerp(tgt,1-Math.exp(-dt*(att?9:5)));cl.m.position.copy(cl.cur);cl.m.rotation.x=att?0:Math.PI/2;cl.m.rotation.z=att?Math.PI/2:0;});
+    const ang=e.on&&r.F>1?(e.dir>0?0:Math.PI)*1+0:-Math.PI/2;const tgtA=e.on&&r.F>1?(e.dir>0?Math.PI:0):-Math.PI/2;O.needle.rotation.y+=((tgtA)-O.needle.rotation.y)*Math.min(1,dt*4);
+    O.fm.opacity=e.field&&e.on?Math.min(0.7,r.F/120):0;}
+  else if(T.cur==='horn'){const O=T.O.horn,h=S.horn,pressed=h.press||h.lock;
+    const f=h.slow>1?400/h.slow:400;
+    if(pressed){h.ph=(h.ph+dt*f)%1;}else{h.ph=0;}
+    const x=pressed?(1-Math.cos(h.ph*2*Math.PI))/2:0;const coil=pressed&&h.ph<0.5;
+    if(h.coil&&!coil&&pressed){h.sparkT=0.18;}h.coil=coil;h.x=x;h.step=!pressed?0:(h.ph<0.25?1:h.ph<0.5?2:h.ph<0.75?3:4);
+    const realtime=h.slow<=1;const xs=realtime&&pressed?0.5+0.5*Math.sin(t*2):x;
+    if(h.mode==='klakson'){O.mov.position.y=-xs*0.14;O.leaf.rotation.z=-Math.max(0,xs-0.35)*0.42;O.coilM.emissiveIntensity=(realtime?pressed:coil)?0.45:0;}
+    else{O.barm.rotation.z=xs*0.07;O.bcoilM.emissiveIntensity=(realtime?pressed:coil)?0.45:0;}
+    O.wK.grp.visible=h.mode==='klakson';O.wB.grp.visible=h.mode!=='klakson';
+    if((realtime&&pressed)||coil){flow(h.mode==='klakson'?O.wK.paths:O.wB.paths,dt,realtime?2.0:1.2,k);if(h.mode!=='klakson')flow(O.pInB,dt,realtime?2.0:1.0,k);}
+    h.sparkT-=dt;const sp=h.mode==='klakson'?O.bead.getWorldPosition(V3(0,0,0)):O.bl.localToWorld(O.bContactLocal.clone());T.spark.position.copy(sp);T.spark.material.opacity=(h.sparkT>0||(realtime&&pressed&&Math.random()<0.4))?0.9:0;T.spark.scale.setScalar(0.5+Math.random()*0.4);
+    O.btnCap.position.y=pressed?0.5:0.58;
+    setSound(pressed&&realtime);
+    waveT-=dt;if(waveT<=0){waveT=0.05;drawWave();const li=document.querySelectorAll('#hSteps li');li.forEach((el,i)=>el.classList.toggle('on',!realtime&&pressed&&i===h.step-1));}}
+  else if(T.cur==='relay'){const O=T.O.relay,on=S.relay.on||S.relay.press;
+    O.arm.rotation.z+=((on?-0.055:0.075)-O.arm.rotation.z)*Math.min(1,dt*14);O.coilM.emissiveIntensity=on?0.45:0;O.btn.position.y=on?0.46:0.52;
+    O.lNO.set(on?1:0);O.lNC.set(on?0:1);
+    if(on)flow(O.pCoil,dt,0.5,k);flow(O.pCom,dt,1.0,k);flow(on?O.pNO:O.pNC,dt,1.0,k);}
+  else {const O=T.O.kont,on=S.kont.on;
+    const f=Math.min(1,dt*12);O.mv.position.y+=((on?-0.2:0)-O.mv.position.y)*f;O.br.position.y=Math.max(O.mv.position.y,-0.15);O.cs.position.y=4.22+O.br.position.y;O.cs.scale.y=(0.52+O.mv.position.y-O.br.position.y)/0.52;
+    O.rs.forEach(r=>r.scale.y=(1.9+O.mv.position.y)/1.9);O.coilM.emissiveIntensity=on?0.45:0;O.ind.position.z=on?1.76:1.88;O.btn.position.y=on?0.5:0.58;
+    if(on)O.shaft.rotation.x+=dt*18;
+    if(on){flow(O.pCoil,dt,0.5,k);flow(O.pPow,dt,1.2,k);flow(O.pSecCoil,dt,0.5,k);flow(O.pSec,dt,1.0,k);}
+    Object.entries(O.terms).forEach(([n,m])=>{m.material.emissiveIntensity=S.kont.sel===n?0.9+0.4*Math.sin(t/150):0;});}
+  T.dots.count=k.v;T.dots.instanceMatrix.needsUpdate=true;
+  T.renderer.render(T.scene,T.camera);
+  const W=T.viewer.clientWidth,Hh=T.viewer.clientHeight,v=V3(0,0,0);
+  T.pins.forEach(p=>{v.copy(p.p).project(T.camera);if(v.z>1){p.el.style.opacity=0;return;}p.el.style.opacity=1;p.el.style.transform=`translate(${(v.x+1)/2*W}px,${(1-v.y)/2*Hh}px) translate(-50%,-100%)`;});
+  requestAnimationFrame(loop);
+}
+
+/* ================= SUARA ================= */
+let actx=null,osc=null,gain=null,lfo=null,lfoG=null,curMode=null;
+function ensureAudio(){if(actx)return;try{actx=new (window.AudioContext||window.webkitAudioContext)();gain=actx.createGain();gain.gain.value=0;gain.connect(actx.destination);}catch(e){actx=null;}}
+function setSound(on){
+  if(!actx)return; on=on&&S.horn.sound;
+  try{
+    if(on&&curMode!==S.horn.mode){if(osc){osc.stop();osc.disconnect();}if(lfo){lfo.stop();lfo.disconnect();}
+      osc=actx.createOscillator();
+      if(S.horn.mode==='klakson'){osc.type='square';osc.frequency.value=410;osc.connect(gain);lfo=null;}
+      else{osc.type='triangle';osc.frequency.value=2350;const g2=actx.createGain();g2.gain.value=0.5;osc.connect(g2);g2.connect(gain);lfo=actx.createOscillator();lfo.frequency.value=22;lfoG=actx.createGain();lfoG.gain.value=0.5;lfo.connect(lfoG);lfoG.connect(g2.gain);lfo.start();}
+      osc.start();curMode=S.horn.mode;}
+    gain.gain.setTargetAtTime(on?0.05:0,actx.currentTime,0.015);
+  }catch(e){}
+}
+document.addEventListener('pointerdown',ensureAudio,{once:true});
+
+/* ================= UI ================= */
+const TABS=[['pre','Tes Awal'],['em','Elektro­magnet'],['horn','Klakson'],['relay','Relay'],['kont','Kontaktor'],['post','Tes Akhir']];
+function toast(sev,t,m){const box=$('#toast');const d=document.createElement('div');d.className='tst '+(sev||'');d.innerHTML=`<b>${t}</b>${m||''}`;box.appendChild(d);while(box.children.length>2)box.removeChild(box.firstChild);setTimeout(()=>d.remove(),5200);}
+function renderTabs(){const done={pre:S.test.pre.done,em:S.visited.em,horn:S.visited.horn,relay:S.visited.relay,kont:S.visited.kont,post:S.test.post.done};
+  $('#tabs').innerHTML=TABS.map(([k,t],i)=>`<button data-t="${k}" class="${S.tab===k?'active':''} ${done[k]?'done':''}"><span class="n">${i+1}</span>${t}</button>`).join('');}
+function setTab(t){S.tab=t;if(['em','horn','relay','kont'].includes(t)){S.visited[t]=true;save();}if(T)showScene();renderTabs();render();window.scrollTo({top:0,behavior:'smooth'});}
+/* ---- tes ---- */
+function grade(kind){const st=S.test[kind];return QUEST.map((q,i)=>{const a=st.ans[i];if(a==null)return {right:false,sure:false,cat:'bt',misc:null};const opt=q.o[a];const right=opt[1]===1;const sure=st.conf[i]==='y';return {right,sure,cat:right?(sure?'ok':'rg'):(sure?'sp':'bt'),misc:right?null:opt[1]};});}
+function miscSummary(kind){const m={};grade(kind).forEach(x=>{if(x.misc){m[x.misc]=m[x.misc]||{n:0,sure:0};m[x.misc].n++;if(x.sure)m[x.misc].sure++;}});return m;}
+function testHTML(kind){
+  const st=S.test[kind],isPost=kind==='post';
+  if(!isPost&&!S.started&&!st.done&&st.ans.length===0)
+    return `<div class="card"><h2>Tes awal: elektromagnet</h2><div class="goal">10 soal singkat tentang elektromagnet, klakson, relay, dan kontaktor. Tidak dinilai untuk rapor — hasilnya menunjukkan bagian yang perlu dipelajari.</div>
+      <p class="muted">Setiap soal: pilih jawaban, lalu pilih <b>Yakin</b> atau <b>Menebak</b>. Jawab jujur.</p>
+      <div class="field"><label class="lbl2" for="fNama" style="margin:6px 0 0">Nama murid</label><input id="fNama" value="${esc(S.name)}" placeholder="Nama lengkap"></div>
+      <div class="field"><label class="lbl2" for="fKelas" style="margin:6px 0 0">Kelas</label><input id="fKelas" value="${esc(S.kelas)}" placeholder="mis. X TOI 1"></div>
+      <div class="row"><button class="btn primary" id="bStart">Mulai tes</button></div></div>`;
+  if(st.done) return resultHTML(kind);
+  const order=isPost?(st.order||(st.order=shuffle([...Array(QUEST.length).keys()]))):[...Array(QUEST.length).keys()];
+  const qi=order[st.i],q=QUEST[qi];if(!st.optOrder)st.optOrder={};
+  const oo=isPost?(st.optOrder[qi]||(st.optOrder[qi]=shuffle([0,1,2,3]))):[0,1,2,3];const a=st.ans[qi],cf=st.conf[qi];
+  return `<div class="card"><h2>${isPost?'Tes akhir':'Tes awal'} · soal ${st.i+1} dari ${QUEST.length}</h2>
+    <div class="qnav">${order.map((x,k)=>`<span class="${k===st.i?'cur':(st.ans[x]!=null?'ans':'')}">${k+1}</span>`).join('')}</div>
+    <div class="qtext">${q.q}</div>
+    <div class="opts" id="qOpts">${oo.map((oi,k)=>`<button class="opt ${a===oi?'on':''}" data-o="${oi}"><span class="k">${'ABCD'[k]}</span><span>${q.o[oi][0]}</span></button>`).join('')}</div>
+    <span class="lbl2">Seberapa yakin kamu?</span>
+    <div class="conf" id="qConf"><button data-c="y" class="${cf==='y'?'on':''}">Yakin</button><button data-c="n" class="${cf==='n'?'on':''}">Menebak / ragu</button></div>
+    <div class="row"><button class="btn" id="bPrev" ${st.i===0?'disabled':''}>← Sebelumnya</button><button class="btn primary" id="bNextQ" ${a==null||!cf?'disabled':''}>${st.i===QUEST.length-1?'Selesai':'Berikutnya →'}</button></div></div>`;
+}
+function resultHTML(kind){
+  const g=grade(kind),score=g.filter(x=>x.right).length,cats={ok:0,rg:0,bt:0,sp:0};g.forEach(x=>cats[x.cat]++);
+  const ms=miscSummary(kind),isPost=kind==='post',keys=Object.keys(ms);
+  let h=`<div class="card"><h2>Hasil ${isPost?'tes akhir':'tes awal'}${S.name?' · '+esc(S.name):''}</h2>
+    <div class="kv"><div><dt>Skor</dt><dd>${score} / ${QUEST.length}</dd></div><div><dt>Paham</dt><dd>${cats.ok}</dd></div><div><dt>Benar tapi ragu</dt><dd>${cats.rg}</dd></div><div><dt>Belum tahu</dt><dd>${cats.bt}</dd></div><div><dt>Salah paham</dt><dd class="${cats.sp?'bad':''}">${cats.sp}</dd></div></div>
+    <p class="muted"><b>Salah paham</b> = salah tapi yakin — paling perlu diluruskan. <b>Belum tahu</b> = salah sambil menebak.</p>`;
+  if(keys.length) h+=`<h3>Yang perlu diluruskan</h3><ul class="prof">${keys.map(k=>`<li><span>${MISC[k].t}<br><button class="go" data-go="${MISC[k].go}">Pelajari di tab ${TABS.find(x=>x[0]===MISC[k].go)[1].replace('­','')} →</button></span><span class="tag ${ms[k].sure?'sp':'bt'}">${ms[k].sure?'salah paham':'belum tahu'}</span></li>`).join('')}</ul>`;
+  else h+=`<div class="fb ok">Tidak ditemukan salah paham. Mantap!</div>`;
+  h+=`<h3>Rincian per soal</h3><ul class="prof">${QUEST.map((q,i)=>{const x=g[i];return `<li><span style="font-size:13px">${i+1}. ${q.q}${!x.right?`<br><span style="color:var(--ok);font-size:12.5px">Jawaban benar: ${q.o.find(o=>o[1]===1)[0]}</span>`:''}</span><span class="tag ${x.cat}">${PROFILE[x.cat]}</span></li>`;}).join('')}</ul>`;
+  if(!isPost) h+=`<div class="row"><button class="btn primary" data-go="${keys.length?MISC[keys[0]].go:'em'}">Mulai belajar →</button><button class="btn" id="bRedo">Ulangi tes awal</button></div>`;
+  h+='</div>';
+  if(isPost&&S.test.pre.done) h+=compareHTML();
+  if(isPost) h+=`<div class="row" style="margin:-4px 0 12px"><button class="btn" id="bRedoPost">Ulangi tes akhir</button></div>`;
+  return h;
+}
+function compareHTML(){
+  const gp=grade('pre'),gq=grade('post'),sp=gp.filter(x=>x.right).length,sq=gq.filter(x=>x.right).length;
+  const mp=miscSummary('pre'),mq=miscSummary('post'),fixed=Object.keys(mp).filter(k=>!mq[k]),still=Object.keys(mq);
+  const cp=c=>gp.filter(x=>x.cat===c).length,cq=c=>gq.filter(x=>x.cat===c).length,sc=S.kont.score;
+  const txt=`REKAP ELEKTROMAGNET: KLAKSON → KONTAKTOR\nNama  : ${S.name||'-'}\nKelas : ${S.kelas||'-'}\nTes awal : ${sp}/10 (paham ${cp('ok')}, ragu ${cp('rg')}, belum tahu ${cp('bt')}, salah paham ${cp('sp')})\nTes akhir: ${sq}/10 (paham ${cq('ok')}, ragu ${cq('rg')}, belum tahu ${cq('bt')}, salah paham ${cq('sp')})\nSalah paham yang sudah lurus: ${fixed.length?fixed.map(k=>MISC[k].t).join('; '):'-'}\nMasih perlu bimbingan: ${still.length?still.map(k=>MISC[k].t).join('; '):'-'}\nTantangan terminal kontaktor: ${sc.ok}/${sc.tot} benar`;
+  return `<div class="card"><h2>Perbandingan tes awal → tes akhir</h2>
+    <div class="bars"><span style="font-weight:600">Skor</span><i><b style="width:${sp*10}%"></b></i><span style="font-family:var(--f-mono)">${sp}</span><span></span><i><b class="post" style="width:${sq*10}%"></b></i><span style="font-family:var(--f-mono)">${sq}</span>
+    <span>Salah paham</span><i><b style="width:${cp('sp')*10}%"></b></i><span style="font-family:var(--f-mono)">${cp('sp')}</span><span></span><i><b class="post" style="width:${cq('sp')*10}%"></b></i><span style="font-family:var(--f-mono)">${cq('sp')}</span></div>
+    <p class="muted">Batang biru = tes awal, hijau = tes akhir.</p>
+    ${fixed.length?`<div class="fb ok"><b>Sudah diluruskan:</b><br>${fixed.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    ${still.length?`<div class="fb warn"><b>Masih perlu dibahas dengan guru:</b><br>${still.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    <h3>Rekap untuk guru</h3><p class="muted">Salin lalu kirim ke Google Classroom atau grup kelas.</p>
+    <textarea class="rekap" id="rekap" readonly>${esc(txt)}</textarea>
+    <div class="row"><button class="btn primary" id="bCopy">Salin rekap</button></div></div>`;
+}
+/* ---- tab materi ---- */
+function emHTML(){
+  const e=S.em,r=emSolve();
+  let note;
+  if(!e.on) note=`<div class="fb">Saklar <b>OFF</b>: tidak ada arus, paku <b>bukan magnet</b> — klip jatuh. Inilah beda elektromagnet dengan magnet permanen: magnetnya bisa dinyalakan dan dimatikan.</div>`;
+  else if(e.core!=='besi') note=`<div class="fb warn">Inti <b>${e.core}</b> hampir tidak memperkuat medan magnet. Hanya bahan seperti <b>besi</b> yang mengumpulkan garis gaya magnet, sehingga elektromagnet jauh lebih kuat. Inti relay dan kontaktor selalu dari besi lunak.</div>`;
+  else note=`<div class="fb ok">Arus ${nf(r.I,2)} A × ${e.N} lilitan = <b>${nf(r.NI,0)} ampere-lilitan</b> → menarik <b>${r.clips} klip</b>. Tambah lilitan atau tegangan → makin kuat. Balik arah arus → kutub U dan S bertukar (lihat jarum kompas).</div>`;
+  return `<div class="card"><h2>Membuat elektromagnet</h2><div class="goal">Paku besi dililit kawat tembaga lalu dialiri arus dari baterai. Atur jumlah lilitan, tegangan, dan bahan inti, lalu lihat berapa klip yang tertarik.</div>
+    <button class="hold" id="eOn" style="background:${e.on?'#20262c':'#1f9a4b'}">${e.on?'SAKLAR ON — tekan untuk OFF':'SAKLAR OFF — tekan untuk ON'}</button>
+    <span class="lbl2">Tegangan baterai</span><div class="seg" id="eV">${[[1.5,'1 baterai · 1,5 V'],[3,'2 baterai · 3 V'],[4.5,'3 baterai · 4,5 V']].map(([v,t])=>`<button data-v="${v}" class="${e.V===v?'on':''}">${t}</button>`).join('')}</div>
+    <span class="lbl2">Jumlah lilitan</span><div class="seg" id="eN">${[10,20,40,80].map(v=>`<button data-v="${v}" class="${e.N===v?'on':''}">${v}</button>`).join('')}</div>
+    <span class="lbl2">Bahan inti</span><div class="seg" id="eC">${[['besi','Paku besi'],['kayu','Batang kayu'],['udara','Tanpa inti']].map(([v,t])=>`<button data-v="${v}" class="${e.core===v?'on':''}">${t}</button>`).join('')}</div>
+    <span class="lbl2">Arah arus</span><div class="seg" id="eD"><button data-v="1" class="${e.dir>0?'on':''}">Normal</button><button data-v="-1" class="${e.dir<0?'on':''}">Dibalik</button></div>
+    <div class="kv"><div><dt>Arus</dt><dd>${nf(r.I,2)} A</dd></div><div><dt>Lilitan × arus</dt><dd>${nf(r.NI,0)} A·lilitan</dd></div><div><dt>Klip tertarik</dt><dd>${r.clips} / 8</dd></div></div>
+    ${note}
+    <div class="row"><button class="btn" id="eF">${e.field?'Sembunyikan':'Tampilkan'} garis medan</button></div>
+    <p class="muted">⚠️ Saat praktik nyata: jangan hidupkan terlalu lama — kawat dan baterai cepat panas karena arusnya besar.</p></div>
+    <div class="card"><h2>Elektromagnet vs magnet permanen</h2><div class="map"><b>Magnet permanen</b><span>selalu bermagnet, kekuatan tetap, kutub tetap (magnet kulkas, speaker)</span><b>Elektromagnet</b><span>bermagnet hanya saat dialiri arus; kekuatan bisa diatur (lilitan, arus, inti besi); kutub bisa dibalik dengan membalik arus</span><b>Dipakai di</b><span>klakson, bel, relay, kontaktor, solenoid valve pneumatik, kunci pintu elektrik, crane magnet di tempat besi tua</span></div></div>`;
+}
+function hornHTML(){
+  const h=S.horn,isK=h.mode==='klakson';
+  const st=isK?['Tombol ditekan → arus mengalir lewat kontak platina (normally closed) ke kumparan.','Kumparan + inti menjadi magnet → menarik <b>jangkar</b>. Jangkar terikat di tengah <b>membran</b> dan <b>piringan nada</b>, jadi keduanya ikut tertarik.','Pendorong berisolasi pada jangkar menekan lengan pegas → <b>kontak terbuka</b> → arus putus, magnet hilang.','Membran yang lentur memantul kembali → kontak menutup lagi → berulang ±400 kali/detik. Piringan nada memperkeras bunyi “teeet”.']
+    :['Tombol ditekan → arus mengalir: T1 → <b>sekrup kontak</b> → pegas daun → jangkar → kumparan elektromagnet U → T2.','Elektromagnet U menarik <b>jangkar besi lunak</b> → <b>palu memukul gong</b>.','Jangkar menjauh dari ujung sekrup kontak → <b>rangkaian terputus</b> → magnet hilang.','<b>Pegas daun</b> mengembalikan jangkar → menyentuh sekrup lagi → berulang ±20 kali/detik = “kriiing”.'];
+  return `<div class="card"><h2>${isK?'Klakson motor':'Bel sekolah'}: elektromagnet yang memutus dirinya sendiri</h2>
+    <div class="goal">Tekan dan tahan tombol. Perlambat waktu untuk melihat urutan kerjanya satu per satu.</div>
+    <span class="lbl2">Alat</span><div class="seg" id="hMode"><button data-v="klakson" class="${isK?'on':''}">Klakson motor</button><button data-v="bel" class="${!isK?'on':''}">Bel sekolah</button></div>
+    <span class="lbl2">Kecepatan</span><div class="seg" id="hSlow">${[[1,'Asli'],[100,'100× lambat'],[400,'400× lambat']].map(([v,t])=>`<button data-v="${v}" class="${h.slow===v?'on':''}">${t}</button>`).join('')}</div>
+    <button class="hold" id="hBtn">TAHAN TOMBOL ${isK?'KLAKSON':'BEL'}<small>${h.slow<=1&&h.sound?'suara aktif':'tahan untuk menjalankan'}</small></button>
+    <div class="row"><button class="btn" id="hLock">${h.lock?'🔒 Tombol terkunci — lepas':'Kunci tombol (tidak perlu ditahan)'}</button><button class="btn" id="hSnd">${h.sound?'🔊 Suara':'🔇 Bisu'}</button></div>
+    <canvas id="wave" width="800" height="272"></canvas>
+    <ol class="steps4" id="hSteps">${st.map((s,i)=>`<li><b>${i+1}</b><span>${s}</span></li>`).join('')}</ol>
+    <div class="fb warn"><b>Percikan api di kontak.</b> Setiap kali kontak terbuka, arus diputus mendadak sehingga muncul percikan kecil. Lama-lama kontak platina aus dan klakson suaranya serak atau mati — dulu “setel platina” adalah servis klakson yang umum.</div></div>
+    <div class="card"><h2>Klakson keras pakai relay</h2><p class="muted">Klakson besar (klakson keong/“telolet”) menarik arus besar. Agar tombol di stang tidak terbakar, tombol hanya menggerakkan <b>relay</b>, dan kontak relay yang menyalurkan arus besar ke klakson. Lanjut ke tab <b>Relay</b>.</p><div class="row"><button class="btn primary" data-go="relay">Ke Relay →</button></div></div>`;
+}
+function drawWave(){
+  const cv=$('#wave');if(!cv)return;const g=cv.getContext('2d'),W=cv.width,H=cv.height,h=S.horn,pressed=h.press||h.lock;
+  g.fillStyle='#06110d';g.fillRect(0,0,W,H);g.strokeStyle='rgba(120,180,150,.18)';for(let i=1;i<10;i++){g.beginPath();g.moveTo(i*W/10,0);g.lineTo(i*W/10,H);g.stroke();}
+  const n=3,y1=H*0.42,y2=H*0.92;
+  g.lineWidth=3;g.strokeStyle='#f5d000';g.beginPath();for(let i=0;i<=300;i++){const p=(i/300)*n;const on=pressed&&(p%1)<0.5;const y=y1-(on?H*0.3:0);if(i===0)g.moveTo(0,y);else g.lineTo(i/300*W,y);}g.stroke();
+  g.strokeStyle='#3fd0ff';g.beginPath();for(let i=0;i<=300;i++){const p=(i/300)*n;const x=pressed?(1-Math.cos(p*2*Math.PI))/2:0;const y=y2-x*H*0.36;if(i===0)g.moveTo(0,y);else g.lineTo(i/300*W,y);}g.stroke();
+  if(pressed&&h.slow>1){const x=(h.ph/n)*W;for(let k=0;k<n;k++){const xx=x+k*W/n;g.strokeStyle='rgba(255,255,255,.4)';g.setLineDash([6,6]);g.beginPath();g.moveTo(xx,0);g.lineTo(xx,H);g.stroke();g.setLineDash([]);}}
+  g.font='600 20px "IBM Plex Mono",monospace';g.fillStyle='#f5d000';g.fillText('arus kumparan',10,24);g.fillStyle='#3fd0ff';g.fillText(h.mode==='klakson'?'posisi membran':'posisi palu',10,H*0.56);
+  g.fillStyle='#9fb8aa';g.textAlign='right';g.fillText(h.slow>1?`${h.slow}× lambat`:(h.mode==='klakson'?'±400 kali/detik':'±20 kali/detik'),W-10,24);g.textAlign='left';
+}
+function relayHTML(){
+  const on=S.relay.on;
+  return `<div class="card"><h2>Relay: saklar yang digerakkan elektromagnet</h2><div class="goal">Tombol kecil di rangkaian 12 VDC mengendalikan lampu 220 VAC. Perhatikan: dua rangkaian itu <b>terpisah</b>, hanya “dihubungkan” oleh gaya magnet.</div>
+    <button class="hold" id="rBtn" style="background:${on?'#20262c':'#1f9a4b'}">${on?'KUMPARAN ON — tekan untuk OFF':'KUMPARAN OFF — tekan untuk ON'}</button>
+    <div class="kv"><div><dt>Arus kumparan</dt><dd>${on?'33 mA':'0 mA'}</dd></div><div><dt>Arus lampu</dt><dd>0,45 A</dd></div><div><dt>Lampu di NO</dt><dd>${on?'NYALA':'mati'}</dd></div><div><dt>Lampu di NC</dt><dd>${on?'mati':'NYALA'}</dd></div></div>
+    <div class="fb ${on?'ok':''}">${on?'Kumparan bermagnet → inti menarik <b>jangkar</b> turun (pegas pelepas teregang) → kontak gerak COM pindah dari NC ke <b>NO</b>. Lampu hijau menyala, lampu merah padam.':'Kumparan tidak dialiri arus → <b>pegas pelepas</b> menarik ekor jangkar sehingga ujungnya terangkat → kontak gerak COM menempel ke <b>NC</b>. Lampu merah menyala, lampu hijau padam.'}</div>
+    <table class="tb2"><tr><th>Terminal</th><th>Fungsi</th></tr>
+      <tr><td>A1 – A2</td><td>Kumparan (koil). Di relay mobil/motor: 85 – 86.</td></tr>
+      <tr><td>COM</td><td>Kontak bersama (yang berpindah). Relay mobil: 30.</td></tr>
+      <tr><td>NO</td><td>Normally Open — terbuka saat relay mati, tertutup saat relay aktif. Relay mobil: 87.</td></tr>
+      <tr><td>NC</td><td>Normally Closed — tertutup saat relay mati, terbuka saat relay aktif. Relay mobil: 87a.</td></tr></table>
+    <p class="muted"><b>Bagian relay:</b> kumparan dengan inti besi, <b>yoke</b> berbentuk L, <b>jangkar</b> berengsel di ujung yoke, <b>pegas pelepas</b> yang menahan jangkar, <b>kontak gerak (COM)</b> di ujung jangkar, dan dua kontak tetap: NC (atas) dan NO (bawah).</p><p class="muted">Arus 33 mA di kumparan mengendalikan arus 0,45 A di lampu — <b>arus kecil mengendalikan arus besar</b>, dan tegangan 220 V tidak pernah masuk ke rangkaian tombol. Inilah alasan keluaran PLC sering memakai relay.</p></div>`;
+}
+function kontHTML(){
+  const K=S.kont,on=K.on,sel=K.sel?TERMS[K.sel]:null,ch=K.ch;
+  return `<div class="card"><h2>Kontaktor: relay ukuran besar</h2><div class="goal">Prinsipnya sama dengan relay: koil A1–A2 dialiri arus → jangkar tertarik → kontak utama menyambung 3 fasa ke motor. Kiri: kontaktor utuh seperti di panel — ketuk terminalnya untuk melihat fungsi. Kanan: <b>penampang</b> (kontaktor dibelah) untuk melihat isinya.</div>
+    <button class="hold" id="kBtn" style="background:${on?'#20262c':'#1f9a4b'}">${on?'KOIL ON — tekan untuk OFF':'KOIL OFF — tekan untuk ON'}</button>
+    <div class="row"><button class="btn" id="kCut">${K.cut?'Sembunyikan nama bagian':'Tampilkan nama bagian'}</button></div>
+    <div class="fb ${on?'ok':''}">${on?'Koil A1–A2 bermagnet → inti tetap menarik <b>jangkar</b> turun (pegas pembalik tertekan) → pembawa kontak ikut turun → <b>jembatan kontak</b> menekan kedua kontak tetap → <b>L1–T1, L2–T2, L3–T3 tersambung</b> → motor berputar. Kontak bantu 13–14 ikut menutup. Pada kontaktor utuh, penanda kuning masuk ke dalam.':'Koil tidak dialiri arus → <b>pegas pembalik</b> mendorong jangkar naik → jembatan kontak terangkat dari kontak tetap → semua kontak utama terbuka → motor diam. Pada kontaktor utuh, penanda kuning menonjol keluar.'}</div>
+    ${sel?`<div class="fb"><b>Terminal ${sel.n}</b><br>${sel.d}</div>`:''}
+    <table class="tb2"><tr><th>Terminal</th><th>Fungsi</th></tr>
+      <tr><td>A1 – A2</td><td>Koil (kumparan)</td></tr><tr><td>1/L1 · 3/L2 · 5/L3</td><td>Masukan kontak utama dari MCB (angka ganjil, di atas)</td></tr>
+      <tr><td>2/T1 · 4/T2 · 6/T3</td><td>Keluaran kontak utama ke motor (angka genap, di bawah)</td></tr><tr><td>13 – 14</td><td>Kontak bantu NO (angka akhir 3–4). 21–22 = NC (angka akhir 1–2)</td></tr></table></div>
+    <div class="card"><h2>Isi kontaktor</h2><div class="map"><b>Koil + inti tetap</b><span>inti berbentuk E dari pelat besi tipis; koil melingkari kaki tengahnya. Pada kontaktor asli letaknya di belakang, dekat rel DIN</span><b>Jangkar</b><span>inti gerak berbentuk E, menyatu dengan pembawa kontak dari plastik</span><b>Pegas pembalik</b><span>mendorong jangkar menjauh saat koil mati, jadi kontak utama normalnya terbuka</span><b>Jembatan kontak</b><span>menyambungkan dua kontak tetap sekaligus, jadi tiap fasa diputus di <b>dua titik</b> dan busur api lebih cepat padam. <b>Pegas kontak</b> menjaga tekanan kontak</span><b>Cincin bayangan</b><span>cincin tembaga di muka inti agar jangkar tidak bergetar/berdengung pada koil AC</span></div><p class="muted">Bedanya dengan relay: kontaknya lebih besar (untuk arus motor), ada 3 kontak utama untuk 3 fasa, dan jangkarnya bergerak lurus, bukan berengsel. Penampang ini hanya memperlihatkan satu kutub (L1–T1); kutub L2–T2 dan L3–T3 sama persis, berjajar di sampingnya.</p></div>
+    <div class="card"><h2>Tantangan: tunjuk terminalnya</h2><div class="stat"><div><b>${K.score.ok}</b><span>benar</span></div><div><b>${K.score.tot}</b><span>soal</span></div><div><b>${K.score.tot?Math.round(K.score.ok/K.score.tot*100):0}%</b><span>skor</span></div></div>
+    ${ch?`<div class="q" style="font-weight:600;font-size:15px">Ketuk terminal untuk: <span style="color:var(--accent)">${ch[0]}</span></div><p class="muted">Ketuk di model 3D atau pilih di bawah.</p>
+      <div class="tchips" id="kChips">${Object.keys(TERMS).map(n=>`<button data-n="${n}" class="${K.last&&K.last.n===n?(K.last.ok?'ok':'no'):''}">${n}</button>`).join('')}</div>`:''}
+    ${K.last?`<div class="fb ${K.last.ok?'ok':'bad'}">${K.last.ok?'Tepat!':'Belum tepat.'} ${TERMS[K.last.n].n}: ${TERMS[K.last.n].d}</div>`:''}
+    <div class="row"><button class="btn primary" id="kNext">${ch?'Soal berikutnya':'Mulai tantangan'}</button></div></div>
+    <div class="card"><h2>Lanjut ke panel</h2><p class="muted">Sekarang kamu tahu isi kontaktor. Coba rangkai panel pengasutan motor yang sesungguhnya.</p>
+    <div class="row"><a class="btn primary" href="https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_DOL/" target="_blank" rel="noopener" style="text-decoration:none">Simulasi Panel DOL →</a></div></div>`;
+}
+function pickTerm(n){
+  const K=S.kont;K.sel=n;
+  if(K.ch&&!K.answered){const ok=K.ch[1].includes(n);K.score.tot++;if(ok)K.score.ok++;K.last={n,ok};K.answered=true;}
+  render();if(T)setPins();
+}
+/* ---- render ---- */
+function render(){
+  let h='';
+  if(S.tab==='pre') h=testHTML('pre');
+  else if(S.tab==='post'){h=S.test.pre.done||S.test.post.done?testHTML('post'):`<div class="card"><h2>Tes akhir</h2><div class="fb warn">Kerjakan dulu tes awal supaya hasilnya bisa dibandingkan.</div><div class="row"><button class="btn primary" data-go="pre">Ke tes awal</button></div></div>`;
+    if(S.test.pre.done&&!S.test.post.done&&S.test.post.ans.length===0&&!S.postStarted) h=`<div class="card"><h2>Tes akhir</h2><div class="goal">Soal yang sama dengan tes awal, urutannya diacak. Bandingkan hasilnya.</div><p class="muted">Sudah menjelajah: ${['em','horn','relay','kont'].filter(k=>S.visited[k]).length}/4 tab materi.</p><div class="row"><button class="btn primary" id="bStartPost">Mulai tes akhir</button></div></div>`;}
+  else if(S.tab==='em') h=emHTML(); else if(S.tab==='horn') h=hornHTML(); else if(S.tab==='relay') h=relayHTML(); else h=kontHTML();
+  $('#pane').innerHTML=h;updateChip();
+}
+function updateChip(){
+  const c=$('#vchip');
+  if(S.tab==='em'){const r=emSolve();c.innerHTML=`<span>Arus <b>${nf(r.I,2)} A</b></span><span>Klip <b>${r.clips}</b></span>`;}
+  else if(S.tab==='horn') c.innerHTML=`<span>${S.horn.mode==='klakson'?'Klakson':'Bel'} · <b>${S.horn.slow>1?S.horn.slow+'× lambat':'asli'}</b></span>`;
+  else if(S.tab==='relay') c.innerHTML=`<span>Relay <b>${S.relay.on?'ON':'OFF'}</b></span>`;
+  else if(S.tab==='kont') c.innerHTML=`<span>Kontaktor <b>${S.kont.on?'ON':'OFF'}</b></span><span>Motor <b>${S.kont.on?'berputar':'diam'}</b></span>`;
+  else c.innerHTML='';
+}
+
+/* ---------- event ---------- */
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.t);});
+$('#pane').addEventListener('input',e=>{if(e.target.id==='fNama'){S.name=e.target.value;save();}if(e.target.id==='fKelas'){S.kelas=e.target.value;save();}});
+$('#pane').addEventListener('pointerdown',e=>{const b=e.target.closest('#hBtn');if(!b)return;e.preventDefault();ensureAudio();S.horn.press=true;b.classList.add('down');try{b.setPointerCapture(e.pointerId);}catch(x){}});
+const relH=()=>{if(!S.horn.press)return;S.horn.press=false;const b=$('#hBtn');if(b)b.classList.remove('down');};
+$('#pane').addEventListener('pointerup',relH);$('#pane').addEventListener('pointercancel',relH);
+$('#pane').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const p=b.parentElement&&b.parentElement.id;
+  if(b.dataset.go){setTab(b.dataset.go);return;}
+  if(b.id==='bStart'){S.started=true;S.test.pre={ans:[],conf:[],i:0,done:false};render();return;}
+  if(b.id==='bStartPost'){S.postStarted=true;S.test.post={ans:[],conf:[],i:0,done:false,order:null};render();return;}
+  const kind=S.tab==='post'?'post':'pre',st=S.test[kind],order=kind==='post'&&st.order?st.order:[...Array(QUEST.length).keys()];
+  if(b.closest('#qOpts')){st.ans[order[st.i]]=+b.dataset.o;save();render();return;}
+  if(p==='qConf'){st.conf[order[st.i]]=b.dataset.c;save();render();return;}
+  if(b.id==='bPrev'){st.i=Math.max(0,st.i-1);render();return;}
+  if(b.id==='bNextQ'){if(st.i<QUEST.length-1)st.i++;else{st.done=true;toast('ok','Tes selesai','');renderTabs();}save();render();return;}
+  if(b.id==='bRedo'){S.test.pre={ans:[],conf:[],i:0,done:false};S.started=true;save();renderTabs();render();return;}
+  if(b.id==='bRedoPost'){S.test.post={ans:[],conf:[],i:0,done:false,order:null};S.postStarted=true;save();renderTabs();render();return;}
+  if(b.id==='bCopy'){const ta=$('#rekap');(navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(()=>toast('ok','Rekap tersalin','')).catch(()=>{ta.select();toast('warn','Teks sudah dipilih','<br>Tekan Ctrl+C / tahan lalu Salin.');});return;}
+  // elektromagnet
+  if(b.id==='eOn'){S.em.on=!S.em.on;render();return;}
+  if(p==='eV'){S.em.V=+b.dataset.v;if(T)buildEM();showScene();render();return;}
+  if(p==='eN'){S.em.N=+b.dataset.v;if(T)buildEM();showScene();render();return;}
+  if(p==='eC'){S.em.core=b.dataset.v;if(T)buildEM();showScene();render();return;}
+  if(p==='eD'){S.em.dir=+b.dataset.v;render();return;}
+  if(b.id==='eF'){S.em.field=!S.em.field;render();return;}
+  // klakson
+  if(p==='hMode'){S.horn.mode=b.dataset.v;curMode=null;showScene();render();return;}
+  if(p==='hSlow'){S.horn.slow=+b.dataset.v;render();return;}
+  if(b.id==='hLock'){ensureAudio();S.horn.lock=!S.horn.lock;render();return;}
+  if(b.id==='hSnd'){S.horn.sound=!S.horn.sound;render();return;}
+  // relay
+  if(b.id==='rBtn'){S.relay.on=!S.relay.on;render();return;}
+  // kontaktor
+  if(b.id==='kBtn'){S.kont.on=!S.kont.on;render();return;}
+  if(b.id==='kCut'){S.kont.cut=!S.kont.cut;render();if(T)setPins();return;}
+  if(b.id==='kNext'){const K=S.kont;let c;do{c=rnd(CHAL);}while(K.ch&&c===K.ch&&CHAL.length>1);K.ch=c;K.answered=false;K.last=null;K.sel=null;render();if(T)setPins();return;}
+  if(b.closest('#kChips')){pickTerm(b.dataset.n);return;}
+});
+
+/* ---------- mulai ---------- */
+try{init3D();}catch(err){$('#loading').textContent='Model 3D tidak dapat dimuat di perangkat ini. Tes dan latihan tetap bisa digunakan.';console.error(err);}
+renderTabs();render();
+})();
+</script>
+</body>
+</html>

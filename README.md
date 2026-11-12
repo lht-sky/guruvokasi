@@ -15,15 +15,16 @@ Simulasi dapat dibuka langsung di browser (laptop maupun HP) tanpa instalasi.
 | 4 | Multimeter Digital | Dasar Kelistrikan & Elektronika | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3D-multimeter-digital/) |
 | 5 | Hukum Ohm & Rangkaian Seri–Paralel | Dasar Kelistrikan & Elektronika | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-hukum-ohm/) |
 | 6 | Power Supply 24 VDC | Dasar Kelistrikan & Elektronika | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-power-supply-24vdc/) |
-| 7 | Panel DOL | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_DOL/) |
-| 8 | Panel Forward–Reverse | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Forward-Reverse/) |
-| 9 | Panel Star–Delta | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Star-Delta/) |
-| 10 | Bengkel Aman TOI — K3LH & Budaya Kerja 5R | K3LH & Budaya Kerja | [Buka](https://lht-sky.github.io/guruvokasi/bengkel-aman-toi/) |
-| 11 | Pabrik Elektronik Tycoon — DK1 Fase E | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pabrik-tycoon/) |
-| 12 | Pneumatik Tycoon — SKEH Fase F | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pneumatik-tycoon/) |
-| 13 | Studio Gamtek 3D — Pemantapan Gambar Teknik (Teknik Mesin kelas XI) | Gambar Teknik Mesin | [Buka](https://lht-sky.github.io/guruvokasi/studio-gamtek-tm/) |
-| 14 | PKL Bengkel Las Maju Jaya — Fabrikasi Dasar, Pengukuran, Bor & Tap (Teknik Mesin, tahap 1) | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pkl-bengkel-maju-jaya/) |
-| 15 | Buku Saku Anak TOI — pegangan cepat K3LH, listrik, panel, pneumatik, PLC, PKL + kalkulator | Buku Saku & Referensi | [Buka](https://lht-sky.github.io/guruvokasi/buku-saku-toi/) |
+| 7 | Elektromagnet: dari Klakson ke Kontaktor — klakson, bel listrik, relay, penampang kontaktor (dengan tes awal & tes akhir) | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-elektromagnet/) |
+| 8 | Panel DOL | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_DOL/) |
+| 9 | Panel Forward–Reverse | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Forward-Reverse/) |
+| 10 | Panel Star–Delta | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Star-Delta/) |
+| 11 | Bengkel Aman TOI — K3LH & Budaya Kerja 5R | K3LH & Budaya Kerja | [Buka](https://lht-sky.github.io/guruvokasi/bengkel-aman-toi/) |
+| 12 | Pabrik Elektronik Tycoon — DK1 Fase E | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pabrik-tycoon/) |
+| 13 | Pneumatik Tycoon — SKEH Fase F | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pneumatik-tycoon/) |
+| 14 | Studio Gamtek 3D — Pemantapan Gambar Teknik (Teknik Mesin kelas XI) | Gambar Teknik Mesin | [Buka](https://lht-sky.github.io/guruvokasi/studio-gamtek-tm/) |
+| 15 | PKL Bengkel Las Maju Jaya — Fabrikasi Dasar, Pengukuran, Bor & Tap (Teknik Mesin, tahap 1) | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pkl-bengkel-maju-jaya/) |
+| 16 | Buku Saku Anak TOI — pegangan cepat K3LH, listrik, panel, pneumatik, PLC, PKL + kalkulator | Buku Saku & Referensi | [Buka](https://lht-sky.github.io/guruvokasi/buku-saku-toi/) |
 
 Segera hadir: Forward–Reverse Berbasis PLC (JS-PLC-01), Elektropneumatik 1 Silinder.
 
