@@ -47,7 +47,7 @@ h1{margin:2px 0 0;font:700 24px/1.1 var(--f-display);letter-spacing:.01em}
 .mini .scr.blank{color:transparent}
 .mini .u{color:#f3b52f;font:600 13px var(--f-mono);line-height:1.2}
 .mini .u small{display:block;color:#aeb6bf;font-weight:500;font-size:11px}
-.gesture{position:absolute;right:10px;bottom:10px;font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.75);border-radius:6px;padding:4px 8px}
+.gesture{position:absolute;left:10px;top:10px;font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.75);border-radius:6px;padding:4px 8px}
 #flash{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .5s}
 #toast{position:absolute;right:10px;top:52px;z-index:5;width:min(calc(100% - 20px),400px);display:grid;gap:6px;pointer-events:none}
 .tst{background:var(--ink);color:#fff;padding:9px 13px;border-radius:8px;font-size:13.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.22);border-left:4px solid #4aa3e0;animation:tin .25s ease-out}
@@ -142,6 +142,11 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px
   .tabs button{font-size:13px;padding:8px 2px}
   .hud .tool{padding:5px 8px;font-size:12px}
 }
+.pad{position:absolute;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:4px;z-index:4;user-select:none;-webkit-user-select:none}
+.pad button{border:1px solid var(--line);background:rgba(251,252,253,.92);border-radius:8px;font-size:14px;font-weight:700;color:#14202b;cursor:pointer;padding:0;touch-action:none;box-shadow:0 2px 6px rgba(20,32,43,.12)}
+.pad button:active{background:#14202b;color:#fff}
+.pad .c{font-size:11px}
+@media (max-width:900px){.pad{grid-template-columns:repeat(3,30px);grid-template-rows:repeat(3,30px);gap:3px;right:8px;bottom:8px}}
 </style>
 <!-- Microsoft Clarity -->
 <script type="text/javascript">
@@ -172,6 +177,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px
     <div class="viewer" id="viewer">
       <canvas id="c" aria-label="Model 3D multimeter digital dan benda uji"></canvas>
       <div id="labels"></div>
+      <div class="pad" id="pad" aria-label="Geser dan zoom tampilan"><button data-p="zi" title="Perbesar">+</button><button data-p="u" title="Geser ke atas">▲</button><button data-p="zo" title="Perkecil">−</button><button data-p="l" title="Geser ke kiri">◀</button><button data-p="c" class="c" title="Kembali ke tengah">⌂</button><button data-p="r" title="Geser ke kanan">▶</button><span></span><button data-p="d" title="Geser ke bawah">▼</button><span></span></div>
       <div id="flash"></div>
       <div class="hud">
         <button class="tool" id="btnFocus" aria-pressed="false">Lihat layar</button>
@@ -180,7 +186,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px
       </div>
       <div id="toast"></div>
       <div class="mini" id="mini"><div class="scr blank" id="miniScr">0</div><div class="u" id="miniU">OFF<small>saklar</small></div></div>
-      <div class="gesture">Geser = putar · scroll/cubit = zoom · ketuk saklar/jack/benda</div>
+      <div class="gesture">Geser = putar · 2 jari / klik kanan = geser · cubit/scroll = zoom</div>
       <div id="loading">Memuat model 3D…</div>
     </div>
   </section>
@@ -293,6 +299,37 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px
 <script>
 (function(){
 'use strict';
+/* ===== geser (pan) tampilan: 2 jari di HP, klik kanan/Shift+geser di laptop, atau tombol panah ===== */
+const PAN={v:null,drag:false,did:false};
+function panBy(dx,dy){
+  if(!T||!PAN.v) return; const cam=T.camera, h=T.viewer.clientHeight||1;
+  const tg=T.cam.t.clone().add(PAN.v), dist=cam.position.distanceTo(tg), s=2*dist*Math.tan(THREE.MathUtils.degToRad(cam.fov/2))/h;
+  const right=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,0), up=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,1);
+  PAN.v.addScaledVector(right,-dx*s).addScaledVector(up,dy*s); if(PAN.v.length()>30) PAN.v.setLength(30);
+}
+function setupPan(){
+  PAN.v=new THREE.Vector3();
+  const cv=T.canvas, P=new Map(); let mid=null,last=null;
+  const midp=()=>{const [a,b]=[...P.values()];return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};};
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  cv.addEventListener('pointerdown',e=>{P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1){PAN.did=false;PAN.drag=(e.button===2||e.button===1||e.shiftKey);last={x:e.clientX,y:e.clientY};}
+    if(P.size===2){mid=midp();PAN.did=true;}});
+  cv.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1&&PAN.drag){const dx=e.clientX-last.x,dy=e.clientY-last.y;if(Math.abs(dx)+Math.abs(dy)>0)PAN.did=true;panBy(dx,dy);last={x:e.clientX,y:e.clientY};}
+    else if(P.size===2){const m=midp();if(mid)panBy(m.x-mid.x,m.y-mid.y);mid=m;}});
+  const up=e=>{P.delete(e.pointerId);if(P.size<2)mid=null;if(P.size===0)PAN.drag=false;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  // tombol panah (tahan untuk terus bergeser)
+  const pad=document.getElementById('pad'); let rep=null;
+  const act=k=>{const st=Math.max(10,T.viewer.clientHeight*0.03);
+    if(k==='u')panBy(0,st);else if(k==='d')panBy(0,-st);else if(k==='l')panBy(st,0);else if(k==='r')panBy(-st,0);
+    else if(k==='zi')T.cam.zoom=Math.max(0.35,T.cam.zoom*0.92);else if(k==='zo')T.cam.zoom=Math.min(1.8,T.cam.zoom*1.08);else if(k==='c'){PAN.v.set(0,0,0);T.cam.zoom=1;}};
+  const stop=()=>{clearInterval(rep);rep=null;};
+  pad.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();const k=b.dataset.p;act(k);stop();if(k!=='c')rep=setInterval(()=>act(k),45);});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>pad.addEventListener(ev,stop));
+}
+
 const $=s=>document.querySelector(s);
 const nf=(x,d=2)=>Number(x).toLocaleString('id-ID',{maximumFractionDigits:d});
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
@@ -567,7 +604,7 @@ function init3D(){
      probe:{red:{p:V3(-2.6,0.2,5.4),q:new THREE.Quaternion()},blk:{p:V3(-4.6,0.2,6.0),q:new THREE.Quaternion()}},leadDirty:true,
      cam:{yaw:0.12,pitch:0.36,zoom:1,focus:false,t:V3(0,5.6,0),d:32}};
   buildObject();
-  bindPointer();
+  bindPointer();setupPan();
   new ResizeObserver(resize).observe(viewer); resize();
   $('#loading').style.display='none';
   requestAnimationFrame(loop);
@@ -815,9 +852,9 @@ function bindPointer(){
     if(pts.size===1){start={x:e.clientX,y:e.clientY};moved=false;}
     if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:T.cam.zoom};moved=true;}});
   cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const pr=pts.get(e.pointerId),cu={x:e.clientX,y:e.clientY};pts.set(e.pointerId,cu);
-    if(pts.size===1){T.cam.yaw=Math.max(-1.25,Math.min(1.25,T.cam.yaw-(cu.x-pr.x)*0.006));T.cam.pitch=Math.max(0.05,Math.min(1.25,T.cam.pitch+(cu.y-pr.y)*0.005));if(Math.hypot(cu.x-start.x,cu.y-start.y)>6)moved=true;}
+    if(pts.size===1&&!PAN.drag){T.cam.yaw=Math.max(-1.25,Math.min(1.25,T.cam.yaw-(cu.x-pr.x)*0.006));T.cam.pitch=Math.max(0.05,Math.min(1.25,T.cam.pitch+(cu.y-pr.y)*0.005));if(Math.hypot(cu.x-start.x,cu.y-start.y)>6)moved=true;}
     else if(pts.size===2&&pinch){const [a,b]=[...pts.values()];T.cam.zoom=Math.min(1.8,Math.max(0.45,pinch.z*pinch.d/Math.hypot(a.x-b.x,a.y-b.y)));}});
-  const up=e=>{if(!pts.has(e.pointerId))return;if(pts.size===1&&!moved&&e.type==='pointerup')pick(e);pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
+  const up=e=>{if(!pts.has(e.pointerId))return;if(pts.size===1&&!moved&&!PAN.did&&e.type==='pointerup')pick(e);pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
   cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
   cv.addEventListener('wheel',e=>{e.preventDefault();T.cam.zoom=Math.min(1.8,Math.max(0.45,T.cam.zoom*Math.exp(e.deltaY*0.0012)));},{passive:false});
   const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
@@ -835,7 +872,7 @@ function bindPointer(){
     else if(tap==='j10') setJack('a'); else if(tap==='jv') setJack('v');
     else if(tap==='obj'){ if(S.tab!=='lab') setTab('lab'); toggleAttach(); }
   }
-  $('#btnReset').addEventListener('click',()=>{T.cam.yaw=0.12;T.cam.pitch=0.36;T.cam.zoom=1;});
+  $('#btnReset').addEventListener('click',()=>{if(PAN.v)PAN.v.set(0,0,0);T.cam.yaw=0.12;T.cam.pitch=0.36;T.cam.zoom=1;});
 }
 function partPos(id){
   const g=T.meter.g;
@@ -858,8 +895,8 @@ function loop(t){
   const dt=Math.min(0.05,(t-last)/1000); last=t;
   const {renderer,scene,camera}=T, c=T.cam, goal=camGoal();
   c.t.lerp(goal.t,1-Math.exp(-dt*5)); c.d+=(goal.d-c.d)*(1-Math.exp(-dt*5));
-  camera.position.set(c.t.x+c.d*Math.cos(c.pitch)*Math.sin(c.yaw),c.t.y+c.d*Math.sin(c.pitch),c.t.z+c.d*Math.cos(c.pitch)*Math.cos(c.yaw));
-  camera.lookAt(c.t);
+  const tg=PAN.v?c.t.clone().add(PAN.v):c.t; camera.position.set(tg.x+c.d*Math.cos(c.pitch)*Math.sin(c.yaw),tg.y+c.d*Math.sin(c.pitch),tg.z+c.d*Math.cos(c.pitch)*Math.cos(c.yaw));
+  camera.lookAt(tg);
   // knob
   const ta=-dialAngle(S.dial); let da=ta-T.meter.knobAng; T.meter.knobAng+=da*(1-Math.exp(-dt*12)); T.meter.knob.rotation.z=T.meter.knobAng;
   updateProbes(dt);
