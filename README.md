@@ -31,6 +31,16 @@ Segera hadir: Power Supply 24 VDC, Forward–Reverse Berbasis PLC (JS-PLC-01), E
 - **HP/tablet:** geser satu jari untuk memutar, cubit dua jari untuk zoom.
 - Diperlukan koneksi internet saat pertama kali dibuka (library 3D dimuat dari CDN).
 
+## Pasang sebagai Aplikasi di HP (Android)
+
+Situs ini bisa dipasang seperti aplikasi, tanpa Play Store:
+
+1. Buka https://lht-sky.github.io/guruvokasi/ di **Chrome** HP Android.
+2. Ketuk tombol **Pasang Aplikasi Guru Vokasi** di bagian atas, atau menu **⋮ → Instal aplikasi / Tambahkan ke layar utama**.
+3. Ikon **Guru Vokasi** muncul di layar HP. Setelah dibuka sekali saat online, semua simulasi tetap bisa dibuka **tanpa internet**.
+
+Aplikasi otomatis memakai versi terbaru setiap kali HP terhubung ke internet.
+
 ## Tentang Pembuat
 
 Nama saya **Lukman Hakim Tejosaputro**, guru vokasi di SMK 2 Triple J Citeureup, Kabupaten Bogor.
@@ -53,6 +63,7 @@ Kritik, saran, dan masukan silakan dikirim ke: **lukman.hakim5830@guru.smk.belaj
    { judul:"Power Supply 24 VDC", folder:"simulasi-3d-power-supply-24vdc", kelompok:"Dasar Kelistrikan & Elektronika", ket:"Catu daya 24 VDC untuk panel kontrol." },
    ```
 3. Tambahkan juga barisnya di tabel **Daftar Simulasi** pada README ini.
-4. Commit & push — GitHub Pages akan memperbarui situs dalam 1–2 menit.
+4. Agar simulasi baru ikut tersedia offline: buka `sw.js`, tambahkan `"./nama-folder/"` (dan file `.js` pendukungnya, jika ada) ke daftar `PRECACHE`, lalu naikkan `VERSI` (mis. `guruvokasi-v1` → `guruvokasi-v2`). Jika terlewat, simulasi tetap tersimpan offline setelah dibuka sekali.
+5. Commit & push — GitHub Pages akan memperbarui situs dalam 1–2 menit.
 
 > Nama folder di URL **peka huruf besar/kecil**: `Simulasi_3D_Panel_DOL` ≠ `simulasi_3d_panel_dol`.

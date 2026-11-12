@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "Guru Vokasi — Simulasi 3D Pendidikan Vokasi",
+  "short_name": "Guru Vokasi",
+  "description": "Simulasi 3D interaktif untuk murid SMK 2 Triple J Citeureup: kelistrikan, kendali motor, pneumatik, K3LH, gambar teknik, dan game PKL.",
+  "lang": "id",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0E1C2E",
+  "theme_color": "#0b5cad",
+  "categories": ["education"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

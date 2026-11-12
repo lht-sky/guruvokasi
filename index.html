@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Guru Vokasi — Simulasi 3D Pendidikan Vokasi</title>
 <meta name="description" content="Kumpulan simulasi 3D interaktif untuk pembelajaran Teknik Otomasi Industri dan Teknik Mesin SMK 2 Triple J Citeureup.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b5cad">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Guru Vokasi">
 <style>
   :root{
     --bg:#f5f6f8; --card:#fff; --ink:#1c2430; --muted:#5d6878; --line:#dfe3e9;
@@ -34,6 +40,9 @@
   .empty{color:var(--muted);display:none}
   footer{border-top:1px solid var(--line);padding:20px;color:var(--muted);font-size:.85rem}
   footer a{color:var(--brand)}
+  .install{display:none;margin-top:16px;align-items:center;gap:10px;flex-wrap:wrap}
+  .install button{background:#fff;color:var(--brand);border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+  .install span{font-size:.85rem;opacity:.9}
 </style>
 <!-- Microsoft Clarity -->
 <script type="text/javascript">
@@ -49,6 +58,10 @@
   <div class="wrap">
     <h1>Simulasi 3D Pendidikan Vokasi</h1>
     <p>Media pembelajaran interaktif untuk murid SMK 2 Triple J Citeureup. Pilih simulasi di bawah, putar model 3D-nya, dan coba sendiri sebelum praktik di bengkel.</p>
+    <div class="install" id="install">
+      <button type="button" id="btnInstall">Pasang Aplikasi Guru Vokasi</button>
+      <span>Muncul di layar HP seperti aplikasi, bisa dibuka tanpa internet.</span>
+    </div>
   </div>
 </header>
 
@@ -143,6 +156,27 @@ function render(){
 }
 q.addEventListener('input', render);
 render();
+</script>
+<script>
+/* Aplikasi (PWA): daftarkan service worker & tampilkan tombol pasang */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+(function(){
+  let tunda = null;
+  const box = document.getElementById('install');
+  const btn = document.getElementById('btnInstall');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); tunda = e; box.style.display = 'flex';
+  });
+  btn.addEventListener('click', async () => {
+    if (!tunda) return;
+    tunda.prompt();
+    await tunda.userChoice;
+    tunda = null; box.style.display = 'none';
+  });
+  window.addEventListener('appinstalled', () => { box.style.display = 'none'; });
+})();
 </script>
 </body>
 </html>
