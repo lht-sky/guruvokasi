@@ -190,7 +190,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px
       <canvas id="c" aria-label="Model 3D elektromagnet, klakson, relay, atau kontaktor"></canvas>
       <div id="labels"></div>
       <div class="pad" id="pad" aria-label="Geser dan zoom tampilan"><button data-p="zi" title="Perbesar">+</button><button data-p="u" title="Geser ke atas">▲</button><button data-p="zo" title="Perkecil">−</button><button data-p="l" title="Geser ke kiri">◀</button><button data-p="c" class="c" title="Kembali ke tengah">⌂</button><button data-p="r" title="Geser ke kanan">▶</button><span></span><button data-p="d" title="Geser ke bawah">▼</button><span></span></div>
-      <div class="hud"><button class="tool" id="bReset">⌂</button></div>
+      <div class="hud"><button class="tool" id="bSnd" title="Suara">🔊</button><button class="tool" id="bReset">⌂</button></div>
       <div id="toast"></div>
       <div class="vchip" id="vchip"></div>
       <div id="loading">Memuat model 3D…</div>
@@ -279,10 +279,10 @@ const TERMS={
 const CHAL=[['Kumparan (koil)',['A1','A2']],['Masukan fasa dari MCB',['1/L1','3/L2','5/L3']],['Keluaran ke motor',['2/T1','4/T2','6/T3']],['Kontak bantu NO',['13','14']]];
 
 /* ================= STATE ================= */
-const S={tab:'pre',name:'',kelas:'',
+const S={tab:'pre',name:'',kelas:'',sound:true,
   test:{pre:{ans:[],conf:[],i:0,done:false},post:{ans:[],conf:[],i:0,done:false,order:null}},
   em:{on:false,V:3,N:40,core:'besi',dir:1,field:true},
-  horn:{mode:'klakson',press:false,lock:false,slow:200,sound:true,ph:0,x:0,coil:false,sparkT:0,step:0},
+  horn:{mode:'klakson',press:false,lock:false,slow:100,ph:0,x:0,coil:false,sparkT:0,step:0},
   relay:{on:false,lock:false},
   kont:{on:false,cut:true,sel:null,ch:null,score:{ok:0,tot:0}},
   visited:{}};
@@ -609,6 +609,7 @@ function bind(){
     pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
   cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
   cv.addEventListener('wheel',e=>{e.preventDefault();T.cam.zoom=Math.min(1.8,Math.max(0.35,T.cam.zoom*Math.exp(e.deltaY*0.0012)));},{passive:false});
+  $('#bSnd').addEventListener('click',()=>{ensureAudio();S.sound=!S.sound;$('#bSnd').textContent=S.sound?'🔊':'🔇';if(!S.sound){setBuzz(false);setHum(false);}if(S.tab==='horn')render();});
   $('#bReset').addEventListener('click',()=>{if(PAN.v)PAN.v.set(0,0,0);T.cam.zoom=1;showScene();});
 }
 function resize(){if(!T)return;const w=T.viewer.clientWidth,h=T.viewer.clientHeight;T.renderer.setSize(w,h,false);T.camera.aspect=w/h;T.camera.updateProjectionMatrix();}
@@ -627,7 +628,8 @@ function loop(t){
     if(e.on)flow(O.paths,dt,0.4+r.I*0.15,k,e.dir);
     O.clips.forEach((cl,i)=>{const att=i<r.clips;const tip=O.pT.clone().add(V3(3.4,-0.2-i*0.28,(i%2?0.06:-0.06)));const tgt=att?tip:cl.rest;cl.cur.lerp(tgt,1-Math.exp(-dt*(att?9:5)));cl.m.position.copy(cl.cur);cl.m.rotation.x=att?0:Math.PI/2;cl.m.rotation.z=att?Math.PI/2:0;});
     const ang=e.on&&r.F>1?(e.dir>0?0:Math.PI)*1+0:-Math.PI/2;const tgtA=e.on&&r.F>1?(e.dir>0?Math.PI:0):-Math.PI/2;O.needle.rotation.y+=((tgtA)-O.needle.rotation.y)*Math.min(1,dt*4);
-    O.fm.opacity=e.field&&e.on?Math.min(0.7,r.F/120):0;}
+    O.fm.opacity=e.field&&e.on?Math.min(0.7,r.F/120):0;
+    {const nc=e.on?r.clips:0;if(SND.clips>=0&&nc>SND.clips)click(0.3,3800,0.02);if(SND.clips>=0&&nc<SND.clips)click(0.15,1500,0.03);SND.clips=nc;}}
   else if(T.cur==='horn'){const O=T.O.horn,h=S.horn,pressed=h.press||h.lock;
     const f=h.slow>1?400/h.slow:400;
     if(pressed){h.ph=(h.ph+dt*f)%1;}else{h.ph=0;}
@@ -640,18 +642,22 @@ function loop(t){
     if((realtime&&pressed)||coil){flow(h.mode==='klakson'?O.wK.paths:O.wB.paths,dt,realtime?2.0:1.2,k);if(h.mode!=='klakson')flow(O.pInB,dt,realtime?2.0:1.0,k);}
     h.sparkT-=dt;const sp=h.mode==='klakson'?O.bead.getWorldPosition(V3(0,0,0)):O.bl.localToWorld(O.bContactLocal.clone());T.spark.position.copy(sp);T.spark.material.opacity=(h.sparkT>0||(realtime&&pressed&&Math.random()<0.4))?0.9:0;T.spark.scale.setScalar(0.5+Math.random()*0.4);
     O.btnCap.position.y=pressed?0.5:0.58;
-    setSound(pressed&&realtime);
+    {const kl=h.mode==='klakson',cur=T.cur==='horn';setBuzz(cur&&kl&&pressed&&realtime);
+      if(cur&&pressed&&realtime&&!kl){SND.bellT-=dt;if(SND.bellT<=0){SND.bellT=0.05;ting(0.05);click(0.06,3200,0.02);}}
+      if(cur&&pressed&&!realtime){if(SND.ph<0.5&&h.ph>=0.5){kl?click(0.35,900,0.05):ting(0.12);}if(SND.ph>0.8&&h.ph<0.2)click(0.12,4000,0.015);}
+      SND.ph=h.ph;}
     waveT-=dt;if(waveT<=0){waveT=0.05;drawWave();const li=document.querySelectorAll('#hSteps li');li.forEach((el,i)=>el.classList.toggle('on',!realtime&&pressed&&i===h.step-1));}}
-  else if(T.cur==='relay'){const O=T.O.relay,on=S.relay.on||S.relay.press;
+  else if(T.cur==='relay'){const O=T.O.relay,on=S.relay.on||S.relay.press;if(SND.relay!==null&&SND.relay!==on)click(0.4,3000,0.025);SND.relay=on;
     O.arm.rotation.z+=((on?-0.055:0.075)-O.arm.rotation.z)*Math.min(1,dt*14);O.coilM.emissiveIntensity=on?0.45:0;O.btn.position.y=on?0.46:0.52;
     O.lNO.set(on?1:0);O.lNC.set(on?0:1);
     if(on)flow(O.pCoil,dt,0.5,k);flow(O.pCom,dt,1.0,k);flow(on?O.pNO:O.pNC,dt,1.0,k);}
-  else {const O=T.O.kont,on=S.kont.on;
+  else {const O=T.O.kont,on=S.kont.on;if(SND.kont!==null&&SND.kont!==on){click(0.6,1400,0.06);click(0.3,600,0.08);}SND.kont=on;setHum(on);
     const f=Math.min(1,dt*12);O.mv.position.y+=((on?-0.2:0)-O.mv.position.y)*f;O.br.position.y=Math.max(O.mv.position.y,-0.15);O.cs.position.y=4.22+O.br.position.y;O.cs.scale.y=(0.52+O.mv.position.y-O.br.position.y)/0.52;
     O.rs.forEach(r=>r.scale.y=(1.9+O.mv.position.y)/1.9);O.coilM.emissiveIntensity=on?0.45:0;O.ind.position.z=on?1.76:1.88;O.btn.position.y=on?0.5:0.58;
     if(on)O.shaft.rotation.x+=dt*18;
     if(on){flow(O.pCoil,dt,0.5,k);flow(O.pPow,dt,1.2,k);flow(O.pSecCoil,dt,0.5,k);flow(O.pSec,dt,1.0,k);}
     Object.entries(O.terms).forEach(([n,m])=>{m.material.emissiveIntensity=S.kont.sel===n?0.9+0.4*Math.sin(t/150):0;});}
+  if(T.cur!=='horn')setBuzz(false);if(T.cur!=='kont')setHum(false);
   T.dots.count=k.v;T.dots.instanceMatrix.needsUpdate=true;
   T.renderer.render(T.scene,T.camera);
   const W=T.viewer.clientWidth,Hh=T.viewer.clientHeight,v=V3(0,0,0);
@@ -660,20 +666,24 @@ function loop(t){
 }
 
 /* ================= SUARA ================= */
-let actx=null,osc=null,gain=null,lfo=null,lfoG=null,curMode=null;
-function ensureAudio(){if(actx)return;try{actx=new (window.AudioContext||window.webkitAudioContext)();gain=actx.createGain();gain.gain.value=0;gain.connect(actx.destination);}catch(e){actx=null;}}
-function setSound(on){
-  if(!actx)return; on=on&&S.horn.sound;
-  try{
-    if(on&&curMode!==S.horn.mode){if(osc){osc.stop();osc.disconnect();}if(lfo){lfo.stop();lfo.disconnect();}
-      osc=actx.createOscillator();
-      if(S.horn.mode==='klakson'){osc.type='square';osc.frequency.value=410;osc.connect(gain);lfo=null;}
-      else{osc.type='triangle';osc.frequency.value=2350;const g2=actx.createGain();g2.gain.value=0.5;osc.connect(g2);g2.connect(gain);lfo=actx.createOscillator();lfo.frequency.value=22;lfoG=actx.createGain();lfoG.gain.value=0.5;lfo.connect(lfoG);lfoG.connect(g2.gain);lfo.start();}
-      osc.start();curMode=S.horn.mode;}
-    gain.gain.setTargetAtTime(on?0.05:0,actx.currentTime,0.015);
-  }catch(e){}
+let actx=null,master=null,nbuf=null,buzzO=null,buzzG=null,humO=null,humG=null;
+function ensureAudio(){
+  if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();master=actx.createGain();master.gain.value=0.9;master.connect(actx.destination);
+    nbuf=actx.createBuffer(1,Math.round(actx.sampleRate*0.2),actx.sampleRate);const d=nbuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    // klakson: gelombang kotak ±410 Hz lewat filter (dengung membran)
+    buzzO=actx.createOscillator();buzzO.type='square';buzzO.frequency.value=410;const bf=actx.createBiquadFilter();bf.type='lowpass';bf.frequency.value=2600;bf.Q.value=4;buzzG=actx.createGain();buzzG.gain.value=0;buzzO.connect(bf);bf.connect(buzzG);buzzG.connect(master);buzzO.start();
+    // dengung motor kontaktor
+    humO=actx.createOscillator();humO.type='sawtooth';humO.frequency.value=100;const hf=actx.createBiquadFilter();hf.type='lowpass';hf.frequency.value=420;humG=actx.createGain();humG.gain.value=0;humO.connect(hf);hf.connect(humG);humG.connect(master);humO.start();
+  }catch(e){actx=null;return;}}
+  if(actx.state==='suspended'){try{actx.resume();}catch(e){}}
 }
-document.addEventListener('pointerdown',ensureAudio,{once:true});
+const sndOn=()=>actx&&S.sound;
+function click(vol,freq,dur){if(!sndOn())return;try{const t=actx.currentTime,s=actx.createBufferSource();s.buffer=nbuf;const f=actx.createBiquadFilter();f.type='bandpass';f.frequency.value=freq||2500;f.Q.value=1.2;const g=actx.createGain();g.gain.setValueAtTime(vol||0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+(dur||0.03));s.connect(f);f.connect(g);g.connect(master);s.start(t);s.stop(t+(dur||0.03)+0.02);}catch(e){}}
+function ting(vol){if(!sndOn())return;try{const t=actx.currentTime;[[2350,1,0.9],[5470,0.45,0.35],[1180,0.35,0.6],[8200,0.15,0.12]].forEach(([fq,a,dc])=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=fq;g.gain.setValueAtTime((vol||0.1)*a,t);g.gain.exponentialRampToValueAtTime(0.0005,t+dc);o.connect(g);g.connect(master);o.start(t);o.stop(t+dc+0.05);});}catch(e){}}
+function setBuzz(on){if(!actx)return;try{buzzG.gain.setTargetAtTime(on&&S.sound?0.05:0,actx.currentTime,0.012);}catch(e){}}
+function setHum(on){if(!actx)return;try{humG.gain.setTargetAtTime(on&&S.sound?0.05:0,actx.currentTime,0.08);}catch(e){}}
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,ensureAudio));
+const SND={bellT:0,ph:0,relay:null,kont:null,clips:-1};
 
 /* ================= UI ================= */
 const TABS=[['pre','Tes Awal'],['em','Elektro­magnet'],['horn','Klakson'],['relay','Relay'],['kont','Kontaktor'],['post','Tes Akhir']];
@@ -761,8 +771,8 @@ function hornHTML(){
     <div class="goal">Tekan dan tahan tombol. Perlambat waktu untuk melihat urutan kerjanya satu per satu.</div>
     <span class="lbl2">Alat</span><div class="seg" id="hMode"><button data-v="klakson" class="${isK?'on':''}">Klakson motor</button><button data-v="bel" class="${!isK?'on':''}">Bel sekolah</button></div>
     <span class="lbl2">Kecepatan</span><div class="seg" id="hSlow">${[[1,'Asli'],[100,'100× lambat'],[400,'400× lambat']].map(([v,t])=>`<button data-v="${v}" class="${h.slow===v?'on':''}">${t}</button>`).join('')}</div>
-    <button class="hold" id="hBtn">TAHAN TOMBOL ${isK?'KLAKSON':'BEL'}<small>${h.slow<=1&&h.sound?'suara aktif':'tahan untuk menjalankan'}</small></button>
-    <div class="row"><button class="btn" id="hLock">${h.lock?'🔒 Tombol terkunci — lepas':'Kunci tombol (tidak perlu ditahan)'}</button><button class="btn" id="hSnd">${h.sound?'🔊 Suara':'🔇 Bisu'}</button></div>
+    <button class="hold" id="hBtn">TAHAN TOMBOL ${isK?'KLAKSON':'BEL'}<small>${S.sound?(h.slow<=1?'suara asli ±'+(isK?'400':'20')+' kali/detik':'suara tiap ketukan'):'suara mati'}</small></button>
+    <div class="row"><button class="btn" id="hLock">${h.lock?'🔒 Tombol terkunci — lepas':'Kunci tombol (tidak perlu ditahan)'}</button><button class="btn" id="hSnd">${S.sound?'🔊 Suara':'🔇 Bisu'}</button></div>
     <canvas id="wave" width="800" height="272"></canvas>
     <ol class="steps4" id="hSteps">${st.map((s,i)=>`<li><b>${i+1}</b><span>${s}</span></li>`).join('')}</ol>
     <div class="fb warn"><b>Percikan api di kontak.</b> Setiap kali kontak terbuka, arus diputus mendadak sehingga muncul percikan kecil. Lama-lama kontak platina aus dan klakson suaranya serak atau mati — dulu “setel platina” adalah servis klakson yang umum.</div></div>
@@ -860,10 +870,10 @@ $('#pane').addEventListener('click',e=>{
   if(p==='eD'){S.em.dir=+b.dataset.v;render();return;}
   if(b.id==='eF'){S.em.field=!S.em.field;render();return;}
   // klakson
-  if(p==='hMode'){S.horn.mode=b.dataset.v;curMode=null;showScene();render();return;}
+  if(p==='hMode'){S.horn.mode=b.dataset.v;showScene();render();return;}
   if(p==='hSlow'){S.horn.slow=+b.dataset.v;render();return;}
   if(b.id==='hLock'){ensureAudio();S.horn.lock=!S.horn.lock;render();return;}
-  if(b.id==='hSnd'){S.horn.sound=!S.horn.sound;render();return;}
+  if(b.id==='hSnd'){ensureAudio();S.sound=!S.sound;const bs=$('#bSnd');if(bs)bs.textContent=S.sound?'🔊':'🔇';if(!S.sound){setBuzz(false);setHum(false);}render();return;}
   // relay
   if(b.id==='rBtn'){S.relay.on=!S.relay.on;render();return;}
   // kontaktor
