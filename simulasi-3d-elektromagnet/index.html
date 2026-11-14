@@ -311,6 +311,15 @@ function lampModel(g,x,y,z,rgb,hex){const o={};cyl(g,0.35,0.4,0.3,'#22262a',x,y+
   const b=new THREE.Mesh(new THREE.SphereGeometry(0.36,24,16),o.gm);b.position.set(x,y+0.9,z);g.add(b);o.gs=glowSprite(rgb||'255,214,130');o.gs.position.set(x,y+0.9,z);g.add(o.gs);
   o.pl=new THREE.PointLight(new THREE.Color(hex||0xffd8a0),0,6);o.pl.position.set(x,y+1.3,z+0.3);g.add(o.pl);o.set=v=>{o.gm.emissiveIntensity=v*2.2;o.gs.material.opacity=v;o.gs.scale.setScalar(0.4+2*v);o.pl.intensity=v*1.4;};return o;}
 
+function fitEnd(g,cu,atStart,s){s=s||1;const L=Math.max(0.01,cu.getLength()),u=atStart?0:1,us=atStart?Math.min(0.5,0.14*s/L):Math.max(0.5,1-0.14*s/L);const tg=cu.getTangentAt(u).normalize();const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),tg);
+  const sl=new THREE.Mesh(new THREE.CylinderGeometry(0.062*s,0.062*s,0.16*s,12),M('#f4f4f2',{roughness:.6}));sl.quaternion.copy(q);sl.position.copy(cu.getPointAt(us));g.add(sl);
+  const sk=new THREE.Mesh(new THREE.BoxGeometry(0.085*s,0.11*s,0.025*s),M('#d9dde1',{metalness:.9,roughness:.3}));sk.quaternion.copy(q);sk.position.copy(cu.getPointAt(u));g.add(sk);}
+function noteLab(extra){return `<div class="card"><h2>Catatan wiring · standar Lab TOI</h2><div class="map">
+  <b>Rangkaian daya</b><span>kabel <b>kuning</b> — jalur listrik utama AC: MCB → power supply / kontaktor → motor / beban.</span>
+  <b>Rangkaian kontrol</b><span>kabel <b>biru</b> — 24 VDC, koil, tombol, sensor, input–output PLC.</span>
+  <b>PE (arde)</b><span>kabel <b>hijau-kuning</b>, khusus pengaman, tidak dipakai untuk fungsi lain.</span>
+  <b>Ujung kabel</b><span>wajib <b>skun Y</b> (dipres dengan tang skun) dan <b>tube marking</b> berisi alamat kabel, mis. L1, N, L+, M, A1, 13, I0.0. Karena warna satu rangkaian sama, <b>tube marking-lah yang membedakan</b> kabel.</span>
+  <b>Terminal &amp; kabel masuk</b><span>terminal blok TB-1512; kabel sumber masuk panel <b>dari bawah</b> (mencegah air dan debu masuk).</span></div>${extra?`<p class="muted">${extra}</p>`:''}</div>`;}
 function init3D(){
   if(typeof THREE==='undefined') throw new Error('three');
   const canvas=$('#c'),viewer=$('#viewer');
@@ -480,16 +489,16 @@ function buildRelay(){
   // rangkaian kendali (kiri)
   const bat=new THREE.Group();bat.position.set(-5.4,0.3,1.0);g.add(bat);box(bat,1.4,1.0,0.8,'#1d1f22',0,0.5,0);const bl=textPlane(1.2,0.4,(c,w,h)=>{c.fillStyle='#f3b52f';c.font=`700 ${h*.6}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('12 VDC',w/2,h/2);});bl.position.set(0,0.5,0.41);bat.add(bl);
   const pb=new THREE.Group();pb.position.set(-3.4,0.3,2.4);g.add(pb);box(pb,0.9,0.45,0.7,'#2a2f35',0,0.22,0);O.btn=cyl(pb,0.2,0.2,0.16,'#1f9a4b',0,0.52,0);O.btn.userData.tap='relay';T.taps.push(O.btn);
-  const c1=tube(g,[[-5.0,1.05,1.0],[-4.4,1.0,2.4],[-3.6,0.6,2.4]],0.05,'#c62a22');
-  const c2=tube(g,[[-3.2,0.6,2.4],[-2.0,0.5,1.8],[-0.75,0.3,0.9],[-0.75,0.2,0.55]],0.05,'#c62a22');
-  const c3=tube(g,[[-0.25,0.2,0.55],[-0.3,0.35,2.2],[-4.0,0.4,3.0],[-5.8,0.6,1.5],[-5.8,1.05,1.0]],0.05,'#1d1f22');
+  const c1=tube(g,[[-5.0,1.05,1.0],[-4.4,1.0,2.4],[-3.6,0.6,2.4]],0.05,'#1f4fa8');
+  const c2=tube(g,[[-3.2,0.6,2.4],[-2.0,0.5,1.8],[-0.75,0.3,0.9],[-0.75,0.2,0.55]],0.05,'#1f4fa8');fitEnd(g,c2.cu,false,0.7);
+  const c3=tube(g,[[-0.25,0.2,0.55],[-0.3,0.35,2.2],[-4.0,0.4,3.0],[-5.8,0.6,1.5],[-5.8,1.05,1.0]],0.05,'#1f4fa8');fitEnd(g,c3.cu,true,0.7);
   // rangkaian beban (kanan)
   const src=new THREE.Group();src.position.set(5.6,0.3,2.4);g.add(src);box(src,1.2,0.9,0.8,'#f2f2ee',0,0.45,0);const sl=textPlane(1.1,0.35,(c,w,h)=>{c.fillStyle='#bb3a2c';c.font=`700 ${h*.6}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('220 VAC',w/2,h/2);});sl.position.set(0,0.45,0.41);src.add(sl);
   O.lNO=lampModel(g,3.6,0.3,-1.6,'60,230,90','#2fd35a');O.lNC=lampModel(g,5.6,0.3,-1.6,'255,70,50','#ff4a3a');
-  const d1=tube(g,[[5.2,0.8,2.4],[2.6,0.5,2.2],[-1.1,0.3,1.4],[-1.1,0.2,0.55]],0.06,'#8a4b22');
-  const dNO=tube(g,[[1.35,0.2,0.55],[1.8,0.35,0.0],[3.2,0.4,-1.0],[3.5,0.5,-1.5]],0.06,'#8a4b22');
-  const dNC=tube(g,[[0.95,0.2,0.55],[1.6,0.5,-0.6],[4.6,0.5,-1.2],[5.5,0.5,-1.5]],0.06,'#8a4b22');
-  tube(g,[[3.75,0.4,-1.6],[4.6,0.4,-0.6],[5.8,0.4,1.2],[5.9,0.8,2.4]],0.06,'#2b62c9');tube(g,[[5.75,0.4,-1.6],[6.0,0.4,0.2],[5.95,0.6,2.0]],0.06,'#2b62c9');
+  const d1=tube(g,[[5.2,0.8,2.4],[2.6,0.5,2.2],[-1.1,0.3,1.4],[-1.1,0.2,0.55]],0.06,'#e8c21a');fitEnd(g,d1.cu,false,0.8);
+  const dNO=tube(g,[[1.35,0.2,0.55],[1.8,0.35,0.0],[3.2,0.4,-1.0],[3.5,0.5,-1.5]],0.06,'#e8c21a');fitEnd(g,dNO.cu,true,0.8);
+  const dNC=tube(g,[[0.95,0.2,0.55],[1.6,0.5,-0.6],[4.6,0.5,-1.2],[5.5,0.5,-1.5]],0.06,'#e8c21a');fitEnd(g,dNC.cu,true,0.8);
+  tube(g,[[3.75,0.4,-1.6],[4.6,0.4,-0.6],[5.8,0.4,1.2],[5.9,0.8,2.4]],0.06,'#e8c21a');tube(g,[[5.75,0.4,-1.6],[6.0,0.4,0.2],[5.95,0.6,2.0]],0.06,'#e8c21a');
   O.pCoil=prep([{pts:c1.cu.getSpacedPoints(30)},{pts:c2.cu.getSpacedPoints(40)},{pts:c3.cu.getSpacedPoints(60)}]);
   O.pCom=prep([{pts:d1.cu.getSpacedPoints(60)}]);O.pNO=prep([{pts:dNO.cu.getSpacedPoints(40)}]);O.pNC=prep([{pts:dNC.cu.getSpacedPoints(50)}]);
   shadowAll(g);
@@ -553,8 +562,8 @@ function buildKont(){
   // kabel stub di penampang
   const S2=v=>sc.localToWorld(V3(...v));
   T.scene.updateMatrixWorld(true);
-  const sl=tube(g,[S2([-3.2,4.6,0.5]),S2([-2.7,3.9,0.5]),S2([-2.15,3.86,0.3])].map(v=>v.toArray()),0.05,'#8a4b22');
-  const sr=tube(g,[S2([2.15,3.86,0.3]),S2([2.7,3.9,0.5]),S2([3.2,4.6,0.5])].map(v=>v.toArray()),0.05,'#8a4b22');
+  const sl=tube(g,[S2([-3.2,4.6,0.5]),S2([-2.7,3.9,0.5]),S2([-2.15,3.86,0.3])].map(v=>v.toArray()),0.05,'#e8c21a');fitEnd(g,sl.cu,false,0.8);
+  const sr=tube(g,[S2([2.15,3.86,0.3]),S2([2.7,3.9,0.5]),S2([3.2,4.6,0.5])].map(v=>v.toArray()),0.05,'#e8c21a');fitEnd(g,sr.cu,true,0.8);
   const inside=new THREE.CatmullRomCurve3([S2([-2.1,3.86,0.3]),S2([-1.55,3.86,0.25]),S2([-1.2,4.0,0.25]),S2([-0.4,4.15,0.25]),S2([0.4,4.15,0.25]),S2([1.2,4.0,0.25]),S2([1.55,3.86,0.25]),S2([2.1,3.86,0.3])]);
   O.pSec=prep([{pts:sl.cu.getSpacedPoints(20)},{pts:inside.getSpacedPoints(40)},{pts:sr.cu.getSpacedPoints(20)}]);
   O.pSecCoil=prep([{pts:new THREE.CatmullRomCurve3([S2([-2.1,1.35,0.3]),S2([-1.4,1.25,0.3]),S2([-0.6,1.95,0.3]),S2([-0.6,1.05,0.3]),S2([0.6,1.95,0.3]),S2([0.6,1.05,0.3]),S2([1.4,1.25,0.3]),S2([2.1,1.35,0.3])]).getSpacedPoints(60)}]);
@@ -565,12 +574,12 @@ function buildKont(){
   box(mo,0.6,0.4,0.6,'#2f6a3d',0,2.15,0);
   const pb=new THREE.Group();pb.position.set(-6.0,0.3,2.2);g.add(pb);box(pb,1.0,0.5,0.8,'#2a2f35',0,0.25,0);O.btn=cyl(pb,0.22,0.22,0.18,'#1f9a4b',0,0.58,0);O.btn.userData.tap='kont';T.taps.push(O.btn);
   const src=textPlane(2.4,0.45,(c,w,h)=>{c.fillStyle='#14202b';c.fillRect(0,0,w,h);c.fillStyle='#f3b52f';c.font=`700 ${h*.5}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('dari MCB 3P — R S T',w/2,h/2);});src.position.set(-3.6,6.6,-1.38);g.add(src);
-  const E=(x,y,z)=>[ex.position.x+x,ex.position.y+y,ex.position.z+z];const C=['#8a4b22','#1d1f22','#8f969c'];const pw=[];
+  const E=(x,y,z)=>[ex.position.x+x,ex.position.y+y,ex.position.z+z];const C=['#e8c21a','#e8c21a','#e8c21a'];const pw=[];
   [-0.56,0,0.56].forEach((x,i)=>{
-    pw.push(tube(g,[[-4.1+i*0.5,6.35,-1.35],[-3.6+x,5.4,-0.6],E(x,4.1,1.5),E(x,3.42,1.32)],0.05,C[i]));
-    pw.push(tube(g,[E(x,0.18,1.32),E(x,-0.2,1.9),[0.5,0.3,2.3+i*0.2],[5.0,0.3,2.3],[6.0+(i-1)*0.15,2.2,1.4]],0.05,C[i]));});
-  const ca=tube(g,[[-6.0,0.6,1.8],[-5.6,2.0,1.2],E(-1.4,4.0,1.6),E(-1.12,3.42,1.32)],0.04,'#c62a22');
-  const cb=tube(g,[E(-1.12,0.18,1.32),E(-1.3,-0.3,1.9),[-5.2,0.3,3.0],[-6.0,0.6,2.6]],0.04,'#2b62c9');
+    {const t=tube(g,[[-4.1+i*0.5,6.35,-1.35],[-3.6+x,5.4,-0.6],E(x,4.1,1.5),E(x,3.42,1.32)],0.05,C[i]);fitEnd(g,t.cu,false,0.8);pw.push(t);}
+    {const t=tube(g,[E(x,0.18,1.32),E(x,-0.2,1.9),[0.5,0.3,2.3+i*0.2],[5.0,0.3,2.3],[6.0+(i-1)*0.15,2.2,1.4]],0.05,C[i]);fitEnd(g,t.cu,true,0.8);fitEnd(g,t.cu,false,0.8);pw.push(t);}});
+  const ca=tube(g,[[-6.0,0.6,1.8],[-5.6,2.0,1.2],E(-1.4,4.0,1.6),E(-1.12,3.42,1.32)],0.04,'#1f4fa8');fitEnd(g,ca.cu,false,0.7);
+  const cb=tube(g,[E(-1.12,0.18,1.32),E(-1.3,-0.3,1.9),[-5.2,0.3,3.0],[-6.0,0.6,2.6]],0.04,'#1f4fa8');fitEnd(g,cb.cu,true,0.7);
   O.pPow=prep(pw.map(t=>({pts:t.cu.getSpacedPoints(50)})));O.pCoil=prep([{pts:ca.cu.getSpacedPoints(60)},{pts:cb.cu.getSpacedPoints(60)}]);
   shadowAll(g);
 }
@@ -799,7 +808,7 @@ function relayHTML(){
       <tr><td>COM</td><td>Kontak bersama (yang berpindah). Relay mobil: 30.</td></tr>
       <tr><td>NO</td><td>Normally Open — terbuka saat relay mati, tertutup saat relay aktif. Relay mobil: 87.</td></tr>
       <tr><td>NC</td><td>Normally Closed — tertutup saat relay mati, terbuka saat relay aktif. Relay mobil: 87a.</td></tr></table>
-    <p class="muted"><b>Bagian relay:</b> kumparan dengan inti besi, <b>yoke</b> berbentuk L, <b>jangkar</b> berengsel di ujung yoke, <b>pegas pelepas</b> yang menahan jangkar, <b>kontak gerak (COM)</b> di ujung jangkar, dan dua kontak tetap: NC (atas) dan NO (bawah).</p><p class="muted">Arus 33 mA di kumparan mengendalikan arus 0,45 A di lampu — <b>arus kecil mengendalikan arus besar</b>, dan tegangan 220 V tidak pernah masuk ke rangkaian tombol. Inilah alasan keluaran PLC sering memakai relay.</p></div>`;
+    <p class="muted"><b>Bagian relay:</b> kumparan dengan inti besi, <b>yoke</b> berbentuk L, <b>jangkar</b> berengsel di ujung yoke, <b>pegas pelepas</b> yang menahan jangkar, <b>kontak gerak (COM)</b> di ujung jangkar, dan dua kontak tetap: NC (atas) dan NO (bawah).</p><p class="muted">Arus 33 mA di kumparan mengendalikan arus 0,45 A di lampu — <b>arus kecil mengendalikan arus besar</b>, dan tegangan 220 V tidak pernah masuk ke rangkaian tombol. Inilah alasan keluaran PLC sering memakai relay.</p></div>${noteLab('Di model: rangkaian kendali 12 VDC (baterai → tombol → koil A1–A2) memakai kabel biru, rangkaian lampu 220 VAC memakai kabel kuning.')}`;
 }
 function kontHTML(){
   const K=S.kont,on=K.on,sel=K.sel?TERMS[K.sel]:null,ch=K.ch;
@@ -818,7 +827,7 @@ function kontHTML(){
     ${K.last?`<div class="fb ${K.last.ok?'ok':'bad'}">${K.last.ok?'Tepat!':'Belum tepat.'} ${TERMS[K.last.n].n}: ${TERMS[K.last.n].d}</div>`:''}
     <div class="row"><button class="btn primary" id="kNext">${ch?'Soal berikutnya':'Mulai tantangan'}</button></div></div>
     <div class="card"><h2>Lanjut ke panel</h2><p class="muted">Sekarang kamu tahu isi kontaktor. Coba rangkai panel pengasutan motor yang sesungguhnya.</p>
-    <div class="row"><a class="btn primary" href="https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_DOL/" target="_blank" rel="noopener" style="text-decoration:none">Simulasi Panel DOL →</a></div></div>`;
+    <div class="row"><a class="btn primary" href="https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_DOL/" target="_blank" rel="noopener" style="text-decoration:none">Simulasi Panel DOL →</a></div></div>${noteLab('Di model: L1/L2/L3 dari MCB 3P dan T1/T2/T3 ke motor memakai kabel kuning (daya) — fasa dibedakan dengan tube marking; koil A1–A2 dan tombol memakai kabel biru (kontrol).')}`;
 }
 function pickTerm(n){
   const K=S.kont;K.sel=n;
