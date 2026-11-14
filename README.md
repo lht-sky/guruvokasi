@@ -27,6 +27,7 @@ Simulasi dapat dibuka langsung di browser (laptop maupun HP) tanpa instalasi.
 | 16 | Studio Gamtek 3D — Pemantapan Gambar Teknik (Teknik Mesin kelas XI) | Gambar Teknik Mesin | [Buka](https://lht-sky.github.io/guruvokasi/studio-gamtek-tm/) |
 | 17 | PKL Bengkel Las Maju Jaya — Fabrikasi Dasar, Pengukuran, Bor & Tap (Teknik Mesin, tahap 1) | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pkl-bengkel-maju-jaya/) |
 | 18 | Buku Saku Anak TOI — pegangan cepat K3LH, listrik, panel, pneumatik, PLC, PKL + kalkulator | Buku Saku & Referensi | [Buka](https://lht-sky.github.io/guruvokasi/buku-saku-toi/) |
+| 19 | Alat Ukur Presisi: Jangka Sorong & Mikrometer — lup skala, ukur benda kerja, kuis baca skala (Teknik Mesin, Dasar Kejuruan Fase E) | Dasar-Dasar Teknik Mesin | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-alat-ukur-presisi/) |
 
 Segera hadir: Forward–Reverse Berbasis PLC (JS-PLC-01), Elektropneumatik 1 Silinder.
 

@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="../favicon-48.png">
+<title>Simulasi 3D Alat Ukur Presisi: Jangka Sorong &amp; Mikrometer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: bengkel ukur — viewport 3D lebar di kiri, panel lup skala + penggerak + hasil di kanan, panduan di bawah */
+:root{
+  --bg:#e7ebef; --surface:#f7f9fb; --surface-2:#eef2f5; --line:#cad2db; --fg:#17202b; --muted:#566374;
+  --accent:#b8560c; --on-accent:#ffffff; --accent-soft:#f7e4d0;
+  --ok:#2b8a3e; --ok-soft:#dcf1e1; --bad:#c92a2a; --bad-soft:#fbe1e1;
+  --stage-a:#f6f8fa; --stage-b:#cfd7df;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f141a; --surface:#171e26; --surface-2:#1e2731; --line:#2d3946; --fg:#e4e9ee; --muted:#95a2b0;
+    --accent:#f5a043; --on-accent:#1d1206; --accent-soft:#3a2915;
+    --ok:#5ccf74; --ok-soft:#163222; --bad:#ff7676; --bad-soft:#3b1c1c;
+    --stage-a:#2a3440; --stage-b:#10161d; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#171e26; --surface-2:#1e2731; --line:#2d3946; --fg:#e4e9ee; --muted:#95a2b0;
+  --accent:#f5a043; --on-accent:#1d1206; --accent-soft:#3a2915;
+  --ok:#5ccf74; --ok-soft:#163222; --bad:#ff7676; --bad-soft:#3b1c1c;
+  --stage-a:#2a3440; --stage-b:#10161d; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.page{max-width:1260px;margin:0 auto;padding-block:22px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.brandbar{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;border-top:4px solid var(--accent)}
+.brandbar img{width:52px;height:52px;flex:none;object-fit:contain}
+.brandbar .ttl{flex:1;min-width:0}
+.eyebrow{font:600 12px/1.2 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.brandbar h1{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,3.4vw,34px);line-height:1.05;margin:3px 0 0;letter-spacing:.01em;text-wrap:balance}
+.brandbar .right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right}
+.dims{font:500 12px var(--f-mono);color:var(--fg);white-space:nowrap;border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+.guru{font:500 12px var(--f-body);color:var(--muted)}
+.guru b{color:var(--fg);font-weight:600}
+@media (max-width:640px){.brandbar{flex-wrap:wrap}.brandbar img{width:42px;height:42px}.brandbar .right{width:100%;flex-direction:row;flex-wrap:wrap;justify-content:space-between;align-items:center;text-align:left}}
+.toolh{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,3.6vw,36px);line-height:1.05;margin:0 0 6px;letter-spacing:.01em;text-wrap:balance}
+.toolh span{color:var(--accent)}
+.sub{color:var(--muted);margin:0;max-width:62ch}
+.seg{display:inline-flex;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{font:600 14px/1 var(--f-body);color:var(--muted);background:transparent;border:0;border-radius:7px;padding:10px 14px;cursor:pointer}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(10,20,30,.14),inset 0 -2px 0 var(--accent)}
+.seg.big button{font-family:var(--f-display);font-size:19px;letter-spacing:.02em;padding:10px 18px}
+.bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.bar .label{font:600 12px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:8px}
+.workspace{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:920px){.workspace{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;height:560px;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:radial-gradient(ellipse 80% 70% at 50% 38%,var(--stage-a),var(--stage-b))}
+@media (max-width:920px){.stage{height:380px}}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage.can-drag canvas{cursor:ew-resize}
+.stage.dragging canvas{cursor:grabbing}
+.ov{position:absolute;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+.ov > *{pointer-events:auto}
+.ov-tl{top:12px;left:12px;right:12px;justify-content:space-between;align-items:flex-start}
+.ov-bl{bottom:12px;left:12px;right:12px;justify-content:space-between;align-items:flex-end}
+.spec{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:500 12px/1.3 var(--f-mono);color:var(--muted)}
+.spec b{font-family:var(--f-display);font-size:16px;color:var(--fg);font-weight:700;letter-spacing:.02em;display:block}
+.camtools{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.hint{font-size:12px;color:var(--muted);background:color-mix(in srgb,var(--surface) 82%,transparent);border-radius:6px;padding:4px 8px;max-width:420px}
+.chip{font:600 12px/1 var(--f-body);padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.7}
+.chip.ok{color:var(--ok);background:var(--ok-soft);border-color:transparent}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;transform:translate(-50%,calc(-100% - 8px));font:600 11px/1.2 var(--f-body);background:var(--surface);color:var(--fg);border:1px solid var(--line);padding:3px 7px;border-radius:6px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.lbl::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:8px;background:var(--muted)}
+.lbl.below{transform:translate(-50%,8px)}
+.lbl.below::after{top:auto;bottom:100%}
+.nogl{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)}
+.btn{font:500 13px/1 var(--f-body);padding:9px 11px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);border-radius:8px;cursor:pointer;white-space:nowrap}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.small{padding:7px 9px;font-size:12px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--fg)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{display:grid;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;min-width:0}
+.card h2{font:700 18px/1 var(--f-display);letter-spacing:.04em;text-transform:uppercase;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h2 small{font:500 12px var(--f-body);letter-spacing:0;text-transform:none;color:var(--muted)}
+.mag-wrap{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+#mag{display:block;width:100%;height:190px;touch-action:none;cursor:grab}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row.spread{justify-content:space-between}
+.muted{color:var(--muted);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+select{font:500 13px var(--f-body);padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg)}
+.readval{font:600 clamp(34px,5vw,44px)/1 var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.readval small{font:500 16px var(--f-body);color:var(--muted);margin-left:6px}
+.bd{list-style:none;margin:0;padding:0;display:grid;font-size:14px}
+.bd li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px dashed var(--line)}
+.bd li span{color:var(--muted);min-width:0}
+.bd li b{font:600 14px var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bd li.total{border-top:1px solid var(--fg)}
+.bd li.total span{color:var(--fg);font-weight:600}
+.answer{display:flex;gap:6px;align-items:stretch}
+.answer label{position:relative;flex:1;min-width:0}
+.answer input{width:100%;font:600 20px var(--f-mono);padding:9px 40px 9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg)}
+.answer label span{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px}
+.fb{border-radius:8px;padding:10px 12px;font-size:14px;display:grid;gap:8px}
+.fb.ok{background:var(--ok-soft)}
+.fb.bad{background:var(--bad-soft)}
+.fb.warn{background:var(--accent-soft)}
+.fb strong{font-weight:600}
+.fb.ok strong{color:var(--ok)}
+.fb.bad strong{color:var(--bad)}
+.score{font:600 13px var(--f-mono);color:var(--muted)}
+.score b{color:var(--fg)}
+.guide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:920px){.guide{grid-template-columns:minmax(0,1fr)}}
+.guide section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+.guide h3{font:700 19px/1.1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;margin:0 0 10px}
+.guide ol,.guide ul{margin:0;padding-left:20px;display:grid;gap:7px;font-size:14px}
+.guide dl{margin:0;display:grid;gap:8px;font-size:14px}
+.guide dt{font-weight:600}
+.guide dd{margin:0;color:var(--muted)}
+.formula{margin-top:12px;font:500 13px var(--f-mono);background:var(--surface-2);border-radius:8px;padding:8px 10px}
+footer{color:var(--muted);font-size:12px}
+@media (max-width:600px){.hint{display:none}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="brandbar">
+    <img src="data:image/png;base64,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" alt="Logo jurusan Teknik Mesin" width="160" height="160">
+    <div class="ttl">
+      <div class="eyebrow">Teknik Mesin · SMKS 2 Triple J</div>
+      <h1>Dasar-Dasar Teknik Mesin</h1>
+    </div>
+    <div class="right">
+      <span class="dims">Dasar Kejuruan · Fase E</span>
+    </div>
+  </header>
+
+  <div class="top">
+    <div>
+      <h2 class="toolh">Alat Ukur Presisi: <span id="toolTitle">Jangka Sorong</span></h2>
+      <p class="sub" id="toolSub">Geser rahang, baca skala utama dan skala nonius, lalu uji kemampuan membacamu.</p>
+    </div>
+    <div class="seg big" role="group" aria-label="Pilih alat ukur">
+      <button type="button" id="tCaliper" aria-pressed="true">Jangka Sorong</button>
+      <button type="button" id="tMicro" aria-pressed="false">Mikrometer</button>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="row"><span class="label">Mode</span>
+      <div class="seg" role="group" aria-label="Pilih mode">
+        <button type="button" data-mode="latihan" aria-pressed="true">Latihan bebas</button>
+        <button type="button" data-mode="ukur" aria-pressed="false">Ukur benda kerja</button>
+        <button type="button" data-mode="baca" aria-pressed="false">Kuis baca skala</button>
+      </div>
+    </div>
+    <div class="row" id="precRow"><label class="label" for="prec">Ketelitian</label>
+      <select id="prec"><option value="0.05">0,05 mm (20 garis nonius)</option><option value="0.02">0,02 mm (50 garis nonius)</option></select>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="stage" id="stage">
+      <div class="labels" id="labels" aria-hidden="true"></div>
+      <div class="ov ov-tl">
+        <div class="spec" id="spec"><b>Jangka sorong</b>0–150 mm · 0,05 mm</div>
+        <div class="camtools">
+          <button class="btn small" type="button" id="vFull">Tampak penuh</button>
+          <button class="btn small" type="button" id="vScale">Fokus skala</button>
+          <button class="btn small" type="button" id="vLabels" aria-pressed="false">Label bagian</button>
+        </div>
+      </div>
+      <div class="ov ov-bl">
+        <div class="hint" id="hint">Seret rahang geser ke kiri/kanan. Seret area kosong untuk memutar tampilan, gulir untuk zoom.</div>
+        <div class="chip" id="contact" hidden>Belum menyentuh</div>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="card">
+        <h2>Lup skala <small id="magHint">seret untuk menggeser</small></h2>
+        <div class="mag-wrap"><canvas id="mag" aria-label="Pembesaran skala alat ukur"></canvas></div>
+        <p class="muted" id="magLegend" style="margin:0"></p>
+        <div class="row spread" id="zoomRow">
+          <span class="muted">Perbesaran</span>
+          <div class="row">
+            <button class="btn small" type="button" data-zoom="1" aria-pressed="true">1×</button>
+            <button class="btn small" type="button" data-zoom="2" aria-pressed="false">2×</button>
+            <button class="btn small" type="button" data-zoom="4" aria-pressed="false">4×</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="driveCard">
+        <h2>Penggerak <small id="lockNote"></small></h2>
+        <input type="range" id="rng" min="0" max="150" step="0.01" value="23.35" aria-label="Posisi rahang">
+        <div class="row" id="steps"></div>
+        <button class="btn primary" type="button" id="contactBtn" hidden>Rapatkan rahang</button>
+      </div>
+
+      <div class="card" id="readCard">
+        <h2>Hasil bacaan</h2>
+        <div class="readval" id="readval">23,35<small>mm</small></div>
+        <ul class="bd" id="bd"></ul>
+      </div>
+
+      <div class="card" id="quizCard" hidden>
+        <h2><span id="quizTitle">Soal</span> <span class="score" id="score">Skor <b>0</b>/0</span></h2>
+        <p class="muted" id="quizPrompt" style="margin:0"></p>
+        <form class="answer" id="ansForm">
+          <label for="ans"><input id="ans" inputmode="decimal" autocomplete="off" placeholder="contoh 23,35"><span>mm</span></label>
+          <button class="btn primary" type="submit" id="checkBtn">Periksa</button>
+        </form>
+        <div class="fb" id="fb" hidden></div>
+        <button class="btn" type="button" id="nextBtn">Soal baru</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="guide" id="guide"></div>
+  <footer>Model 3D disederhanakan untuk belajar membaca skala; proporsi bentuk tidak persis sama dengan alat sebenarnya.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const fmt=(v,d=2)=>v.toFixed(d).replace('.',',');
+const DEG=Math.PI/180;
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const state={
+  tool:'caliper', mode:'latihan', res:0.05,
+  R:{caliper:23.35, micro:7.78}, dR:{caliper:23.35, micro:7.78},
+  work:null, checked:false, score:{ok:0,total:0},
+  magOffset:null, magZoom:1, labels:false, dirtyMag:true
+};
+
+/* ---------- pembacaan ---------- */
+function vernier(){ return state.res===0.05 ? {N:20,span:39,labelEvery:2} : {N:50,span:49,labelEvery:5}; }
+function caliperRead(R){
+  const res=state.res, N=vernier().N;
+  let main=Math.floor(R+1e-9), k=Math.round((R-main)/res);
+  if(k>=N){main+=1;k=0;}
+  return {main,k,val:Math.round((main+k*res)*100)/100};
+}
+function microRead(R){
+  const r=Math.round(R*100)/100, whole=Math.floor(r+1e-9);
+  const half=(r-whole)>=0.5-1e-9;
+  const t=Math.round((r-whole-(half?0.5:0))*100);
+  return {whole,half,t,val:r};
+}
+function reading(tool,R){ return tool==='caliper'?caliperRead(R):microRead(R); }
+function breakdownHTML(tool,R){
+  if(tool==='caliper'){
+    const r=caliperRead(R);
+    return `<li><span>Skala utama (kiri angka 0 nonius)</span><b>${r.main} mm</b></li>
+      <li><span>Nonius segaris: garis ke-${r.k} × ${fmt(state.res)}</span><b>${fmt(r.k*state.res)} mm</b></li>
+      <li class="total"><span>Hasil ukur</span><b>${fmt(r.val)} mm</b></li>`;
+  }
+  const r=microRead(R);
+  return `<li><span>Sleeve atas (mm penuh)</span><b>${r.whole} mm</b></li>
+    <li><span>Sleeve bawah (setengah mm)</span><b>${r.half?'+ 0,50 mm':'0 mm'}</b></li>
+    <li><span>Thimble: garis ${r.t} × 0,01</span><b>${fmt(r.t*0.01)} mm</b></li>
+    <li class="total"><span>Hasil ukur</span><b>${fmt(r.val)} mm</b></li>`;
+}
+
+/* ---------- 3D ---------- */
+const stage=$('#stage');
+let renderer=null, scene, camera, controls, glOK=true;
+try{
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.setClearColor(0x000000,0);
+  stage.prepend(renderer.domElement);
+}catch(e){ glOK=false; }
+if(!glOK || typeof THREE==='undefined'){
+  glOK=false;
+  const d=document.createElement('div'); d.className='nogl';
+  d.textContent='Tampilan 3D tidak dapat dimuat di perangkat ini. Lup skala, penggerak, dan kuis di panel tetap bisa dipakai.';
+  stage.prepend(d);
+}
+
+let caliper,micro,slide,thimble,spindle,vernierPlane,workMesh=null,maxAniso=1;
+const M={};
+function mat(c,m,r){ return new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r}); }
+function box(w,h,d,mt,x,y,z){ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mt); o.position.set(x,y,z); return o; }
+function cylX(r1,r2,len,mt,xc,y,z,seg=48){ const g=new THREE.CylinderGeometry(r2,r1,len,seg); g.rotateZ(-Math.PI/2); const o=new THREE.Mesh(g,mt); o.position.set(xc,y,z); return o; }
+function extrude(pts,depth,mt,z){ const s=new THREE.Shape(); s.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length;i++) s.lineTo(pts[i][0],pts[i][1]); const g=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:false}); const o=new THREE.Mesh(g,mt); o.position.z=z; return o; }
+function canvasTex(w,h,draw){ const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'); draw(g,w,h); const t=new THREE.CanvasTexture(c); t.anisotropy=maxAniso; return t; }
+const FONT='Arial, Helvetica, sans-serif';
+
+function mainScaleTex(){
+  const xmin=-12,wmm=172,hmm=12.4,ppm=22;
+  return canvasTex(Math.round(wmm*ppm),Math.round(hmm*ppm),(g,w,h)=>{
+    const gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#c4ccd5'); gr.addColorStop(1,'#e4e9ee'); g.fillStyle=gr; g.fillRect(0,0,w,h);
+    g.fillStyle='#15191d';
+    for(let m=0;m<=150;m++){ const x=(m-xmin)*ppm, L=(m%10===0?5.2:m%5===0?3.7:2.5)*ppm; g.fillRect(x-2,h-L,4,L); }
+    g.textAlign='center'; g.font=`bold ${4*ppm}px ${FONT}`;
+    for(let cm=0;cm<=15;cm++) g.fillText(String(cm),(cm*10-xmin)*ppm,h-6.1*ppm);
+    g.font=`bold ${2*ppm}px ${FONT}`; g.fillText('mm',(-6.5-xmin)*ppm,h-1*ppm);
+  });
+}
+function vernierTex(){
+  const {N,span,labelEvery}=vernier(), xmin=-4,wmm=60,hmm=10,ppm=22;
+  return canvasTex(wmm*ppm,hmm*ppm,(g,w,h)=>{
+    const gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#eef1f4'); gr.addColorStop(1,'#c9d0d8'); g.fillStyle=gr; g.fillRect(0,0,w,h);
+    g.fillStyle='#15191d'; g.textAlign='center'; g.font=`bold ${2.5*ppm}px ${FONT}`;
+    for(let i=0;i<=N;i++){ const x=(i*span/N-xmin)*ppm, long=i%labelEvery===0, L=(long?3.4:2.2)*ppm; g.fillRect(x-1.8,0,3.6,L); if(long) g.fillText(String(i/labelEvery),x,6.3*ppm); }
+    g.textAlign='right'; g.font=`bold ${1.7*ppm}px ${FONT}`; g.fillText(`${fmt(state.res)} mm`,w-1*ppm,h-0.9*ppm);
+  });
+}
+function sleeveTex(){
+  const xmin=44,wmm=34,hmm=4.4,ppm=34;
+  return canvasTex(wmm*ppm,Math.round(hmm*ppm),(g,w,h)=>{
+    g.fillStyle='#d9dee4'; g.fillRect(0,0,w,h);
+    const mid=h/2; g.fillStyle='#15191d'; g.fillRect(0,mid-0.07*ppm,w,0.14*ppm);
+    g.textAlign='center'; g.font=`bold ${0.95*ppm}px ${FONT}`;
+    for(let t=0;t<=25;t++){ const x=(47+t-xmin)*ppm; g.fillRect(x-0.06*ppm,mid-1.0*ppm,0.12*ppm,1.0*ppm); if(t%5===0) g.fillText(String(t),x,mid-1.12*ppm);
+      if(t<25){ const xh=(47+t+0.5-xmin)*ppm; g.fillRect(xh-0.06*ppm,mid,0.12*ppm,0.8*ppm); } }
+  });
+}
+function textTex(txt,size=128,color='#111'){
+  return canvasTex(size,size,(g,w,h)=>{ g.fillStyle=color; g.textAlign='center'; g.textBaseline='middle'; g.font=`bold ${size*0.62}px ${FONT}`; g.fillText(txt,w/2,h/2); });
+}
+
+function buildScene(){
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(30,1,1,5000);
+  maxAniso=renderer.capabilities.getMaxAnisotropy();
+  scene.add(new THREE.AmbientLight(0xffffff,0.55));
+  scene.add(new THREE.HemisphereLight(0xffffff,0x3a4652,0.45));
+  const d1=new THREE.DirectionalLight(0xffffff,0.85); d1.position.set(80,140,180); scene.add(d1);
+  const d2=new THREE.DirectionalLight(0xdfe8ff,0.35); d2.position.set(-120,-60,90); scene.add(d2);
+
+  M.steel=mat(0xb9c1ca,0.45,0.32); M.steelD=mat(0x7f8994,0.5,0.42); M.frame=mat(0x3d4f62,0.25,0.6);
+  M.carb=mat(0x8a929b,0.6,0.25); M.work=mat(0xc8963a,0.55,0.35); M.dark=mat(0x2a3037,0.2,0.6);
+  M.tick=new THREE.MeshBasicMaterial({color:0x121417});
+
+  /* Jangka sorong */
+  caliper=new THREE.Group(); scene.add(caliper);
+  caliper.add(box(179,16,3.5,M.steel,75.5,8,0));
+  const mp=new THREE.Mesh(new THREE.PlaneGeometry(172,12.4),new THREE.MeshStandardMaterial({map:mainScaleTex(),metalness:0.25,roughness:0.5}));
+  mp.position.set(74,9.8,1.76); caliper.add(mp);
+  caliper.add(extrude([[-14,0.5],[0,0.5],[0,-48],[-2.5,-48],[-14,-14]],3.5,M.steel,-1.75));
+  caliper.add(extrude([[-10,15.5],[5,15.5],[6,44],[0,44],[0,32],[-10,20]],1.6,M.steel,0.2));
+  caliper.add(box(4,16.5,3.6,M.steelD,163,8,0)); // ujung batang
+  slide=new THREE.Group(); caliper.add(slide);
+  slide.add(box(60,13,1.45,M.steel,26,-2.5,2.475));
+  slide.add(box(60,25,1.45,M.steel,26,3.5,-2.475));
+  slide.add(box(60,2.6,6.4,M.steel,26,17.3,0));
+  slide.add(box(60,9,3.5,M.steel,26,-4.5,0));
+  slide.add(extrude([[0,-8.5],[16,-8.5],[16,-14],[2.5,-48],[0,-48]],3.5,M.steel,-1.75));
+  slide.add(extrude([[-5,15.5],[14,15.5],[14,20],[0,32],[0,44],[-6,44]],1.6,M.steel,-1.8));
+  vernierPlane=new THREE.Mesh(new THREE.PlaneGeometry(60,10),new THREE.MeshStandardMaterial({map:vernierTex(),metalness:0.25,roughness:0.5}));
+  vernierPlane.position.set(26,-1,3.21); slide.add(vernierPlane);
+  const screw=new THREE.Mesh(new THREE.CylinderGeometry(2.6,2.6,3.4,24),M.steelD); screw.position.set(20,20.3,0); slide.add(screw);
+  const head=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,1.6,24),M.dark); head.position.set(20,22.6,0); slide.add(head);
+  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(4,4,5,20),M.steelD); wheel.rotation.x=Math.PI/2; wheel.position.set(42,-12.5,0); slide.add(wheel);
+
+  /* Mikrometer */
+  micro=new THREE.Group(); scene.add(micro);
+  const fs=new THREE.Shape(); fs.moveTo(-17.5,7); fs.lineTo(-17.5,0); fs.absarc(12.5,0,30,Math.PI,2*Math.PI,false); fs.lineTo(42.5,7); fs.lineTo(34.5,7); fs.lineTo(34.5,0); fs.absarc(12.5,0,22,0,Math.PI,true); fs.lineTo(-9.5,7); fs.lineTo(-17.5,7);
+  const fr=new THREE.Mesh(new THREE.ExtrudeGeometry(fs,{depth:6,bevelEnabled:false}),M.frame); fr.position.z=-3; micro.add(fr);
+  const plate=new THREE.Mesh(new THREE.PlaneGeometry(16,5),new THREE.MeshBasicMaterial({map:canvasTex(512,160,(g,w,h)=>{g.fillStyle='#3d4f62';g.fillRect(0,0,w,h);g.fillStyle='#e8edf2';g.textAlign='center';g.textBaseline='middle';g.font=`bold 58px ${FONT}`;g.fillText('0–25 mm',w/2,h*0.36);g.font=`bold 40px ${FONT}`;g.fillText('0,01 mm',w/2,h*0.78);})}));
+  plate.position.set(12.5,-26,3.02); micro.add(plate);
+  micro.add(cylX(3.2,3.2,9.5,M.carb,-4.75,3.5,0));
+  micro.add(cylX(5.5,5.5,8,M.steel,38.5,3.5,0));
+  micro.add(cylX(4.5,4.5,37.5,M.steel,61.25,3.5,0));
+  const sp=new THREE.Mesh(new THREE.PlaneGeometry(34,4.4),new THREE.MeshStandardMaterial({map:sleeveTex(),metalness:0.2,roughness:0.5}));
+  sp.position.set(61,3.5,4.52); micro.add(sp);
+  const lock=new THREE.Mesh(new THREE.CylinderGeometry(1.6,1.6,4,16),M.steelD); lock.position.set(38.5,10.5,0); micro.add(lock);
+  const knob=new THREE.Mesh(new THREE.CylinderGeometry(2.6,2.6,1.6,16),M.dark); knob.position.set(38.5,13,0); micro.add(knob);
+  spindle=new THREE.Group(); micro.add(spindle);
+  spindle.add(cylX(3.2,3.2,47,M.carb,23.5,3.5,0));
+  thimble=new THREE.Group(); micro.add(thimble);
+  thimble.add(cylX(4.9,6,0.8,M.steel,0.4,0,0,64));
+  thimble.add(cylX(6,6,25.2,M.steel,13.4,0,0,64));
+  thimble.add(cylX(6.15,6.15,8,M.steelD,21.5,0,0,48));
+  thimble.add(cylX(3.6,3.6,3,M.steelD,27.5,0,0,32));
+  thimble.add(cylX(4.2,4.2,5,M.steel,31.5,0,0,32));
+  for(let i=0;i<50;i++){
+    const phi=i*7.2*DEG, len=i%5===0?3.2:2, r=6.01;
+    const t=new THREE.Mesh(new THREE.BoxGeometry(len,0.13,0.06),M.tick);
+    t.position.set(0.9+len/2,r*Math.sin(phi),r*Math.cos(phi)); t.rotation.x=-phi; thimble.add(t);
+    if(i%5===0){
+      const p=new THREE.Mesh(new THREE.PlaneGeometry(1.7,1.7),new THREE.MeshBasicMaterial({map:textTex(String(i)),transparent:true,depthWrite:false}));
+      p.position.set(5.7,(r+0.02)*Math.sin(phi),(r+0.02)*Math.cos(phi)); p.rotation.x=-phi; thimble.add(p);
+    }
+  }
+  thimble.position.set(47,3.5,0);
+}
+
+const PARTS={
+  caliper:[
+    ['Rahang ukur luar (tetap)',()=>[-6,-48,1.8],true],
+    ['Rahang ukur luar (geser)',R=>[R+8,-48,1.8],true],
+    ['Rahang ukur dalam',()=>[0,44,1]],
+    ['Skala utama',R=>[R<80?125:30,16,1.8]],
+    ['Skala nonius',R=>[R+30,-9,3.3],true],
+    ['Sekrup pengunci',R=>[R+20,23.4,0]],
+    ['Penggeser ibu jari',R=>[R+48,-16,2],true]
+  ],
+  micro:[
+    ['Rangka',()=>[12.5,-30,3],true],
+    ['Landasan (anvil)',()=>[-6,7,0]],
+    ['Spindel',R=>[(R+34.5)/2,6.7,0]],
+    ['Pengunci spindel',()=>[38.5,13.8,0]],
+    ['Sleeve (skala utama)',()=>[45,-1,4],true],
+    ['Thimble',R=>[47+R+14,-2.6,0],true],
+    ['Ratchet',R=>[47+R+31.5,7.7,0]]
+  ]
+};
+const labelBox=$('#labels'); let labelEls=[];
+function buildLabels(){
+  labelBox.innerHTML=''; labelEls=PARTS[state.tool].map(([name,,below])=>{ const d=document.createElement('div'); d.className='lbl'+(below?' below':''); d.textContent=name; labelBox.appendChild(d); return d; });
+  labelBox.hidden=!state.labels;
+}
+const v3=glOK?new THREE.Vector3():null;
+function updateLabels(w,h){
+  if(!state.labels) return;
+  const R=state.dR[state.tool];
+  PARTS[state.tool].forEach(([,f],i)=>{ const p=f(R); v3.set(p[0],p[1],p[2]).project(camera); const el=labelEls[i]; if(v3.z>1){el.hidden=true;return;} el.hidden=false; el.style.left=((v3.x+1)/2*w)+'px'; el.style.top=((1-v3.y)/2*h)+'px'; });
+}
+
+/* benda kerja */
+function clearWork(){ if(workMesh){ workMesh.parent&&workMesh.parent.remove(workMesh); workMesh.geometry.dispose(); workMesh=null; } state.work=null; }
+function makeWork(){
+  clearWork();
+  const rnd=(a,b,s)=>Math.round(Math.round((a+Math.random()*(b-a))/s)*s*100)/100;
+  let w;
+  if(state.tool==='caliper'){
+    const r=Math.random();
+    if(r<0.3) w={tool:'caliper',kind:'inner',shape:'ring',D:rnd(10,24,state.res),name:'diameter dalam ring'};
+    else if(r<0.65) w={tool:'caliper',kind:'outer',shape:'blok',D:rnd(6,38,state.res),name:'tebal blok baja'};
+    else w={tool:'caliper',kind:'outer',shape:'poros',D:rnd(6,38,state.res),name:'diameter poros'};
+  }else{
+    w=Math.random()<0.6?{tool:'micro',kind:'outer',shape:'pin',D:rnd(2,24,0.01),name:'diameter pin'}:{tool:'micro',kind:'outer',shape:'plat',D:rnd(1,22,0.01),name:'tebal plat'};
+  }
+  state.work=w;
+  if(glOK){
+    let g, parent=state.tool==='caliper'?caliper:micro, pos;
+    if(w.shape==='poros'){ g=new THREE.CylinderGeometry(w.D/2,w.D/2,16,64); g.rotateX(Math.PI/2); pos=[w.D/2,-30,0]; }
+    else if(w.shape==='blok'){ g=new THREE.BoxGeometry(w.D,16,14); pos=[w.D/2,-30,0]; }
+    else if(w.shape==='ring'){ const s=new THREE.Shape(); s.absarc(0,0,w.D/2+5,0,Math.PI*2,false); const hole=new THREE.Path(); hole.absarc(0,0,w.D/2,0,Math.PI*2,true); s.holes.push(hole); g=new THREE.ExtrudeGeometry(s,{depth:6,bevelEnabled:false,curveSegments:48}); g.translate(0,0,-3); pos=[w.D/2,38,0]; }
+    else if(w.shape==='pin'){ g=new THREE.CylinderGeometry(w.D/2,w.D/2,9,64); g.rotateX(Math.PI/2); pos=[w.D/2,3.5,0]; }
+    else { g=new THREE.BoxGeometry(w.D,13,10); pos=[w.D/2,3.5,0]; }
+    workMesh=new THREE.Mesh(g,M.work); workMesh.position.set(...pos); parent.add(workMesh);
+  }
+}
+function isContact(){ const w=state.work; return !!(w && w.tool===state.tool && Math.abs(state.R[state.tool]-w.D)<0.001); }
+
+/* kamera */
+let camAnim=null, stageW=1, stageH=1;
+function fitView(cx,cy,w,h,elev,instant){
+  if(!glOK) return;
+  const vt=Math.tan(camera.fov*DEG/2), aspect=stageW/stageH;
+  const dist=Math.max((h/2)/vt,(w/2)/(vt*aspect))*1.1;
+  const target=new THREE.Vector3(cx,cy,0), pos=new THREE.Vector3(cx,cy+dist*elev,dist);
+  if(instant||reduceMotion){ camera.position.copy(pos); controls.target.copy(target); controls.update(); camAnim=null; return; }
+  camAnim={t0:performance.now(),p0:camera.position.clone(),q0:controls.target.clone(),p1:pos,q1:target};
+}
+function viewFull(instant){ state.tool==='caliper'?fitView(76,-2,196,100,0.1,instant):fitView(37,-8,122,56,0.14,instant); }
+function viewScale(){ const R=state.R[state.tool]; state.tool==='caliper'?fitView(R+22,4,84,38,0.04):fitView(47+R-2,4,46,26,0.12); }
+
+/* ---------- lup skala (2D) ---------- */
+const mag=$('#mag'), mg=mag.getContext('2d'); let MW=300, MH=190;
+function sizeMag(){ const dpr=Math.min(window.devicePixelRatio||1,2); MW=mag.clientWidth; MH=mag.clientHeight; mag.width=Math.round(MW*dpr); mag.height=Math.round(MH*dpr); mg.setTransform(dpr,0,0,dpr,0,0); state.dirtyMag=true; }
+const HL='#e8590c';
+function showHL(){ return state.mode==='latihan'||state.checked; }
+function drawCaliperMag(R){
+  const g=mg, W=MW, H=MH, {N,span,labelEvery}=vernier(), s=span/N;
+  if(state.magOffset==null) state.magOffset=span/2;
+  const vw=(span+12)/state.magZoom, x0=R+state.magOffset-vw/2, ppm=W/vw, X=m=>(m-x0)*ppm, mid=Math.round(H*0.47);
+  let gr=g.createLinearGradient(0,0,0,mid); gr.addColorStop(0,'#bcc4cd'); gr.addColorStop(1,'#e6eaee'); g.fillStyle=gr; g.fillRect(0,0,W,mid);
+  g.fillStyle='#69737e'; g.fillRect(0,mid,W,H-mid);
+  const sx1=X(R-4), sx2=X(R+56);
+  gr=g.createLinearGradient(0,mid,0,H); gr.addColorStop(0,'#f1f4f6'); gr.addColorStop(1,'#c3cad2'); g.fillStyle=gr; g.fillRect(sx1,mid,sx2-sx1,H-mid);
+  g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(sx1,mid,sx2-sx1,1);
+  const lw=Math.max(1,Math.min(2.4,ppm*0.1));
+  const r=caliperRead(R), kk=Math.round((R-Math.floor(R+1e-9))/state.res), hlMain=Math.round(R+kk*s), hl=showHL();
+  g.textAlign='center'; g.textBaseline='alphabetic';
+  for(let m=Math.max(0,Math.floor(x0)-1); m<=Math.min(150,Math.ceil(x0+vw)+1); m++){
+    const x=X(m), L=m%10===0?H*0.3:m%5===0?H*0.21:H*0.14, on=hl&&m===hlMain;
+    g.fillStyle=on?HL:'#121519'; g.fillRect(x-(on?lw:lw/2),mid-L,on?lw*2:lw,L);
+    if(m%10===0){ g.font=`600 15px ${FONT}`; g.fillStyle='#121519'; g.fillText(String(m/10),x,mid-H*0.3-6); }
+  }
+  g.textAlign='center';
+  for(let i=0;i<=N;i++){
+    const x=X(R+i*s); if(x<-20||x>W+20) continue;
+    const long=i%labelEvery===0, L=long?H*0.24:H*0.15, on=hl&&i===kk;
+    g.fillStyle=on?HL:'#121519'; g.fillRect(x-(on?lw:lw/2),mid,on?lw*2:lw,L);
+    if(long){ g.font=`600 13px ${FONT}`; g.fillStyle=(i===0)?'#0b3d91':'#121519'; g.fillText(String(i/labelEvery),x,mid+H*0.24+15); }
+  }
+  if(hl){ const x=X(hlMain); g.strokeStyle='rgba(232,89,12,.35)'; g.lineWidth=Math.max(6,ppm*0.6); g.beginPath(); g.moveTo(x,mid-H*0.22); g.lineTo(x,mid+H*0.2); g.stroke(); }
+}
+function drawMicroMag(R){
+  const g=mg, W=MW, H=MH, mid=H/2, edge=Math.round(W*0.56), ppm=edge/6.6;
+  g.fillStyle='#27303a'; g.fillRect(0,0,W,H);
+  const sh=H*0.24; let gr=g.createLinearGradient(0,mid-sh,0,mid+sh); gr.addColorStop(0,'#8e98a3'); gr.addColorStop(0.5,'#eef1f4'); gr.addColorStop(1,'#8e98a3'); g.fillStyle=gr; g.fillRect(0,mid-sh,edge,sh*2);
+  g.fillStyle='#121519'; g.fillRect(0,mid-0.8,edge,1.6);
+  g.textAlign='center'; g.textBaseline='alphabetic'; g.font=`600 13px ${FONT}`;
+  const r=microRead(R), hl=showHL();
+  for(let t=Math.max(0,Math.floor(R-edge/ppm)-1); t<=R+1e-6; t++){
+    const x=edge-(R-t)*ppm; const on=hl&&t===r.whole;
+    g.fillStyle=on?HL:'#121519'; g.fillRect(x-(on?1.4:0.8),mid-sh*0.62,on?2.8:1.6,sh*0.62);
+    if(t%5===0){ g.fillStyle='#121519'; g.fillText(String(t),x,mid-sh*0.68); }
+  }
+  for(let t=Math.max(0,Math.floor(R-edge/ppm)-1); t+0.5<=R+1e-6; t++){
+    const x=edge-(R-t-0.5)*ppm, on=hl&&r.half&&t===r.whole;
+    g.fillStyle=on?HL:'#121519'; g.fillRect(x-(on?1.4:0.8),mid,on?2.8:1.6,sh*0.5);
+  }
+  const th=H*0.46; gr=g.createLinearGradient(0,mid-th,0,mid+th); gr.addColorStop(0,'#59636e'); gr.addColorStop(0.5,'#f2f4f6'); gr.addColorStop(1,'#59636e'); g.fillStyle=gr; g.fillRect(edge,mid-th,W-edge,th*2);
+  g.fillStyle='rgba(0,0,0,.18)'; g.fillRect(edge,mid-th,5,th*2);
+  const theta=(((R%0.5)+0.5)%0.5)/0.01, rt=th*0.97, hlIdx=Math.round(theta)%50;
+  g.textAlign='left'; g.textBaseline='middle';
+  for(let i=Math.floor(theta)-14;i<=Math.ceil(theta)+14;i++){
+    const phi=(i-theta)*7.2*DEG; if(Math.abs(phi)>1.42) continue;
+    const y=mid-rt*Math.sin(phi), c=Math.cos(phi), idx=((i%50)+50)%50, L=idx%5===0?26:15, on=hl&&idx===hlIdx;
+    g.globalAlpha=Math.max(0.3,c); g.fillStyle=on?HL:'#121519'; const hgt=Math.max(0.6,(on?2.8:1.5)*c); g.fillRect(edge+6,y-hgt/2,L,hgt);
+    if(idx%5===0){ g.save(); g.translate(edge+6+L+5,y); g.scale(1,Math.max(0.05,c)); g.font=`600 14px ${FONT}`; g.fillStyle='#121519'; g.fillText(String(idx),0,0); g.restore(); }
+    g.globalAlpha=1;
+  }
+  g.textBaseline='alphabetic'; g.font=`600 11px ${FONT}`; g.fillStyle='#d6dce2'; g.textAlign='left'; g.fillText('sleeve',8,mid+sh+16); g.fillText('garis acuan',8,mid-sh-8);
+  g.textAlign='right'; g.fillStyle='#d6dce2'; g.fillText('thimble',W-8,14);
+}
+function drawMag(){ mg.clearRect(0,0,MW,MH); const R=state.dR[state.tool]; state.tool==='caliper'?drawCaliperMag(R):drawMicroMag(R); }
+
+let pan=null;
+mag.addEventListener('pointerdown',e=>{ if(state.tool!=='caliper') return; pan={x:e.clientX,o:state.magOffset}; mag.setPointerCapture(e.pointerId); mag.style.cursor='grabbing'; });
+mag.addEventListener('pointermove',e=>{ if(!pan) return; const {span}=vernier(); const vw=(span+12)/state.magZoom, ppm=MW/vw; state.magOffset=Math.max(-25,Math.min(span+25,pan.o-(e.clientX-pan.x)/ppm)); state.dirtyMag=true; });
+const endPan=()=>{ pan=null; mag.style.cursor=''; }; mag.addEventListener('pointerup',endPan); mag.addEventListener('pointercancel',endPan);
+$$('[data-zoom]').forEach(b=>b.addEventListener('click',()=>{ state.magZoom=+b.dataset.zoom; $$('[data-zoom]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); state.dirtyMag=true; }));
+
+/* ---------- kontrol ---------- */
+const rng=$('#rng');
+function movable(){ return state.mode!=='baca'; }
+function setR(v){
+  const t=state.tool, max=t==='caliper'?150:25;
+  v=Math.max(0,Math.min(max,v));
+  const w=state.work;
+  if(w&&w.tool===t){ v=w.kind==='inner'?Math.min(v,w.D):Math.max(v,w.D); }
+  v=Math.round(v*100)/100;
+  state.R[t]=v; rng.value=v;
+  if(reduceMotion) state.dR[t]=v;
+  updateReadout(); updateContact();
+}
+rng.addEventListener('input',()=>{ if(movable()) setR(parseFloat(rng.value)); });
+function buildSteps(){
+  const box=$('#steps'); box.innerHTML='';
+  const st=state.tool==='caliper'?[[-1,'− 1 mm'],[-state.res,'− '+fmt(state.res)],[state.res,'+ '+fmt(state.res)],[1,'+ 1 mm']]:[[-0.5,'− 0,50'],[-0.01,'− 0,01'],[0.01,'+ 0,01'],[0.5,'+ 0,50']];
+  st.forEach(([d,l])=>{ const b=document.createElement('button'); b.type='button'; b.className='btn small'; b.textContent=l; b.addEventListener('click',()=>{ if(movable()) setR(state.R[state.tool]+d); }); box.appendChild(b); });
+}
+$('#contactBtn').addEventListener('click',()=>{ const w=state.work; if(w&&w.tool===state.tool) setR(w.D); });
+
+function updateReadout(){
+  const R=state.R[state.tool];
+  $('#readval').innerHTML=`${fmt(reading(state.tool,R).val)}<small>mm</small>`;
+  $('#bd').innerHTML=breakdownHTML(state.tool,R);
+  state.dirtyMag=true;
+}
+function updateContact(){
+  const chip=$('#contact');
+  if(state.mode!=='ukur'||!state.work){ chip.hidden=true; if(glOK) M.work.emissive.setHex(0); return; }
+  const c=isContact(); chip.hidden=false; chip.classList.toggle('ok',c);
+  chip.textContent=c?(state.tool==='caliper'?'Rahang menyentuh benda kerja':'Spindel menyentuh benda kerja'):'Belum menyentuh benda kerja';
+  if(glOK) M.work.emissive.setHex(c?0x1c4a26:0x000000);
+}
+
+/* ---------- kuis ---------- */
+const rand=(a,b,s)=>Math.round(Math.round((a+Math.random()*(b-a))/s)*s*100)/100;
+function newQuestion(){
+  state.checked=false; $('#fb').hidden=true; $('#ans').value=''; $('#checkBtn').disabled=false; state.magOffset=null;
+  if(state.mode==='ukur'){
+    makeWork(); const w=state.work, t=state.tool;
+    state.R[t]=w.kind==='inner'?Math.max(0,w.D-6):Math.min(t==='caliper'?150:25,w.D+(t==='caliper'?10:2.5));
+    setR(state.R[t]);
+    $('#quizTitle').textContent='Ukur benda kerja';
+    $('#quizPrompt').textContent=`Ukur ${w.name}. ${t==='caliper'?(w.kind==='inner'?'Buka rahang ukur dalam':'Tutup rahang ukur luar'):'Putar thimble'} sampai menyentuh benda (atau tekan tombol ${t==='caliper'?'Rapatkan rahang':'Putar ratchet'}), lalu baca skalanya.`;
+  }else{
+    clearWork(); const t=state.tool;
+    setR(t==='caliper'?rand(1,140,state.res):rand(0.5,24.9,0.01));
+    $('#quizTitle').textContent='Kuis baca skala';
+    $('#quizPrompt').textContent='Posisi alat dikunci. Baca skala pada lup atau tampilan 3D, lalu tulis hasilnya.';
+  }
+  updateContact(); state.dirtyMag=true;
+}
+$('#nextBtn').addEventListener('click',newQuestion);
+$('#ansForm').addEventListener('submit',e=>{
+  e.preventDefault(); if(state.checked) return;
+  const fb=$('#fb'), raw=$('#ans').value.trim().replace(/mm/i,'').replace(',','.'), v=parseFloat(raw);
+  if(!raw||isNaN(v)){ fb.className='fb warn'; fb.innerHTML='Tulis angka hasil bacaan dalam mm, misalnya <strong>23,35</strong>.'; fb.hidden=false; return; }
+  if(state.mode==='ukur'&&!isContact()){ fb.className='fb warn'; fb.innerHTML=`<span>${state.tool==='caliper'?'Rahang':'Spindel'} belum menyentuh benda kerja. Rapatkan dulu, baru baca skalanya.</span>`; fb.hidden=false; return; }
+  const R=state.R[state.tool], ans=reading(state.tool,R).val, ok=Math.abs(v-ans)<0.0005;
+  state.score.total++; if(ok) state.score.ok++;
+  $('#score').innerHTML=`Skor <b>${state.score.ok}</b>/${state.score.total}`;
+  fb.className='fb '+(ok?'ok':'bad');
+  fb.innerHTML=(ok?`<span><strong>Tepat.</strong> Hasil bacaan ${fmt(ans)} mm.</span>`:`<span><strong>Belum tepat.</strong> Jawabanmu ${fmt(v)} mm, hasil yang benar ${fmt(ans)} mm.</span>`)+`<ul class="bd">${breakdownHTML(state.tool,R)}</ul>`;
+  fb.hidden=false; state.checked=true; $('#checkBtn').disabled=true; state.dirtyMag=true;
+});
+
+/* ---------- panduan ---------- */
+const GUIDE={
+  caliper:`<section><h3>Cara membaca</h3><ol>
+    <li>Rapatkan rahang ke benda kerja dengan tekanan ringan, lalu kencangkan sekrup pengunci.</li>
+    <li>Baca skala utama: angka milimeter tepat di sebelah kiri garis 0 nonius.</li>
+    <li>Cari satu garis nonius yang paling segaris dengan salah satu garis skala utama.</li>
+    <li>Kalikan urutan garis itu dengan ketelitian, lalu jumlahkan dengan bacaan skala utama.</li></ol>
+    <div class="formula">Hasil = skala utama + (n × ketelitian)</div></section>
+    <section><h3>Bagian alat</h3><dl>
+    <div><dt>Rahang ukur luar</dt><dd>Mengukur diameter luar poros dan tebal benda.</dd></div>
+    <div><dt>Rahang ukur dalam</dt><dd>Mengukur diameter lubang dan lebar alur.</dd></div>
+    <div><dt>Skala utama &amp; skala nonius</dt><dd>Skala utama dalam mm pada batang; nonius pada rahang geser membagi 1 mm menjadi 20 atau 50 bagian.</dd></div>
+    <div><dt>Sekrup pengunci</dt><dd>Menahan rahang geser agar posisi tidak berubah saat dibaca.</dd></div></dl></section>
+    <section><h3>Tips di bengkel</h3><ul>
+    <li>Bersihkan permukaan rahang dan benda kerja dari geram dan oli.</li>
+    <li>Periksa titik nol: saat rahang dirapatkan, garis 0 nonius harus segaris dengan 0 skala utama.</li>
+    <li>Baca dengan mata tegak lurus skala agar tidak terjadi kesalahan paralaks.</li>
+    <li>Jangan mengukur benda yang masih berputar di mesin atau masih panas.</li></ul></section>`,
+  micro:`<section><h3>Cara membaca</h3><ol>
+    <li>Putar thimble sampai spindel hampir menyentuh benda, lalu putar ratchet sampai berbunyi 2–3 klik.</li>
+    <li>Baca skala sleeve atas: milimeter penuh terakhir yang terlihat di kiri tepi thimble.</li>
+    <li>Periksa skala sleeve bawah: bila garis setengah mm sesudahnya terlihat, tambahkan 0,50 mm.</li>
+    <li>Baca garis thimble yang segaris dengan garis acuan sleeve, kalikan 0,01 mm, lalu jumlahkan.</li></ol>
+    <div class="formula">Hasil = sleeve atas + sleeve bawah + (n × 0,01)</div></section>
+    <section><h3>Bagian alat</h3><dl>
+    <div><dt>Landasan &amp; spindel</dt><dd>Dua muka ukur yang menjepit benda kerja.</dd></div>
+    <div><dt>Sleeve</dt><dd>Skala utama: garis atas tiap 1 mm, garis bawah tiap 0,5 mm.</dd></div>
+    <div><dt>Thimble</dt><dd>50 garis keliling; satu putaran penuh menggeser spindel 0,5 mm (pitch ulir).</dd></div>
+    <div><dt>Ratchet &amp; pengunci</dt><dd>Ratchet menjaga tekanan ukur tetap sama; pengunci menahan spindel.</dd></div></dl></section>
+    <section><h3>Tips di bengkel</h3><ul>
+    <li>Periksa nol dengan ratchet sebelum mengukur; landasan dan spindel harus bersih.</li>
+    <li>Jangan memutar thimble langsung saat sudah kontak. Gunakan ratchet.</li>
+    <li>Pegang rangka di bagian pelat isolasi agar panas tangan tidak memuaikan rangka.</li>
+    <li>Simpan dengan spindel sedikit terbuka dan pengunci dilepas.</li></ul></section>`
+};
+
+/* ---------- mode & alat ---------- */
+function applyTool(){
+  const t=state.tool, cal=t==='caliper';
+  $('#tCaliper').setAttribute('aria-pressed',String(cal)); $('#tMicro').setAttribute('aria-pressed',String(!cal));
+  $('#toolTitle').textContent=cal?'Jangka Sorong':'Mikrometer';
+  $('#toolSub').textContent=cal?'Geser rahang, baca skala utama dan skala nonius, lalu uji kemampuan membacamu.':'Putar thimble, baca skala sleeve dan thimble, lalu uji kemampuan membacamu.';
+  $('#spec').innerHTML=cal?`<b>Jangka sorong</b>0–150 mm · ${fmt(state.res)} mm`:'<b>Mikrometer luar</b>0–25 mm · 0,01 mm · pitch 0,5 mm';
+  $('#precRow').hidden=!cal; $('#zoomRow').hidden=!cal;
+  $('#magHint').textContent=cal?'seret untuk menggeser':'dibesarkan ±6×';
+  $('#magLegend').textContent=cal?'Atas: skala utama (angka = cm, garis = mm). Bawah: skala nonius.':'Kiri: sleeve (atas tiap 1 mm, bawah tiap 0,5 mm). Kanan: thimble 50 garis.';
+  $('#hint').textContent=cal?'Seret rahang geser ke kiri/kanan. Seret area kosong untuk memutar tampilan, gulir untuk zoom.':'Seret thimble untuk memutarnya. Seret area kosong untuk memutar tampilan, gulir untuk zoom.';
+  $('#contactBtn').textContent=cal?'Rapatkan rahang':'Putar ratchet sampai kontak';
+  rng.max=cal?150:25; rng.setAttribute('aria-label',cal?'Posisi rahang geser':'Bukaan spindel');
+  $('#guide').innerHTML=GUIDE[t];
+  if(glOK){ caliper.visible=cal; micro.visible=!cal; }
+  buildSteps(); buildLabels(); state.magOffset=null;
+}
+function applyMode(){
+  const m=state.mode;
+  $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));
+  $('#readCard').hidden=m!=='latihan'; $('#quizCard').hidden=m==='latihan';
+  $('#contactBtn').hidden=m!=='ukur';
+  const lock=m==='baca'; rng.disabled=lock; $$('#steps button').forEach(b=>b.disabled=lock);
+  $('#lockNote').textContent=lock?'terkunci selama kuis':'';
+  if(m==='latihan'){ clearWork(); state.checked=false; setR(state.R[state.tool]); updateContact(); }
+  else newQuestion();
+  state.dirtyMag=true;
+}
+$('#tCaliper').addEventListener('click',()=>{ if(state.tool==='caliper') return; clearWork(); state.tool='caliper'; applyTool(); applyMode(); viewFull(); });
+$('#tMicro').addEventListener('click',()=>{ if(state.tool==='micro') return; clearWork(); state.tool='micro'; applyTool(); applyMode(); viewFull(); });
+$$('[data-mode]').forEach(b=>b.addEventListener('click',()=>{ state.mode=b.dataset.mode; applyMode(); }));
+$('#prec').addEventListener('change',e=>{
+  state.res=parseFloat(e.target.value);
+  if(glOK){ vernierPlane.material.map.dispose(); vernierPlane.material.map=vernierTex(); vernierPlane.material.needsUpdate=true; }
+  applyTool(); applyMode();
+});
+$('#vFull').addEventListener('click',()=>viewFull());
+$('#vScale').addEventListener('click',viewScale);
+$('#vLabels').addEventListener('click',e=>{ state.labels=!state.labels; e.currentTarget.setAttribute('aria-pressed',String(state.labels)); labelBox.hidden=!state.labels; });
+
+/* ---------- interaksi 3D ---------- */
+if(glOK){
+  buildScene();
+  const el=renderer.domElement, ray=new THREE.Raycaster(), ndc=new THREE.Vector2(); let drag=null;
+  const pick=e=>{ const r=el.getBoundingClientRect(); ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1); ray.setFromCamera(ndc,camera); return ray.intersectObjects(state.tool==='caliper'?[slide]:[thimble,spindle],true)[0]; };
+  el.addEventListener('pointerdown',e=>{
+    if(!movable()) return; const hit=pick(e); if(!hit) return;
+    const r=el.getBoundingClientRect(), a=hit.point.clone().project(camera), b=hit.point.clone().add(new THREE.Vector3(1,0,0)).project(camera);
+    const vx=(b.x-a.x)*r.width/2, vy=-(b.y-a.y)*r.height/2;
+    drag={x:e.clientX,y:e.clientY,R:state.R[state.tool],vx,vy,l2:Math.max(1e-6,vx*vx+vy*vy)};
+    controls.enabled=false; el.setPointerCapture(e.pointerId); stage.classList.add('dragging'); e.preventDefault();
+  });
+  el.addEventListener('pointermove',e=>{
+    if(drag){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; let mm=(dx*drag.vx+dy*drag.vy)/drag.l2; if(state.tool==='micro') mm+=(-dy/220)*0.5; setR(drag.R+mm); return; }
+    if(e.pointerType==='mouse'&&e.buttons===0) stage.classList.toggle('can-drag',movable()&&!!pick(e));
+  });
+  const endDrag=()=>{ if(!drag) return; drag=null; controls.enabled=true; stage.classList.remove('dragging'); };
+  el.addEventListener('pointerup',endDrag); el.addEventListener('pointercancel',endDrag);
+  controls=new THREE.OrbitControls(camera,el);
+  controls.enableDamping=true; controls.dampingFactor=0.12; controls.screenSpacePanning=true; controls.minDistance=25; controls.maxDistance=900;
+}
+
+function resize(){
+  if(glOK){ stageW=stage.clientWidth||1; stageH=stage.clientHeight||1; renderer.setSize(stageW,stageH,false); camera.aspect=stageW/stageH; camera.updateProjectionMatrix(); }
+  sizeMag();
+}
+new ResizeObserver(resize).observe(stage);
+new ResizeObserver(sizeMag).observe(mag);
+
+function loop(now){
+  requestAnimationFrame(loop);
+  for(const t of ['caliper','micro']){ const d=state.R[t]-state.dR[t]; if(Math.abs(d)>0.0004){ state.dR[t]+=d*0.22; if(t===state.tool) state.dirtyMag=true; } else if(d!==0){ state.dR[t]=state.R[t]; if(t===state.tool) state.dirtyMag=true; } }
+  if(state.dirtyMag){ drawMag(); state.dirtyMag=false; }
+  if(!glOK) return;
+  slide.position.x=state.dR.caliper;
+  const Rm=state.dR.micro; spindle.position.x=Rm; thimble.position.x=47+Rm; thimble.rotation.x=Rm/0.5*Math.PI*2;
+  if(camAnim){ let k=Math.min(1,(now-camAnim.t0)/450); k=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; camera.position.lerpVectors(camAnim.p0,camAnim.p1,k); controls.target.lerpVectors(camAnim.q0,camAnim.q1,k); if(k>=1) camAnim=null; }
+  controls.update(); renderer.render(scene,camera); updateLabels(stageW,stageH);
+}
+
+resize(); applyTool(); applyMode(); viewFull(true);
+requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
