@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi 3D Sensor: dari Keseharian ke Pabrik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#e3e8ec; --ink:#14202b; --muted:#56636e; --line:#d2dae0; --soft:#eef2f5;
+  --accent:#0a62a8; --yellow:#f3b52f; --ok:#24834b; --okbg:#eef8f1; --bad:#bb3a2c; --badbg:#fdf0ee; --warn:#b8650f; --warnbg:#fff5e6;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+header.top{background:#171f28;color:#e6ebf0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #2d3946}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand img{width:44px;height:44px;flex:none}
+.eyebrow2{font:600 12px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+h1{margin:2px 0 0;font:700 24px/1.1 var(--f-display);letter-spacing:.01em}
+.meta{display:grid;justify-items:end;gap:4px;text-align:right;flex:none}
+.dims{font:500 12px var(--f-mono);color:var(--yellow);border:1px solid #4a3d18;border-radius:4px;padding:3px 7px;white-space:nowrap}
+.guru{font-size:12.5px;color:#c3ccd5}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(380px,1fr);gap:16px;padding:16px;max-width:1440px;margin:0 auto;align-items:start}
+.stage{position:sticky;top:12px}
+.viewer{position:relative;height:min(74vh,660px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(#eef2f5,#c9d2da)}
+#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;font:600 12px/1.25 var(--f-body);background:rgba(20,32,43,.88);color:#fff;border-radius:7px;padding:3px 7px;white-space:nowrap;text-align:center}
+.lbl small{display:block;font:500 11px var(--f-mono);color:#f3d36a}
+.lbl.pos{background:#c42b22}.lbl.neg{background:#23272c}.lbl.big{font-size:14px;padding:5px 10px;background:#0a62a8}
+.lbl.hot{background:#b8321f}
+.hud{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.tool{border:1px solid var(--line);background:rgba(251,252,253,.94);padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+#toast{position:absolute;right:10px;top:52px;z-index:5;width:min(calc(100% - 20px),380px);display:grid;gap:6px;pointer-events:none}
+.tst{background:var(--ink);color:#fff;padding:9px 13px;border-radius:8px;font-size:13.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.22);border-left:4px solid #4aa3e0;animation:tin .25s ease-out}
+.tst b{display:block}.tst.bad{border-left-color:#ff5a45}.tst.ok{border-left-color:#4cc47e}.tst.warn{border-left-color:#f3b52f}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+.vchip{position:absolute;left:10px;bottom:10px;background:rgba(20,32,43,.92);color:#e6ebf0;border-radius:8px;padding:7px 11px;font:600 13px var(--f-mono);display:flex;gap:14px;flex-wrap:wrap}
+.vchip b{color:var(--yellow);font-size:16px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#dfe5ea;color:var(--muted);font-weight:600;text-align:center;padding:20px}
+.panel{min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#d6dde4;border-radius:10px;padding:4px;margin-bottom:12px}
+.tabs button{border:0;background:transparent;border-radius:7px;padding:7px 2px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.2}
+.tabs button .n{display:block;font:600 11px var(--f-mono);color:#8a97a2}
+.tabs button.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,32,43,.12)}
+.tabs button.done .n::after{content:" ✓";color:var(--ok)}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.card h2{font:700 21px/1.1 var(--f-display);letter-spacing:.02em;margin:0 0 6px}
+.card h3{font:700 15px/1.2 var(--f-display);letter-spacing:.04em;margin:12px 0 4px;color:var(--accent);text-transform:uppercase}
+.muted{color:var(--muted);font-size:13.5px;margin:4px 0 0;line-height:1.5}
+.goal{background:var(--soft);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;font-size:14px;margin:6px 0 4px}
+.seg{display:flex;flex-wrap:wrap;background:var(--soft);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:7px 8px;border-radius:6px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.lbl2{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.fb{border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5;background:var(--soft);margin-top:10px}
+.fb:empty{display:none}.fb.ok{background:var(--okbg)}.fb.bad{background:var(--badbg)}.fb.warn{background:var(--warnbg)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px;margin-top:10px}
+.kv div{background:var(--soft);border-radius:6px;padding:7px 9px}
+.kv dt{font-size:11.5px;color:var(--muted)}
+.kv dd{margin:0;font:600 15px var(--f-mono)}
+.kv dd.bad{color:var(--bad)}
+.analog{background:#f4f9fd;border:1px solid #cfe2f1;border-radius:10px;margin-top:10px;padding:8px}
+.analog canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.analog .cap{font-size:13px;color:#24506f;padding:4px 4px 0;line-height:1.45}
+.map{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px;margin-top:6px}
+.map b{color:var(--accent)}
+.cells{display:flex;gap:6px;flex-wrap:wrap}
+.cells button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;font:600 13px var(--f-mono);cursor:pointer}
+.cells button.rev{background:var(--badbg);border-color:#e4a59c;color:var(--bad)}
+#scopeA{display:block;width:100%;height:auto;aspect-ratio:10/5;background:#06110d;border-radius:8px;margin-top:10px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.slider{display:flex;align-items:center;gap:10px}
+.slider output{font:600 14px var(--f-mono);min-width:72px;text-align:right;color:var(--accent)}
+/* tes */
+.qnav{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0 10px}
+.qnav span{width:26px;height:26px;border-radius:6px;background:var(--soft);display:grid;place-items:center;font:600 12px var(--f-mono);color:var(--muted)}
+.qnav span.cur{background:var(--ink);color:#fff}.qnav span.ans{background:#d6e6f5;color:var(--accent)}
+.qtext{font-weight:600;font-size:16px;line-height:1.45}
+.opts{display:grid;gap:7px;margin-top:10px}
+.opt{text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:10px 12px;font-size:14.5px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.opt .k{font:700 13px var(--f-mono);background:var(--soft);border-radius:5px;padding:1px 7px;flex:none}
+.opt.on{border-color:var(--accent);background:#eef5fc}
+.opt.on .k{background:var(--accent);color:#fff}
+.conf{display:flex;gap:6px;margin-top:10px}
+.conf button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:8px;font-weight:600;font-size:13.5px;cursor:pointer}
+.conf button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.field{display:grid;gap:4px;margin-top:8px}
+.field input{border:1.5px solid var(--line);border-radius:8px;padding:9px 12px}
+.prof{list-style:none;margin:8px 0 0;padding:0}
+.prof li{border-top:1px solid var(--line);padding:8px 0;font-size:14px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.prof li:first-child{border-top:0}
+.tag{font:600 11.5px var(--f-mono);padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag.sp{background:var(--badbg);color:var(--bad)}.tag.bt{background:var(--warnbg);color:var(--warn)}.tag.ok{background:var(--okbg);color:var(--ok)}.tag.rg{background:#eef5fc;color:var(--accent)}
+.prof .go{font-size:12.5px;color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:0;padding:0}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:13.5px;margin-top:8px}
+.bars i{display:block;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.bars i b{display:block;height:100%;background:var(--accent)}
+.bars i b.post{background:var(--ok)}
+textarea.rekap{width:100%;min-height:150px;border:1px solid var(--line);border-radius:8px;padding:9px;font:500 12.5px/1.5 var(--f-mono);background:#fbfcfd;margin-top:8px}
+/* sortir */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+.sc{border:1.5px solid var(--line);border-radius:10px;padding:9px;background:#fff;display:grid;gap:6px}
+.sc .ic{font-size:26px;line-height:1}
+.sc .nm{font-weight:600;font-size:13.5px;line-height:1.3}
+.sc .bb{display:flex;gap:4px}
+.sc .bb button{flex:1;border:1px solid var(--line);background:var(--soft);border-radius:6px;padding:5px;font:700 12.5px var(--f-mono);cursor:pointer}
+.sc.right{border-color:#9fd0b2;background:var(--okbg)}.sc.wrong{border-color:#e4a59c;background:var(--badbg)}
+.sc .why{font-size:12px;color:var(--muted);line-height:1.35}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px;line-height:1.6}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:0;gap:0}
+  .stage{top:0;z-index:20}
+  .viewer{height:36vh;min-height:230px;border-radius:0;border:none;border-bottom:1px solid var(--line)}
+  .panel{padding:12px}
+  header.top{padding:8px 12px}
+  .brand img{width:36px;height:36px}
+  h1{font-size:18px}.eyebrow2{font-size:10.5px}
+  .meta .guru,.dims .full{display:none}
+  .tabs button{font-size:12px}
+  .vchip{font-size:11.5px;gap:10px;padding:5px 8px}.vchip b{font-size:14px}
+}
+
+.tabs{grid-template-columns:repeat(5,1fr)}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:4px 0 8px}
+.stat b{display:block;font:700 24px/1.1 var(--f-display)}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+.big{width:100%;border:0;border-radius:12px;padding:14px;font:700 18px/1 var(--f-display);letter-spacing:.04em;background:#1f9a4b;color:#fff;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.25);margin-top:10px}
+.big.off{background:#20262c}
+.flow3{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;gap:6px;margin:10px 0 4px}
+.flow3 div{border:1.5px solid var(--line);border-radius:10px;padding:8px;text-align:center;background:#fff}
+.flow3 div b{display:block;font:700 15px var(--f-display);letter-spacing:.03em}
+.flow3 div span{font-size:12px;color:var(--muted);line-height:1.3;display:block;margin-top:2px}
+.flow3 div.s{border-color:#e9a90b;background:#fff8e6}
+.flow3 i{align-self:center;font-style:normal;font-weight:700;color:var(--muted)}
+.devs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.devs button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:8px 6px;font:600 13px/1.25 var(--f-body);cursor:pointer;text-align:center}
+.devs button em{display:block;font-style:normal;font-size:22px;line-height:1.1}
+.devs button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.tb2{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+.tb2 th,.tb2 td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tb2 th{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.obs td,.obs th{text-align:center}
+.obs td:first-child,.obs th:first-child{text-align:left}
+.obs td.y{color:#1f7a44;font-weight:700;background:#eaf7ef}
+.obs td.n{color:#b3412f;font-weight:700;background:#fdeeeb}
+.obs td.u{color:#9aa4ae}
+.tchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tchips button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:7px 10px;font:600 13px var(--f-body);cursor:pointer}
+.tchips button.ok{background:var(--okbg);border-color:#9fd0b2}
+.tchips button.no{background:var(--badbg);border-color:#e4a59c}
+#daplot{display:block;width:100%;height:auto;aspect-ratio:8/3;background:#06110d;border-radius:8px;margin-top:10px}
+.svgw{background:#fbfcfd;border:1px solid var(--line);border-radius:10px;margin-top:8px;padding:4px}
+.svgw svg{display:block;width:100%;height:auto}
+.numin{display:flex;gap:8px;align-items:center;margin-top:8px}
+.numin input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:8px;padding:9px 10px;font:600 15px var(--f-mono)}
+.steps4{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.steps4 li{border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13.5px;display:flex;gap:8px;align-items:flex-start}
+.steps4 li b{font:700 13px var(--f-mono);background:var(--soft);border-radius:5px;padding:0 6px}
+.steps4 li.on{border-color:#e9a90b;background:#fff8e6}
+.steps4 li.on b{background:#e9a90b;color:#fff}
+@media (max-width:520px){.flow3{gap:3px}.flow3 div{padding:6px 3px}.flow3 div b{font-size:13px}.flow3 div span{font-size:11px}.devs{grid-template-columns:repeat(2,1fr)}}
+.pad{position:absolute;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:4px;z-index:4;user-select:none;-webkit-user-select:none}
+.pad button{border:1px solid var(--line);background:rgba(251,252,253,.92);border-radius:8px;font-size:14px;font-weight:700;color:#14202b;cursor:pointer;padding:0;touch-action:none;box-shadow:0 2px 6px rgba(20,32,43,.12)}
+.pad button:active{background:#14202b;color:#fff}
+.pad .c{font-size:11px}
+@media (max-width:900px){.pad{grid-template-columns:repeat(3,30px);grid-template-rows:repeat(3,30px);gap:3px;right:8px;bottom:8px}}
+</style>
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "zasgkur533");
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <img src="data:image/webp;base64,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" alt="Logo Teknik Otomasi Industri">
+    <div>
+      <div class="eyebrow2">SMK 2 Triple J · Teknik Otomasi Industri</div>
+      <h1>Simulasi 3D Sensor: dari Keseharian ke Pabrik</h1>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="dims"><span class="full">Piranti Sensor &amp; Aktuator Industri · </span>Fase F</span>
+  </div>
+</header>
+<main class="layout">
+  <section class="stage">
+    <div class="viewer" id="viewer">
+      <canvas id="c" aria-label="Model 3D sensor di rumah, tangki, dan konveyor pabrik"></canvas>
+      <div id="labels"></div>
+      <div class="pad" id="pad" aria-label="Geser dan zoom tampilan"><button data-p="zi" title="Perbesar">+</button><button data-p="u" title="Geser ke atas">▲</button><button data-p="zo" title="Perkecil">−</button><button data-p="l" title="Geser ke kiri">◀</button><button data-p="c" class="c" title="Kembali ke tengah">⌂</button><button data-p="r" title="Geser ke kanan">▶</button><span></span><button data-p="d" title="Geser ke bawah">▼</button><span></span></div>
+      <div class="hud"><button class="tool" id="bReset">⌂</button></div>
+      <div id="toast"></div>
+      <div class="vchip" id="vchip"></div>
+      <div id="loading">Memuat model 3D…</div>
+    </div>
+  </section>
+  <section class="panel">
+    <nav class="tabs" id="tabs"></nav>
+    <div id="pane"></div>
+  </section>
+</main>
+<footer>Media pembelajaran interaktif · Program Keahlian Teknik Elektronika · Konsentrasi Teknik Otomasi Industri · SMKS 2 Triple J<br>Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+/* ===== geser (pan) tampilan: 2 jari di HP, klik kanan/Shift+geser di laptop, atau tombol panah ===== */
+const PAN={v:null,drag:false,did:false};
+function panBy(dx,dy){
+  if(!T||!PAN.v) return; const cam=T.camera, h=T.viewer.clientHeight||1;
+  const tg=T.cam.t.clone().add(PAN.v), dist=cam.position.distanceTo(tg), s=2*dist*Math.tan(THREE.MathUtils.degToRad(cam.fov/2))/h;
+  const right=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,0), up=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,1);
+  PAN.v.addScaledVector(right,-dx*s).addScaledVector(up,dy*s); if(PAN.v.length()>30) PAN.v.setLength(30);
+}
+function setupPan(){
+  PAN.v=new THREE.Vector3();
+  const cv=T.canvas, P=new Map(); let mid=null,last=null;
+  const midp=()=>{const [a,b]=[...P.values()];return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};};
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  cv.addEventListener('pointerdown',e=>{P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1){PAN.did=false;PAN.drag=(e.button===2||e.button===1||e.shiftKey);last={x:e.clientX,y:e.clientY};}
+    if(P.size===2){mid=midp();PAN.did=true;}});
+  cv.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1&&PAN.drag){const dx=e.clientX-last.x,dy=e.clientY-last.y;if(Math.abs(dx)+Math.abs(dy)>0)PAN.did=true;panBy(dx,dy);last={x:e.clientX,y:e.clientY};}
+    else if(P.size===2){const m=midp();if(mid)panBy(m.x-mid.x,m.y-mid.y);mid=m;}});
+  const up=e=>{P.delete(e.pointerId);if(P.size<2)mid=null;if(P.size===0)PAN.drag=false;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  // tombol panah (tahan untuk terus bergeser)
+  const pad=document.getElementById('pad'); let rep=null;
+  const act=k=>{const st=Math.max(10,T.viewer.clientHeight*0.03);
+    if(k==='u')panBy(0,st);else if(k==='d')panBy(0,-st);else if(k==='l')panBy(st,0);else if(k==='r')panBy(-st,0);
+    else if(k==='zi')T.cam.zoom=Math.max(0.35,T.cam.zoom*0.92);else if(k==='zo')T.cam.zoom=Math.min(1.8,T.cam.zoom*1.08);else if(k==='c'){PAN.v.set(0,0,0);T.cam.zoom=1;}};
+  const stop=()=>{clearInterval(rep);rep=null;};
+  pad.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();const k=b.dataset.p;act(k);stop();if(k!=='c')rep=setInterval(()=>act(k),45);});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>pad.addEventListener(ev,stop));
+}
+
+const $=s=>document.querySelector(s);
+const nf=(x,d=1)=>Number(x).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ================= TES DIAGNOSTIK ================= */
+const MISC={
+  m1:{t:'Sensor dianggap yang menggerakkan atau memutuskan, padahal sensor hanya merasakan lalu mengirim sinyal',go:'hari'},
+  m2:{t:'Proximity induktif dianggap bisa mendeteksi semua benda (plastik, kardus)',go:'pabrik'},
+  m3:{t:'Sensor dianggap harus menyentuh benda untuk mendeteksinya',go:'pabrik'},
+  m4:{t:'Beda sinyal digital (ON/OFF) dan analog (bertahap) belum dipahami',go:'da'},
+  m5:{t:'Arti 4 mA pada sinyal 4–20 mA belum dipahami (4 mA = 0 %, 0 mA = kabel putus)',go:'da'},
+  m6:{t:'Sifat LDR tertukar (yang benar: makin gelap, resistansi LDR makin besar)',go:'hari'},
+  m7:{t:'Warna kabel sensor 3 kawat (cokelat +, biru 0 V, hitam sinyal) belum dikenali',go:'da'},
+  m8:{t:'Keluaran PNP dan NPN tertukar (PNP aktif = +24 V di kabel hitam)',go:'da'},
+  m9:{t:'Pompa toren dianggap bekerja di satu titik saja, padahal ada batas bawah dan batas atas',go:'hari'},
+  m10:{t:'Sensor kapasitif belum dikenali (bisa mendeteksi cairan dan bahan bukan logam)',go:'pabrik'}
+};
+const QUEST=[
+  {q:'Pintu otomatis toko terbuka saat kamu mendekat. Tugas sensor gerak di atas pintu adalah…',o:[['Merasakan ada orang lalu mengirim sinyal ke pengendali pintu',1],['Menggeser daun pintu','m1'],['Memberi tenaga listrik ke motor pintu','m1'],['Menentukan sendiri kapan pintu ditutup tanpa pengendali','m1']]},
+  {q:'Proximity induktif di konveyor akan aktif bila yang lewat adalah…',o:[['Kaleng logam',1],['Botol plastik berisi air','m2'],['Kotak kardus','m2'],['Semua benda yang lewat','m2']]},
+  {q:'Untuk menghitung kardus di konveyor <b>tanpa menyentuhnya</b>, sensor yang cocok adalah…',o:[['Limit switch','m3'],['Sensor fotoelektrik',1],['Saklar pelampung','m3'],['Saklar tekan pintu kulkas','m3']]},
+  {q:'LDR pada lampu taman otomatis: saat hari makin gelap, resistansi LDR…',o:[['Makin kecil','m6'],['Tetap','m6'],['Makin besar',1],['Menjadi nol','m6']]},
+  {q:'Beda sinyal analog dengan sinyal digital adalah…',o:[['Analog nilainya berubah bertahap mengikuti besaran; digital hanya dua keadaan (ON/OFF)',1],['Analog selalu bertegangan lebih besar','m4'],['Digital nilainya bertahap, analog hanya ON/OFF','m4'],['Tidak ada bedanya','m4']]},
+  {q:'Transmitter level tangki 4–20 mA terbaca <b>4 mA</b>. Artinya…',o:[['Kabel transmitter putus','m5'],['Tangki kosong (0 %)',1],['Tangki terisi setengah','m5'],['Tangki penuh','m5']]},
+  {q:'Sensor proximity 3 kabel berwarna cokelat, biru, dan hitam. Kabel <b>hitam</b> adalah…',o:[['+24 V','m7'],['0 V','m7'],['Arde / ground pengaman','m7'],['Sinyal keluaran ke PLC',1]]},
+  {q:'Sensor proximity <b>PNP</b> sedang mendeteksi benda. Tegangan di kabel hitamnya…',o:[['+24 V',1],['0 V','m8'],['Turun menjadi 12 V','m8'],['Berubah 4–20 mA','m8']]},
+  {q:'Pompa air toren menyala saat air mencapai batas bawah. Pompa berhenti…',o:[['Begitu air naik sedikit di atas batas bawah','m9'],['Saat air mencapai batas atas',1],['Hanya kalau listrik dimatikan','m9'],['Saat toren kosong','m9']]},
+  {q:'Pabrik minuman ingin memeriksa apakah botol plastik sudah berisi air. Sensor yang cocok adalah…',o:[['Proximity induktif','m2'],['Limit switch','m10'],['Proximity kapasitif',1],['Termokopel','m10']]}
+];
+const PROFILE={sp:'Salah paham',bt:'Belum tahu',rg:'Benar tapi ragu',ok:'Paham'};
+
+/* ================= DATA ALAT KESEHARIAN ================= */
+const DEV={
+  lampu:{ic:'💡',nm:'Lampu taman',full:'Lampu taman otomatis',sensor:'LDR (Light Dependent Resistor)',besaran:'Intensitas cahaya',sinyal:'Analog — resistansi berubah, lalu dibandingkan dengan batas → lampu ON/OFF',alur:'LDR → rangkaian pembanding/relay → lampu',pabrik:'Sensor fotoelektrik di konveyor menghitung produk. Sensor cahaya menyalakan lampu gudang dan penerangan jalan pabrik otomatis.'},
+  pintu:{ic:'🚪',nm:'Pintu toko',full:'Pintu otomatis toko',sensor:'Sensor gerak (radar microwave atau inframerah pasif/PIR)',besaran:'Gerakan / kehadiran orang',sinyal:'Digital — ada orang / tidak ada',alur:'Sensor gerak → pengendali pintu → motor geser pintu',pabrik:'Light curtain (tirai cahaya) di mesin press: tangan masuk area berbahaya → mesin langsung berhenti. Area scanner di robot dan AGV.'},
+  toren:{ic:'🛢️',nm:'Pompa toren',full:'Pompa air toren',sensor:'Saklar pelampung (float switch)',besaran:'Ketinggian (level) air',sinyal:'Digital, dua titik: batas bawah dan batas atas',alur:'Pelampung → kontak saklar → pompa air',pabrik:'Level switch di tangki bahan cair dan sensor kapasitif di silo biji plastik. Menjaga pompa tidak berjalan kering dan tangki tidak meluap.'},
+  parkir:{ic:'🚗',nm:'Sensor parkir',full:'Sensor parkir mobil',sensor:'Ultrasonik (gelombang suara ±40 kHz, tak terdengar)',besaran:'Jarak',sinyal:'Analog — jarak dihitung dari waktu pantul gelombang',alur:'Sensor ultrasonik → modul pengolah → buzzer berbunyi makin rapat',pabrik:'Sensor ultrasonik mengukur level silo dan tangki dari atas, mendeteksi tinggi tumpukan, dan mencegah AGV/forklift menabrak.'},
+  magic:{ic:'🍚',nm:'Rice cooker',full:'Rice cooker (magic com)',sensor:'Termostat magnet — magnet ferit yang kehilangan daya tariknya pada ±103 °C',besaran:'Suhu',sinyal:'Digital — MASAK / HANGAT',alur:'Termostat → tuas saklar → pemanas utama atau pemanas penghangat',pabrik:'Termokopel dan RTD (PT100) mengukur suhu oven, mesin injeksi plastik, dan tangki pemanas. Nilainya dikirim ke pengendali suhu.'},
+  kulkas:{ic:'🧊',nm:'Lampu kulkas',full:'Lampu kulkas',sensor:'Saklar tekan di bingkai pintu (prinsip limit switch, kontak NC)',besaran:'Posisi pintu (bersentuhan)',sinyal:'Digital — pintu tertutup / terbuka',alur:'Saklar pintu → lampu (langsung, tanpa pengendali)',pabrik:'Limit switch mendeteksi ujung langkah mesin dan pintu pengaman (interlock): pintu mesin dibuka → mesin berhenti.'}
+};
+const DEVK=Object.keys(DEV);
+const STX={lampu:-12,pintu:-7.2,toren:-2.4,parkir:2.4,magic:7.2,kulkas:12};
+const HCAM={lampu:[0,1.9,0,0.25,[3.0,2.3]],pintu:[0.2,1.6,0.3,0.28,[3.0,2.1]],toren:[-0.2,2.0,0,0.25,[3.0,2.4]],parkir:[0.2,1.0,0,0.35,[3.0,1.8]],magic:[0,1.7,-0.3,0.33,[1.9,1.5]],kulkas:[0,1.7,-0.2,0.22,[2.4,2.1]]};
+
+/* ================= DATA PABRIK ================= */
+const MAT={kaleng:{nm:'Kaleng logam',ic:'🥫'},isi:{nm:'Botol berisi air',ic:'💧'},kosong:{nm:'Botol plastik kosong',ic:'🧴'},kardus:{nm:'Kotak kardus',ic:'📦'}};
+const SENS=[
+  {id:'S1',nm:'Fotoelektrik',x:-4.6,plc:'I0.0',det:m=>true},
+  {id:'S2',nm:'Induktif',x:-2.2,plc:'I0.1',det:m=>m==='kaleng'},
+  {id:'S3',nm:'Kapasitif',x:0.2,plc:'I0.2',det:m=>m!=='kosong'},
+  {id:'S4',nm:'Limit switch',x:2.6,plc:'I0.3',det:m=>true}
+];
+const PUSHX=4.8;
+const OPTS=['Fotoelektrik','Induktif','Kapasitif','Limit switch','Ultrasonik','Termokopel'];
+const CHAL=[
+  ['Memisahkan kaleng logam dari sampah plastik yang lewat di konveyor','Induktif','Induktif hanya bereaksi pada logam, jadi plastik dan kardus diabaikan.'],
+  ['Memeriksa apakah botol plastik di jalur pengisian sudah berisi air','Kapasitif','Kapasitif merasakan perubahan kapasitansi oleh cairan di dalam botol, bahkan menembus dinding plastik.'],
+  ['Menghitung kardus yang lewat dari jarak 2 meter tanpa menyentuh','Fotoelektrik','Fotoelektrik memakai berkas cahaya, jaraknya bisa jauh dan tidak menyentuh benda.'],
+  ['Memastikan pintu pengaman mesin sudah tertutup rapat (bersentuhan)','Limit switch','Limit switch bekerja dengan sentuhan mekanis — cocok untuk interlock pintu.'],
+  ['Mengukur tinggi biji plastik di dalam silo dari atas tanpa menyentuh','Ultrasonik','Ultrasonik mengukur jarak dari waktu pantul gelombang suara, hasilnya analog.'],
+  ['Mengukur suhu oven pengering cat sampai 250 °C','Termokopel','Termokopel tahan suhu tinggi dan menghasilkan tegangan kecil sebanding suhu.'],
+  ['Mendeteksi baut besi yang lewat di jalur pengumpan','Induktif','Baut besi adalah logam; induktif mendeteksinya tanpa sentuh dan tahan lama.'],
+  ['Mendeteksi kemasan kertas yang lewat sangat dekat (± 5 mm) di mesin kecil','Kapasitif','Kapasitif mendeteksi bahan bukan logam pada jarak dekat. Fotoelektrik juga bisa, tetapi untuk jarak sangat dekat kapasitif ringkas.']
+];
+const RANGES=[['suhu',0,100,'°C'],['tekanan',0,10,'bar'],['level tangki',0,200,'cm'],['suhu oven',0,400,'°C'],['aliran',0,50,'L/menit'],['tekanan',0,16,'bar']];
+
+/* ================= STATE ================= */
+const S={tab:'pre',name:'',kelas:'',
+  test:{pre:{ans:[],conf:[],i:0,done:false},post:{ans:[],conf:[],i:0,done:false,order:null}},
+  hari:{dev:'lampu',cahaya:80,jarak:5,keran:false,level:55,pompa:false,parkir:2.0,sound:true,rc:{st:'off',T:28,air:100,t:0},kulkasBuka:false},
+  da:{lvl:50,putus:false,tipe:'pnp',ada:false,q:null,res:null,score:{ok:0,tot:0}},
+  pab:{view:'konv',run:true,auto:false,push:true,seen:{},count:0,logam:0,ch:null,score:{ok:0,tot:0},last:null},
+  visited:{}};
+try{const sv=JSON.parse(localStorage.getItem('toi-sensor-v1')||'null');if(sv){Object.assign(S.test,sv.test||{});S.name=sv.name||'';S.kelas=sv.kelas||'';S.visited=sv.visited||{};}}catch(e){}
+function save(){try{localStorage.setItem('toi-sensor-v1',JSON.stringify({test:S.test,name:S.name,kelas:S.kelas,visited:S.visited}));}catch(e){}}
+
+const ldrR=c=>1000*Math.pow(1000,1-c/100);
+const fmtR=r=>r>=1e6?nf(r/1e6,2)+' MΩ':r>=1000?nf(r/1000,r<1e4?1:0)+' kΩ':nf(r,0)+' Ω';
+const lampOn=()=>S.hari.cahaya<30;
+const doorSense=()=>S.hari.jarak<2;
+function beepInfo(d){if(d>1.5)return ['tidak berbunyi',0];if(d>1.0)return ['bip … bip …',0.7];if(d>0.6)return ['bip-bip-bip',0.32];if(d>0.35)return ['bipbipbipbip',0.14];return ['tiiiiit (berhenti!)',-1];}
+const daMA=()=>S.da.putus?0:4+16*S.da.lvl/100;
+const LSL=()=>S.da.lvl>=20?1:0, LSH=()=>S.da.lvl>=80?1:0;
+
+/* ================= 3D ================= */
+let T=null;
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+const M=(h,o)=>new THREE.MeshStandardMaterial(Object.assign({color:col(h),roughness:.55,metalness:0},o||{}));
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.userData={c,draw};return t;}
+function glowSprite(rgb){const t=canvasTex(128,128,g=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,`rgba(${rgb},.95)`);gr.addColorStop(.35,`rgba(${rgb},.45)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,128,128);});return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));}
+function shadowAll(o){o.traverse(m=>{if(m.isMesh&&!m.userData.noShadow){m.castShadow=true;m.receiveShadow=true;}});}
+function box(g,w,h,d,c,x,y,z,o){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(c,o));m.position.set(x,y,z);g.add(m);return m;}
+function cyl(g,r1,r2,h,c,x,y,z,o,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg||24),M(c,o));m.position.set(x,y,z);g.add(m);return m;}
+function sph(g,r,c,x,y,z,o){const m=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),M(c,o));m.position.set(x,y,z);g.add(m);return m;}
+function tube(g,pts,r,c,o){const cu=new THREE.CatmullRomCurve3(pts.map(p=>p.isVector3?p.clone():V3(...p)),false,'centripetal');const m=new THREE.Mesh(new THREE.TubeGeometry(cu,Math.max(24,pts.length*14),r,8,false),c==='PE'?peMat():M(c,o));g.add(m);return {m,cu};}
+let _peTex=null;function peMat(){if(!_peTex){_peTex=canvasTex(8,64,(c,w,h)=>{for(let i=0;i<4;i++){c.fillStyle=i%2?'#2e9b3e':'#f2d21a';c.fillRect(0,i*h/4,w,h/4);}});_peTex.wrapS=_peTex.wrapT=THREE.RepeatWrapping;}return new THREE.MeshStandardMaterial({map:_peTex,roughness:.5});}
+
+function textPlane(w,h,draw){const t=canvasTex(Math.round(w*110),Math.round(h*110),draw);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,roughness:.7,transparent:true}));m.userData.noShadow=true;return m;}
+function redraw(m){const t=m.material.map,u=t.userData;const g=u.c.getContext('2d');g.clearRect(0,0,u.c.width,u.c.height);u.draw(g,u.c.width,u.c.height);t.needsUpdate=true;}
+function label(g,txt,w,x,y,z,fg,bg,hh){const p=textPlane(w,hh||0.36,(c,W,H)=>{if(bg){c.fillStyle=bg;c.fillRect(0,0,W,H);}c.fillStyle=fg||'#14202b';c.font=`700 ${H*.6}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText(txt,W/2,H/2);});p.position.set(x,y,z);g.add(p);return p;}
+function glass(c,op){return new THREE.MeshStandardMaterial({color:col(c),transparent:true,opacity:op,roughness:.08,metalness:0,depthWrite:false});}
+function ledMat(hex){return M('#3a3a3a',{emissive:new THREE.Color(hex),emissiveIntensity:0});}
+function prep(paths){paths.forEach(p=>{let L=0;const c=[0];for(let i=1;i<p.pts.length;i++){L+=p.pts[i].distanceTo(p.pts[i-1]);c.push(L);}p.len=L;p.cum=c;p.n=Math.max(1,Math.round(L/0.4));p.u=0;});return paths;}
+
+/* ---------- model PSU DIN-rail (dipakai di beberapa adegan) ---------- */
+function makePSU(parent,sc,taps){
+  const g=new THREE.Group();g.scale.setScalar(sc);parent.add(g);const R={g,term:{}};
+  const W=1.7,H=3.6,D=2.0;
+  const vent=canvasTex(128,256,(c,w,h)=>{c.fillStyle='#aab2ba';c.fillRect(0,0,w,h);c.fillStyle='#2a2f35';for(let i=0;i<14;i++)c.fillRect(w*.15,8+i*17.5,w*.7,8);});
+  const bodyM=new THREE.MeshStandardMaterial({color:col('#b4bcc4'),metalness:.55,roughness:.4});const ventM=new THREE.MeshStandardMaterial({map:vent,metalness:.4,roughness:.5});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(W,H,D),[ventM,ventM,ventM,ventM,bodyM,bodyM]);body.position.set(0,0,0);g.add(body);R.body=body;
+  if(taps){body.userData.part='VENT';taps.push(body);}
+  // muka depan plastik
+  const fp=box(g,W-0.06,H-0.06,0.08,'#3a4048',0,0,D/2+0.02,{roughness:.6});
+  const lab=textPlane(1.3,1.05,(c,w,h)=>{c.fillStyle='#e9edf0';c.fillRect(0,0,w,h);c.fillStyle='#14202b';c.textAlign='center';c.textBaseline='middle';c.font=`700 ${h*.17}px "Barlow Condensed",Arial`;c.fillText('POWER SUPPLY',w/2,h*.14);c.font=`700 ${h*.2}px "Barlow Condensed",Arial`;c.fillText('24 V ⎓ 5 A',w/2,h*.36);c.font=`600 ${h*.1}px "IBM Plex Mono",monospace`;c.fillText('OUTPUT 120 W',w/2,h*.55);c.fillText('INPUT 100–240 VAC',w/2,h*.71);c.fillText('50/60 Hz  1,2 A',w/2,h*.85);});
+  lab.position.set(0,-0.15,D/2+0.065);g.add(lab);if(taps){lab.userData.part='LBL';taps.push(lab);}
+  // terminal
+  const termRow=(names,y,sign)=>{names.forEach((n,i)=>{const x=(i-(names.length-1)/2)*0.38;box(g,0.34,0.42,0.3,'#20262c',x,y,D/2+0.12);
+    const s=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.11,0.06,16),M('#cfd3d8',{metalness:.9,roughness:.25,emissive:new THREE.Color(0xffb020),emissiveIntensity:0}));s.rotation.x=Math.PI/2;s.position.set(x,y,D/2+0.29);g.add(s);box(g,0.16,0.025,0.02,'#555',x,y,D/2+0.33);
+    const key=n==='+V'?'VP':n==='−V'?'VN':n==='⏚'?'PE':n;s.userData.part=key;if(taps)taps.push(s);(R.term[n]=R.term[n]||[]).push(s);
+    label(g,n,0.36,x,y+sign*0.34,D/2+0.07,'#ffffff',null,0.24);});};
+  termRow(['+V','+V','−V','−V'],1.45,-1);termRow(['L','N','⏚'],-1.45,1);
+  R.led=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,8),ledMat(0x3cff6e));R.led.position.set(-0.4,0.82,D/2+0.08);g.add(R.led);label(g,'DC OK',0.5,-0.4,0.62,D/2+0.07,'#ffffff',null,0.2);
+  R.ledG=glowSprite('80,255,120');R.ledG.position.copy(R.led.position);R.ledG.scale.setScalar(0.5);g.add(R.ledG);
+  const adj=cyl(g,0.11,0.11,0.08,'#e8e1cf',0.4,0.82,D/2+0.08);adj.rotation.x=Math.PI/2;box(g,0.03,0.17,0.02,'#555',0.4,0.82,D/2+0.13);label(g,'V.ADJ',0.5,0.4,0.62,D/2+0.07,'#ffffff',null,0.2);R.adj=adj;
+  if(taps){R.led.userData.part='OK';adj.userData.part='ADJ';taps.push(R.led,adj);}
+  const clip=box(g,1.0,0.5,0.12,'#20262c',0,-1.3,-D/2-0.06);box(g,0.3,0.12,0.14,'#c0392b',0,-1.62,-D/2-0.06);if(taps){clip.userData.part='DIN';taps.push(clip);}
+  R.W=W;R.H=H;R.D=D;
+  R.tp=(n,i)=>{const s=R.term[n][i||0];return s.getWorldPosition(V3(0,0,0));};
+  return R;
+}
+/* ---------- panel kontrol: MCB 1P, SMPS, terminal, PLC di rel DIN ---------- */
+function buildPanel(parent,x,y,z,sc,kind){
+  const P=new THREE.Group();P.position.set(x,y,z);P.scale.setScalar(sc);parent.add(P);const R={P,kind};
+  const W=4.0,H=4.6,D=1.0,cab='#d3d8dc';
+  box(P,W+0.2,H+0.2,0.08,cab,0,H/2,0.04);[-1,1].forEach(s=>box(P,0.1,H+0.2,D,cab,s*(W/2+0.05),H/2,D/2));box(P,W+0.2,0.1,D,cab,0,H+0.05,D/2);box(P,W+0.2,0.1,D,cab,0,-0.05,D/2);
+  box(P,W-0.1,H-0.1,0.04,'#c3c8cc',0,H/2,0.1);
+  [3.5,1.9].forEach(yy=>box(P,3.2,0.12,0.06,'#cfd3d8',0,yy,0.15,{metalness:.8}));
+  const duct=(w,h,xx,yy)=>{box(P,w,h,0.42,'#8f969c',xx,yy,0.33);};duct(3.5,0.3,0,4.25);duct(3.5,0.3,0,2.7);duct(3.5,0.3,0,1.05);duct(0.3,3.5,-1.78,2.65);duct(0.3,3.5,1.78,2.65);
+  // MCB 1P
+  const mcb=new THREE.Group();mcb.position.set(-1.3,3.5,0.5);P.add(mcb);box(mcb,0.32,1.0,0.7,'#f2f2f0',0,0,0);box(mcb,0.2,0.22,0.1,'#2a2f35',0,0.05,0.38);box(mcb,0.14,0.14,0.18,'#1f9a4b',0,0.12,0.45);
+  label(mcb,'C4',0.3,0,-0.3,0.36,'#14202b',null,0.16);[0.42,-0.42].forEach(dy=>box(mcb,0.14,0.06,0.04,'#cfd3d8',0,dy,0.36,{metalness:.9}));
+  // SMPS
+  R.psu=makePSU(P,0.34);R.psu.g.position.set(-0.75,3.5,0.52);R.psu.led.material.emissiveIntensity=2.5;R.psu.ledG.material.opacity=0.8;
+  const pt=(tx,ty)=>V3(-0.75+tx*0.34,3.5+ty*0.34,0.52+1.29*0.34+0.03);
+  // terminal blok
+  const tbx={};['L+','L+','M','M','PE'].forEach((n,i)=>{const xx=-0.25+i*0.24;box(P,0.22,0.7,0.6,n==='PE'?'#2e9b3e':n==='M'?'#dbe6f3':'#2b62c9',xx,3.5,0.48);box(P,0.22,0.05,0.62,'#e8b23a',xx,3.5,0.48);label(P,n,0.24,xx,3.95,0.79,'#14202b',null,0.16);if(!tbx[n])tbx[n]=xx;});
+  // PLC
+  const px=-0.35,py=1.9;const plc=new THREE.Group();plc.position.set(px,py,0.55);P.add(plc);box(plc,2.1,1.2,0.75,'#e3e6e9',0,0,0);box(plc,2.1,0.22,0.77,'#2a2f35',0,0.5,0);box(plc,2.1,0.22,0.77,'#2a2f35',0,-0.5,0);
+  box(plc,0.55,0.3,0.02,'#2b62c9',-0.7,0.18,0.385);label(plc,'PLC',0.5,-0.7,0.18,0.4,'#ffffff',null,0.22);
+  R.inLed=[];for(let i=0;i<8;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(0.035,10,8),ledMat(0x3cff6e));m.position.set(-0.25+i*0.15,0.22,0.385);plc.add(m);R.inLed.push(m);}
+  R.outLed=[];for(let i=0;i<4;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(0.035,10,8),ledMat(0xff8a1a));m.position.set(-0.25+i*0.15,-0.12,0.385);plc.add(m);R.outLed.push(m);}
+  label(plc,'IN 0  1  2  3  4  5  6  7',1.3,0.28,0.06,0.39,'#14202b',null,0.13);label(plc,'OUT 0  1  2  3',0.7,0.0,-0.27,0.39,'#14202b',null,0.13);
+  const runL=new THREE.Mesh(new THREE.SphereGeometry(0.035,10,8),ledMat(0x3cff6e));runL.position.set(-0.85,-0.15,0.385);runL.material.emissiveIntensity=2;plc.add(runL);label(plc,'RUN',0.3,-0.85,-0.27,0.39,'#14202b',null,0.12);
+  const term=(i,top)=>V3(px-1.3+i*0.19,py+(top?0.5:-0.5),0.55+0.4);
+  for(let i=0;i<10;i++){box(P,0.1,0.06,0.03,'#cfd3d8',px-1.3+i*0.19,py+0.5,0.94,{metalness:.9});if(i<5)box(P,0.1,0.06,0.03,'#cfd3d8',px-1.3+i*0.19,py-0.5,0.94,{metalness:.9});}
+  if(kind==='da'){const am=new THREE.Group();am.position.set(1.05,1.9,0.55);P.add(am);box(am,0.45,1.2,0.75,'#e3e6e9',0,0,0);box(am,0.45,0.22,0.77,'#2a2f35',0,0.5,0);box(am,0.45,0.22,0.77,'#2a2f35',0,-0.5,0);label(am,'AI',0.3,0,0.2,0.385,'#14202b',null,0.2);label(am,'4–20 mA',0.42,0,0.0,0.385,'#14202b',null,0.13);R.aiLed=new THREE.Mesh(new THREE.SphereGeometry(0.035,10,8),ledMat(0x3cff6e));R.aiLed.position.set(0,-0.18,0.385);am.add(R.aiLed);}
+  // terminal lapangan X1
+  const x1n=kind==='da'?2:5,x10=kind==='da'?1.38:0.95;const x1=i=>x10+i*0.13;
+  for(let i=0;i<x1n;i++){box(P,0.12,0.7,0.6,'#9aa1a8',x1(i),1.9,0.48);box(P,0.12,0.05,0.62,'#e8b23a',x1(i),1.9,0.48);}
+  label(P,'X1',0.3,x1(0)+(x1n-1)*0.065,2.38,0.79,'#14202b',null,0.16);
+  // kabel dalam panel
+  const wr=(pts,c,r,nf)=>{const t=tube(P,pts.map(v=>v.isVector3?v:V3(...v)),r||0.02,c);if(!nf){const z=(r||0.02)<0.018?0.45:0.55;fitEnd(P,t.cu,false,z);if(!(r>0.03))fitEnd(P,t.cu,true,z);}return t;};
+  wr([[-1.3,-0.1,0.5],[-1.6,0.6,0.35],[-1.78,1.5,0.35],[-1.78,4.0,0.35],[-1.5,4.25,0.35],[-1.3,4.1,0.75],[-1.3,3.95,0.88]],'#20262c',0.045);
+  wr([[-1.3,3.05,0.88],[-1.3,2.85,0.6],[-1.15,2.72,0.4],[-0.9,2.75,0.5],pt(-0.38,-1.45).add(V3(0,-0.15,0)),pt(-0.38,-1.45)],'#e8c21a');
+  wr([[-1.78,2.75,0.35],[-1.2,2.68,0.38],[-0.8,2.7,0.45],pt(0,-1.45).add(V3(0,-0.17,0)),pt(0,-1.45)],'#e8c21a');
+  wr([[tbx.PE,3.15,0.8],[tbx.PE,2.8,0.45],[0,2.7,0.4],[-0.6,2.72,0.45],pt(0.38,-1.45).add(V3(0,-0.15,0)),pt(0.38,-1.45)],'PE');
+  wr([pt(-0.38,1.45),pt(-0.38,1.45).add(V3(0,0.18,0)),[-0.85,4.25,0.45],[-0.4,4.25,0.45],[tbx['L+'],4.0,0.6],[tbx['L+'],3.85,0.8]],'#1f4fa8');
+  wr([pt(0.38,1.45),pt(0.38,1.45).add(V3(0,0.2,0)),[-0.5,4.3,0.45],[0.0,4.27,0.45],[tbx.M,4.0,0.6],[tbx.M,3.85,0.8]],'#1f4fa8');
+  wr([[tbx['L+'],3.15,0.8],[tbx['L+'],2.8,0.5],[-1.4,2.7,0.4],term(0,true).add(V3(0,0.1,-0.1)),term(0,true)],'#1f4fa8');
+  wr([[tbx.M,3.15,0.8],[tbx.M,2.82,0.5],[-1.2,2.72,0.42],term(1,true).add(V3(0,0.1,-0.1)),term(1,true)],'#1f4fa8');
+  const tm=(t,v)=>{const l=label(P,t,0.2,v.x,v.y,v.z+0.02,'#14202b','#ffffff',0.09);};
+  tm('L1',pt(-0.38,-1.45).add(V3(-0.02,-0.2,0.02)));tm('N',pt(0,-1.45).add(V3(0.0,-0.24,0.02)));tm('PE',pt(0.38,-1.45).add(V3(0.03,-0.2,0.02)));tm('L+',pt(-0.38,1.45).add(V3(0,0.2,0.02)));tm('M',pt(0.38,1.45).add(V3(0,0.23,0.02)));
+  // jalur lapangan: gland → X1 → PLC
+  P.updateMatrixWorld(true);const Wd=v=>P.localToWorld(v.clone());
+  R.gland=i=>V3(x1(i),-0.12,0.55);
+  for(let i=0;i<x1n;i++)cyl(P,0.07,0.07,0.12,'#20262c',x1(i),-0.12,0.55);
+  R.inPath=(i,plcIdx,ai)=>{const tgt=ai?V3(1.05,py+0.5,0.94):term(plcIdx,true);const a=[R.gland(i),V3(x1(i),0.4,0.45),V3(x1(i),1.05,0.4),V3(x1(i),1.55,0.75),V3(x1(i),2.25,0.75),V3(x1(i),2.7,0.45),V3(tgt.x,2.7,0.45),tgt.clone().add(V3(0,0.15,-0.1)),tgt];wr(a.slice(3),'#1f4fa8',0.016);return a.map(Wd);};
+  R.outPath=(i,q)=>{const s=term(q,false);const a=[s,s.clone().add(V3(0,-0.15,-0.1)),V3(s.x,1.05,0.45),V3(x1(i),1.05,0.45),V3(x1(i),1.55,0.75)];wr(a,'#1f4fa8',0.016);return a.concat([V3(x1(i),1.05,0.4),V3(x1(i),0.4,0.45),R.gland(i)]).map(Wd);};
+  R.W=Wd;
+  return R;
+}
+function fitEnd(g,cu,atStart,s){s=s||1;const L=Math.max(0.01,cu.getLength()),u=atStart?0:1,us=atStart?Math.min(0.5,0.14*s/L):Math.max(0.5,1-0.14*s/L);const tg=cu.getTangentAt(u).normalize();const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),tg);
+  const sl=new THREE.Mesh(new THREE.CylinderGeometry(0.062*s,0.062*s,0.16*s,12),M('#f4f4f2',{roughness:.6}));sl.quaternion.copy(q);sl.position.copy(cu.getPointAt(us));g.add(sl);
+  const sk=new THREE.Mesh(new THREE.BoxGeometry(0.085*s,0.11*s,0.025*s),M('#d9dde1',{metalness:.9,roughness:.3}));sk.quaternion.copy(q);sk.position.copy(cu.getPointAt(u));g.add(sk);}
+function noteLab(extra){return `<div class="card"><h2>Catatan wiring · standar Lab TOI</h2><div class="map">
+  <b>Rangkaian daya</b><span>kabel <b>kuning</b> — jalur listrik utama AC: MCB → power supply / kontaktor → motor / beban.</span>
+  <b>Rangkaian kontrol</b><span>kabel <b>biru</b> — 24 VDC, koil, tombol, sensor, input–output PLC.</span>
+  <b>PE (arde)</b><span>kabel <b>hijau-kuning</b>, khusus pengaman, tidak dipakai untuk fungsi lain.</span>
+  <b>Ujung kabel</b><span>wajib <b>skun Y</b> (dipres dengan tang skun) dan <b>tube marking</b> berisi alamat kabel, mis. L1, N, L+, M, A1, 13, I0.0. Karena warna satu rangkaian sama, <b>tube marking-lah yang membedakan</b> kabel.</span>
+  <b>Terminal &amp; kabel masuk</b><span>terminal blok TB-1512; kabel sumber masuk panel <b>dari bawah</b> (mencegah air dan debu masuk).</span></div>${extra?`<p class="muted">${extra}</p>`:''}</div>`;}
+function init3D(){
+  if(typeof THREE==='undefined') throw new Error('three');
+  const canvas=$('#c'),viewer=$('#viewer');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.95;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,0.1,250);
+  const pmrem=new THREE.PMREMGenerator(renderer),env=new THREE.Scene();
+  const sky=new THREE.SphereGeometry(50,32,16),pa=sky.attributes.position,cols=[];const lo=new THREE.Color(0x2c3540),hi=new THREE.Color(0xf2f5f8);
+  for(let i=0;i<pa.count;i++){const t=(pa.getY(i)/50+1)/2;const c=lo.clone().lerp(hi,Math.pow(t,.8));cols.push(c.r,c.g,c.b);}
+  sky.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));env.add(new THREE.Mesh(sky,new THREE.MeshBasicMaterial({side:THREE.BackSide,vertexColors:true})));
+  const pm=new THREE.MeshBasicMaterial({color:new THREE.Color(1.6,1.6,1.6),side:THREE.DoubleSide});
+  [[0,32,12,40,12],[-34,8,22,14,30],[30,-4,-20,10,24]].forEach(([x,y,z,w,h])=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),pm);m.position.set(x,y,z);m.lookAt(0,0,0);env.add(m);});
+  scene.environment=pmrem.fromScene(env,0.03).texture;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x6a7580,0.35));
+  const key=new THREE.DirectionalLight(0xfff6ea,0.75);key.position.set(6,16,10);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-16,right:16,top:12,bottom:-12,near:1,far:60});key.shadow.bias=-0.0006;scene.add(key);
+  const fill=new THREE.DirectionalLight(0xd6e4ff,0.3);fill.position.set(-10,6,-6);scene.add(fill);
+  const bench=new THREE.Mesh(new THREE.BoxGeometry(44,0.6,26),M('#5f7c70',{roughness:.85}));bench.position.y=-0.3;bench.receiveShadow=true;scene.add(bench);
+  const G={hari:new THREE.Group(),da:new THREE.Group(),pabrik:new THREE.Group()};Object.values(G).forEach(g=>scene.add(g));
+  const dots=new THREE.InstancedMesh(new THREE.SphereGeometry(0.055,8,6),new THREE.MeshBasicMaterial({color:0xffd21a,toneMapped:false}),600);dots.count=0;dots.frustumCulled=false;scene.add(dots);
+  T={renderer,scene,camera,canvas,viewer,G,dots,key,pins:[],taps:[],O:{},cam:{yaw:0.3,pitch:0.3,zoom:1,t:V3(0,1,0),d:18}};
+  buildHari();buildDA();buildPabrik();
+  bind();setupPan();new ResizeObserver(resize).observe(viewer);resize();
+  showScene();
+  $('#loading').style.display='none';
+  requestAnimationFrame(loop);
+}
+
+/* ---------- KESEHARIAN: 6 alat ---------- */
+function stationBase(g,x,key){const s=new THREE.Group();s.position.set(x,0,0);g.add(s);
+  const pad=box(s,4.4,0.16,3.6,'#bfb49e',0,0.08,0,{roughness:.9});pad.userData.tap='dev:'+key;T.taps.push(pad);
+  label(s,DEV[key].full,3.6,0,0.17,1.6,'#14202b','rgba(255,255,255,0)').rotation.x=-Math.PI/2;
+  return s;}
+function buildHari(){
+  const g=T.G.hari;const O=T.O.hari={};
+  // 1. lampu taman + LDR
+  let s=stationBase(g,STX.lampu,'lampu');O.sLampu=s;
+  O.skyM=new THREE.MeshBasicMaterial({color:new THREE.Color(0x9fd2ff),toneMapped:false});const sk=new THREE.Mesh(new THREE.PlaneGeometry(4.4,4.2),O.skyM);sk.position.set(0,2.25,-1.75);s.add(sk);
+  O.sun=new THREE.Mesh(new THREE.SphereGeometry(0.28,20,12),new THREE.MeshBasicMaterial({color:0xffd75a}));O.sun.position.set(-1.3,3.4,-1.7);s.add(O.sun);
+  O.moon=new THREE.Mesh(new THREE.SphereGeometry(0.2,20,12),new THREE.MeshBasicMaterial({color:0xe8ecf2}));O.moon.position.set(1.4,3.6,-1.7);s.add(O.moon);
+  box(s,4.2,0.08,2.6,'#6fa35a',0,0.2,-0.3,{roughness:.9});
+  cyl(s,0.09,0.12,3.2,'#2f3a44',0.4,1.8,-0.4,{metalness:.6});box(s,0.9,0.08,0.08,'#2f3a44',0.0,3.35,-0.4,{metalness:.6});
+  const head=cyl(s,0.08,0.32,0.28,'#2f3a44',-0.42,3.22,-0.4,{metalness:.6});
+  O.lampM=M('#fff6dc',{emissive:new THREE.Color(0xffd27a),emissiveIntensity:0});const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.17,16,10),O.lampM);bulb.position.set(-0.42,3.05,-0.4);s.add(bulb);
+  O.lampG=glowSprite('255,214,130');O.lampG.position.set(-0.42,3.0,-0.4);s.add(O.lampG);
+  O.lampL=new THREE.SpotLight(0xffd8a0,0,7,0.7,0.6);O.lampL.position.set(-0.42,3.0,-0.4);O.lampL.target.position.set(-0.42,0,0.2);s.add(O.lampL);s.add(O.lampL.target);
+  cyl(s,0.14,0.14,0.14,'#20262c',0.4,3.47,-0.4);const ldr=new THREE.Mesh(new THREE.CircleGeometry(0.11,24),new THREE.MeshStandardMaterial({map:canvasTex(64,64,(c,w,h)=>{c.fillStyle='#e6c79c';c.beginPath();c.arc(32,32,31,0,7);c.fill();c.strokeStyle='#b5401f';c.lineWidth=4;c.beginPath();c.moveTo(14,14);for(let i=0;i<5;i++){c.lineTo(50,18+i*8);c.lineTo(14,22+i*8);}c.stroke();})}));ldr.rotation.x=-Math.PI/2;ldr.position.set(0.4,3.545,-0.4);s.add(ldr);
+  // 2. pintu otomatis
+  s=stationBase(g,STX.pintu,'pintu');O.sPintu=s;
+  const wc='#a9b4be';box(s,1.2,3.2,0.25,wc,-1.6,1.76,-0.9);box(s,1.2,3.2,0.25,wc,1.6,1.76,-0.9);box(s,2.0,0.75,0.25,wc,0,2.98,-0.9);
+  label(s,'TOKO SERBA ADA',2.0,0,3.05,-0.76,'#ffffff','#c0392b');
+  O.doorL=new THREE.Mesh(new THREE.BoxGeometry(1.0,2.4,0.06),glass('#9ad2f0',.45));O.doorL.position.set(-0.5,1.36,-0.86);s.add(O.doorL);
+  O.doorR=O.doorL.clone();O.doorR.position.x=0.5;s.add(O.doorR);
+  [O.doorL,O.doorR].forEach(d=>{const f=new THREE.Mesh(new THREE.BoxGeometry(1.0,0.06,0.08),M('#7d858d',{metalness:.7}));f.position.y=1.17;d.add(f);});
+  box(s,0.5,0.18,0.25,'#20262c',0,2.52,-0.7);O.pirLed=new THREE.Mesh(new THREE.SphereGeometry(0.04,10,8),ledMat(0xff3b2f));O.pirLed.position.set(0.17,2.52,-0.57);s.add(O.pirLed);
+  sph(s,0.08,'#f0f0f0',0,2.44,-0.6);
+  O.coneM=new THREE.MeshBasicMaterial({color:0x6fd38d,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide});
+  const cone=new THREE.Mesh(new THREE.ConeGeometry(1.25,2.3,32,1,true),O.coneM);cone.position.set(0,1.32,0.15);cone.rotation.x=-0.42;s.add(cone);
+  O.person=new THREE.Group();s.add(O.person);cyl(O.person,0.22,0.2,1.0,'#2b62c9',0,0.85,0);sph(O.person,0.17,'#d9a77c',0,1.55,0);cyl(O.person,0.08,0.08,0.55,'#2a2f35',-0.1,0.28,0);cyl(O.person,0.08,0.08,0.55,'#2a2f35',0.1,0.28,0);
+  // 3. toren + pompa
+  s=stationBase(g,STX.toren,'toren');O.sToren=s;
+  [[-0.55,-0.55],[0.55,-0.55],[-0.55,0.35],[0.55,0.35]].forEach(([x,z])=>box(s,0.1,2.0,0.1,'#6b7279',x,1.16,z-0.3,{metalness:.6}));box(s,1.4,0.1,1.2,'#6b7279',0,2.2,-0.4,{metalness:.6});
+  const tk=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,1.6,32,1,true),glass('#f0f3f6',.3));tk.position.set(0,3.05,-0.4);s.add(tk);
+  cyl(s,0.72,0.72,0.06,'#d6dade',0,3.88,-0.4);cyl(s,0.72,0.72,0.06,'#d6dade',0,2.27,-0.4);
+  O.water=new THREE.Mesh(new THREE.CylinderGeometry(0.66,0.66,1,32),glass('#3a92e0',.55));s.add(O.water);O.water.position.set(0,2.3,-0.4);
+  cyl(s,0.025,0.025,1.5,'#cfd3d8',0.38,3.05,-0.4,{metalness:.8});
+  O.tkY=y=>2.3+1.5*y/100;
+  [25,90].forEach(p=>cyl(s,0.06,0.06,0.04,'#c0392b',0.38,O.tkY(p),-0.4));
+  O.float=sph(s,0.12,'#f39c12',0.38,3,-0.4);
+  const pumpG=new THREE.Group();pumpG.position.set(-1.55,0.16,0.7);s.add(pumpG);box(pumpG,0.8,0.12,0.5,'#2a2f35',0,0.06,0);cyl(pumpG,0.24,0.24,0.6,'#2b62c9',-0.08,0.38,0,{metalness:.4}).rotation.z=Math.PI/2;cyl(pumpG,0.18,0.18,0.25,'#9aa1a8',0.32,0.38,0,{metalness:.7});
+  O.pumpG=pumpG;
+  const pipe=tube(s,[[-1.2,0.6,0.7],[-1.0,0.9,0.4],[-0.95,2.5,-0.2],[-0.9,4.1,-0.4],[-0.4,4.1,-0.4],[-0.3,3.85,-0.4]],0.05,'#e8e8e8');
+  O.pPipe=prep([{pts:pipe.cu.getSpacedPoints(50)}]);
+  tube(s,[[0.5,2.28,-0.2],[0.9,2.0,0.2],[1.25,1.2,0.6],[1.25,0.95,0.6]],0.05,'#e8e8e8');
+  O.tap=box(s,0.25,0.08,0.08,'#c0392b',1.25,0.95,0.6);O.tap.userData.tap='keran';T.taps.push(O.tap);
+  O.stream=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.03,0.65,10),glass('#5aa9ee',.7));O.stream.position.set(1.25,0.57,0.6);s.add(O.stream);
+  box(s,0.6,0.25,0.5,'#8a6a45',1.25,0.29,0.6);
+  // 4. sensor parkir
+  s=stationBase(g,STX.parkir,'parkir');O.sParkir=s;
+  box(s,0.3,2.2,3.2,'#b9a58b',2.0,1.26,0,{roughness:.9});
+  O.car=new THREE.Group();s.add(O.car);
+  box(O.car,2.6,0.55,1.4,'#c0392b',0,0.62,0,{metalness:.3,roughness:.35});box(O.car,1.4,0.5,1.25,'#c0392b',-0.25,1.12,0,{metalness:.3,roughness:.35});
+  box(O.car,1.3,0.4,1.27,'#24323f',-0.25,1.12,0,{roughness:.1,metalness:.3}).scale.set(1,1,1);
+  [[-0.85,0.7],[0.85,0.7],[-0.85,-0.7],[0.85,-0.7]].forEach(([x,z])=>{const w=cyl(O.car,0.26,0.26,0.18,'#1d1f22',x,0.36,z);w.rotation.x=Math.PI/2;});
+  box(O.car,0.1,0.22,1.42,'#2a2f35',1.32,0.55,0);
+  [-0.35,0.35].forEach(z=>{const d=cyl(O.car,0.05,0.05,0.04,'#111',1.38,0.6,z);d.rotation.z=Math.PI/2;});
+  O.rings=[];for(let i=0;i<4;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(0.2,0.022,6,32,Math.PI*0.9),new THREE.MeshBasicMaterial({color:0x6fd3ff,transparent:true,opacity:0,depthWrite:false}));r.rotation.y=Math.PI/2;r.rotation.z=-Math.PI*0.45;s.add(r);O.rings.push(r);}
+  O.carX=d=>2.0-0.15-1.38-d*0.6;
+  // 5. rice cooker
+  s=stationBase(g,STX.magic,'magic');O.sMagic=s;
+  box(s,2.4,0.9,1.3,'#9c7a55',0,0.6,-0.5,{roughness:.8});
+  const rc=new THREE.Group();rc.position.set(0,1.05,-0.4);s.add(rc);O.rc=rc;
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.75,0.7,1.0,40,1,true),new THREE.MeshStandardMaterial({color:col('#e8dcc4'),transparent:true,opacity:.35,roughness:.4,side:THREE.DoubleSide,depthWrite:false}));body.position.y=0.5;rc.add(body);
+  cyl(rc,0.7,0.7,0.05,'#d9d9d6',0,0.02,0);
+  const lid=new THREE.Mesh(new THREE.SphereGeometry(0.78,40,12,0,Math.PI*2,0,Math.PI/2.6),M('#e8dcc4',{roughness:.5}));lid.scale.y=0.45;lid.position.y=1.0;rc.add(lid);box(rc,0.5,0.08,0.12,'#555',0,1.36,0);
+  const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.5,0.75,32,1,true),M('#cfd3d8',{metalness:.8,roughness:.3,side:THREE.DoubleSide}));pot.position.y=0.58;rc.add(pot);cyl(rc,0.5,0.5,0.03,'#cfd3d8',0,0.21,0,{metalness:.8});
+  O.rice=cyl(rc,0.52,0.52,0.3,'#f6f1e3',0,0.37,0);O.riceWater=cyl(rc,0.53,0.53,0.1,'#7fb7e6',0,0.55,0,{transparent:true,opacity:.6});
+  O.heatM=M('#b8732f',{metalness:.7,emissive:new THREE.Color(0xff5a1a),emissiveIntensity:0});const heat=new THREE.Mesh(new THREE.TorusGeometry(0.36,0.05,8,32),O.heatM);heat.rotation.x=Math.PI/2;heat.position.y=0.14;rc.add(heat);
+  O.thermo=cyl(rc,0.09,0.09,0.12,'#7d858d',0,0.12,0,{metalness:.8});
+  const pnl=box(rc,0.5,0.4,0.12,'#5d646c',0,0.45,0.72);pnl.rotation.x=-0.1;
+  O.ledMasak=new THREE.Mesh(new THREE.SphereGeometry(0.04,10,8),ledMat(0xff3b2f));O.ledMasak.position.set(-0.12,0.55,0.79);rc.add(O.ledMasak);
+  O.ledHangat=new THREE.Mesh(new THREE.SphereGeometry(0.04,10,8),ledMat(0xffb020));O.ledHangat.position.set(0.12,0.55,0.79);rc.add(O.ledHangat);
+  O.lever=box(rc,0.12,0.12,0.12,'#2a2f35',0,0.32,0.82);
+  O.steam=[];for(let i=0;i<3;i++){const sp=glowSprite('235,240,245');sp.material.blending=THREE.NormalBlending;sp.position.set(-0.2+i*0.2,1.5,0);rc.add(sp);O.steam.push(sp);}
+  // 6. kulkas
+  s=stationBase(g,STX.kulkas,'kulkas');O.sKulkas=s;
+  const fz=-0.5,outC='#c7d0d8',inC='#8f9ea9';
+  box(s,1.6,3.0,0.08,outC,0,1.66,fz-0.7);box(s,0.08,3.0,1.4,outC,-0.78,1.66,fz);box(s,0.08,3.0,1.4,outC,0.78,1.66,fz);box(s,1.64,0.1,1.4,outC,0,3.13,fz);box(s,1.64,0.14,1.4,'#5d646c',0,0.23,fz);
+  box(s,1.46,2.8,0.02,inC,0,1.7,fz-0.64,{roughness:.8});box(s,0.02,2.8,1.25,inC,-0.73,1.7,fz);box(s,0.02,2.8,1.25,inC,0.73,1.7,fz);box(s,1.46,0.02,1.25,inC,0,3.07,fz);box(s,1.46,0.05,1.25,'#7f8d97',0,0.32,fz);
+  box(s,1.46,0.08,1.25,'#5d6a74',0,2.25,fz); // sekat freezer
+  [1.05,1.7].forEach(y=>{const sh=new THREE.Mesh(new THREE.BoxGeometry(1.42,0.03,1.15),new THREE.MeshStandardMaterial({color:col('#6fa8c8'),transparent:true,opacity:.55,roughness:.15}));sh.position.set(0,y,fz);s.add(sh);box(s,1.42,0.04,0.03,'#e3e7ea',0,y,fz+0.58);});
+  box(s,0.34,0.3,0.3,'#e67e22',-0.35,1.22,fz-0.15);cyl(s,0.12,0.12,0.45,'#27ae60',0.05,1.3,fz-0.2);cyl(s,0.1,0.1,0.35,'#c0392b',0.35,1.25,fz-0.1);
+  sph(s,0.13,'#e74c3c',-0.3,1.85,fz-0.1);sph(s,0.13,'#f1c40f',-0.02,1.85,fz-0.15);box(s,0.45,0.18,0.35,'#8e44ad',0.35,1.81,fz-0.1);
+  box(s,1.2,0.28,0.9,'#3d6f8e',0,0.5,fz,{transparent:true,opacity:.8});
+  box(s,0.5,0.3,0.5,'#dfe9f0',-0.3,2.45,fz-0.1);box(s,0.4,0.25,0.4,'#e8b23a',0.3,2.42,fz-0.15);
+  O.fLightM=M('#ffffff',{emissive:new THREE.Color(0xfff2c4),emissiveIntensity:0});const fl=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.05,0.12),O.fLightM);fl.position.set(0,2.18,fz-0.3);s.add(fl);
+  O.fLight=new THREE.PointLight(0xfff0cc,0,2.6,1.6);O.fLight.position.set(0,2.0,fz);s.add(O.fLight);O.fGlow=glowSprite('255,236,190');O.fGlow.position.set(0,2.15,fz-0.3);O.fGlow.scale.setScalar(0.45);s.add(O.fGlow);
+  O.plunger=cyl(s,0.04,0.04,0.12,'#f2f2f2',0.62,2.6,fz+0.66);O.plunger.rotation.x=Math.PI/2;box(s,0.14,0.18,0.06,'#2a2f35',0.62,2.6,fz+0.61);
+  O.fdoor=new THREE.Group();O.fdoor.position.set(-0.8,0,fz+0.72);s.add(O.fdoor);
+  box(O.fdoor,1.6,3.0,0.1,'#b8c3cc',0.8,1.66,0,{roughness:.35});box(O.fdoor,1.6,0.03,0.11,'#7d8a94',0.8,2.25,0);box(O.fdoor,0.06,0.9,0.08,'#6b7279',1.45,2.7,0.09,{metalness:.8});box(O.fdoor,0.06,1.0,0.08,'#6b7279',1.45,1.7,0.09,{metalness:.8});
+  [[1.3,'#cdd6dd'],[0.75,'#cdd6dd']].forEach(([y,c])=>box(O.fdoor,1.3,0.2,0.2,c,0.8,y,-0.15));
+  cyl(O.fdoor,0.08,0.08,0.3,'#2b62c9',0.5,1.55,-0.15);cyl(O.fdoor,0.08,0.08,0.3,'#c0392b',0.9,1.55,-0.15);
+  shadowAll(g);
+}
+/* ---------- DIGITAL & ANALOG: tangki ---------- */
+function buildDA(){
+  const g=T.G.da;const O=T.O.da={};
+  box(g,12,6,0.2,'#b9c2ca',0,3,-2.2);
+  const tx=-2.2;
+  const tk=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,4,40,1,true),glass('#eef2f5',.28));tk.position.set(tx,2.3,-0.4);g.add(tk);
+  cyl(g,1.33,1.33,0.08,'#9aa1a8',tx,4.3,-0.4,{metalness:.7});cyl(g,1.33,1.33,0.12,'#9aa1a8',tx,0.3,-0.4,{metalness:.7});
+  [[-1,-1],[1,-1],[-1,0.6],[1,0.6]].forEach(([x,z])=>{});
+  O.water=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,1,40),glass('#3a92e0',.55));O.water.position.set(tx,0.4,-0.4);g.add(O.water);
+  O.wY=p=>0.36+3.9*p/100;
+  // level switch (pelampung samping)
+  O.sw=[[20,'LSL'],[80,'LSH']].map(([p,n])=>{const y=O.wY(p);const b=box(g,0.36,0.3,0.3,'#2a2f35',tx+1.45,y,-0.4);
+    const fl=new THREE.Group();fl.position.set(tx+1.25,y,-0.4);g.add(fl);const arm=box(fl,0.45,0.05,0.05,'#9aa1a8',-0.22,0,0,{metalness:.7});const fb=sph(fl,0.12,'#f39c12',-0.45,0,0);
+    const led=new THREE.Mesh(new THREE.SphereGeometry(0.05,10,8),ledMat(0x3cff6e));led.position.set(tx+1.45,y+0.08,-0.24);g.add(led);
+    return {p,n,fl,led,y};});
+  // transmitter ultrasonik
+  const lt=new THREE.Group();lt.position.set(tx,4.35,-0.4);g.add(lt);cyl(lt,0.25,0.25,0.4,'#2b62c9',0,0.3,0,{metalness:.3});cyl(lt,0.2,0.2,0.2,'#e8e8e8',0,0.6,0);cyl(lt,0.18,0.25,0.12,'#20262c',0,0.06,0);
+  O.lt=lt;O.rings=[];for(let i=0;i<4;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(0.3,0.015,6,40),new THREE.MeshBasicMaterial({color:0x6fd3ff,transparent:true,opacity:0,depthWrite:false}));r.rotation.x=Math.PI/2;r.position.set(tx,4.2,-0.4);g.add(r);O.rings.push(r);}
+  // panel kontrol + HMI
+  const PN=buildPanel(g,3.2,0.3,-2.1,0.82,'da');O.pn=PN;
+  const hm=new THREE.Group();hm.position.set(3.2,4.3,-1.75);g.add(hm);box(hm,0.12,0.5,0.12,'#5d646c',0,0.25,-0.1,{metalness:.6});box(hm,2.25,1.75,0.22,'#2a2f35',0,1.3,0);
+  O.screen=textPlane(2.0,1.5,(c,w,h)=>drawPanel(c,w,h));O.screen.position.set(0,1.3,0.12);hm.add(O.screen);O.hmi=hm;
+  // kabel lapangan (abu-abu) → gland panel → X1 → PLC / modul AI
+  const cab=(pts,pIn)=>{tube(g,pts.concat([pIn[0]]),0.045,'#8f969c');return prep([{pts:new THREE.CatmullRomCurve3(pts.concat(pIn),false,'centripetal').getSpacedPoints(70)}]);};
+  O.pK1=cab([V3(tx+1.62,O.wY(20),-0.4),V3(-0.2,O.wY(20)-0.1,-0.3),V3(0.6,0.5,-0.6),V3(2.5,0.15,-1.1),V3(PN.W(PN.gland(0)).x,0.15,-1.4)],PN.inPath(0,2));
+  O.pK2=cab([V3(tx+1.62,O.wY(80),-0.4),V3(-0.1,O.wY(80)-0.3,-0.4),V3(0.5,1.2,-0.8),V3(2.4,0.2,-1.2),V3(PN.W(PN.gland(0)).x+0.02,0.17,-1.45)],PN.inPath(0,3));
+  O.pK3=cab([V3(tx,5.0,-0.4),V3(-0.6,5.3,-0.8),V3(1.0,3.2,-1.4),V3(1.4,0.6,-1.6),V3(2.6,0.15,-1.6),V3(PN.W(PN.gland(1)).x,0.15,-1.5)],PN.inPath(1,0,true));
+  tube(g,[V3(PN.W(V3(-1.3,-0.1,0.5)).x,0.0,-1.6),V3(PN.W(V3(-1.3,-0.1,0.5)).x,0.15,-1.7),PN.W(V3(-1.3,-0.12,0.5))],0.06,'#20262c');
+  O.pumpIn=tube(g,[[tx-2.6,0.4,0.6],[tx-1.9,0.5,0.2],[tx-1.6,4.6,-0.4],[tx-0.6,4.6,-0.4],[tx-0.5,4.3,-0.4]],0.07,'#e8e8e8');
+  tube(g,[[tx+0.9,0.35,0.4],[tx+1.6,0.25,1.2],[tx+3.0,0.25,1.4]],0.07,'#e8e8e8');
+  shadowAll(g);
+}
+function drawPanel(c,w,h){
+  c.fillStyle='#0d1a14';c.fillRect(0,0,w,h);c.strokeStyle='#2a3b33';c.lineWidth=4;c.strokeRect(2,2,w-4,h-4);
+  const L=[['LSL (digital)',LSL()?'1  →  24 V':'0  →  0 V',LSL()],['LSH (digital)',LSH()?'1  →  24 V':'0  →  0 V',LSH()],['LT (analog)',S.da.putus?'0,0 mA  PUTUS!':nf(daMA(),1)+' mA',2]];
+  c.textBaseline='middle';
+  L.forEach(([a,b,on],i)=>{const y=h*(0.17+i*0.22);c.font=`600 ${h*.075}px "IBM Plex Mono",monospace`;c.fillStyle='#9fc2b0';c.textAlign='left';c.fillText(a,w*.06,y);
+    c.fillStyle=on===2?(S.da.putus?'#ff6b5b':'#6fd3ff'):(on?'#5dff8a':'#59705f');c.font=`700 ${h*.085}px "IBM Plex Mono",monospace`;c.textAlign='right';c.fillText(b,w*.94,y);});
+  const y=h*0.84;c.fillStyle='#14251d';c.fillRect(w*.06,y-h*.06,w*.88,h*.12);
+  if(!S.da.putus){c.fillStyle='#3a92e0';c.fillRect(w*.06,y-h*.06,w*.88*S.da.lvl/100,h*.12);}
+  c.fillStyle='#e8f2ec';c.font=`700 ${h*.08}px "IBM Plex Mono",monospace`;c.textAlign='center';c.fillText(S.da.putus?'— — —':'Level '+nf(S.da.lvl,0)+' %',w/2,y);
+}
+/* ---------- PABRIK: konveyor ---------- */
+function buildPabrik(){
+  const g=T.G.pabrik;const O=T.O.pab={items:[],t:0,spawnT:0,pushT:0,prev:{}};
+  box(g,18,6,0.2,'#b9c2ca',0,3,-3.2);
+  // konveyor
+  [-0.9,0.9].forEach(z=>box(g,14.4,0.25,0.12,'#7d858d',0,0.95,z,{metalness:.7}));
+  [[-6.8,-0.75],[6.8,-0.75],[-6.8,0.75],[6.8,0.75],[0,-0.75],[0,0.75]].forEach(([x,z])=>box(g,0.12,0.9,0.12,'#5d646c',x,0.45,z,{metalness:.6}));
+  O.beltTex=canvasTex(512,64,(c,w,h)=>{c.fillStyle='#2a2f35';c.fillRect(0,0,w,h);c.fillStyle='#3a4048';for(let i=0;i<16;i++)c.fillRect(i*32,0,12,h);});O.beltTex.wrapS=THREE.RepeatWrapping;O.beltTex.repeat.set(6,1);
+  const belt=new THREE.Mesh(new THREE.BoxGeometry(14.2,0.08,1.66),new THREE.MeshStandardMaterial({map:O.beltTex,roughness:.8}));belt.position.set(0,0.96,0);g.add(belt);
+  [-7.1,7.1].forEach(x=>{const r=cyl(g,0.12,0.12,1.7,'#9aa1a8',x,0.9,0,{metalness:.8});r.rotation.x=Math.PI/2;});
+  const BY=1.0;O.BY=BY;
+  // S1 fotoelektrik through-beam
+  const s1=SENS[0].x;const em=new THREE.Group();em.position.set(s1,0,-1.15);g.add(em);box(em,0.08,1.3,0.08,'#5d646c',0,0.65,0,{metalness:.6});box(em,0.3,0.42,0.3,'#e3b21c',0,1.35,0.05);
+  const rc=new THREE.Group();rc.position.set(s1,0,1.15);g.add(rc);box(rc,0.08,1.3,0.08,'#5d646c',0,0.65,0,{metalness:.6});box(rc,0.3,0.42,0.3,'#e3b21c',0,1.35,-0.05);
+  O.beamM=new THREE.MeshBasicMaterial({color:0xff3030,transparent:true,opacity:.85,depthWrite:false});const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,2.0,8),O.beamM);beam.rotation.x=Math.PI/2;beam.position.set(s1,1.33,0);g.add(beam);
+  // S2 induktif, S3 kapasitif (silinder M18 dari belakang)
+  const prox=(x,body,face)=>{const p=new THREE.Group();p.position.set(x,1.32,-1.05);g.add(p);box(p,0.08,0.08,0.5,'#5d646c',0,0,-0.35,{metalness:.6});box(p,0.08,1.3,0.08,'#5d646c',0,-0.65,-0.6,{metalness:.6});
+    const b=cyl(p,0.13,0.13,0.62,body,0,0,0,{metalness:body==='#c9a64a'?.8:.1,roughness:.35});b.rotation.x=Math.PI/2;
+    const f=cyl(p,0.13,0.13,0.05,face,0,0,0.33);f.rotation.x=Math.PI/2;
+    for(let i=0;i<4;i++){const n=cyl(p,0.16,0.16,0.04,'#9aa1a8',0,0,-0.15+i*0.12,{metalness:.8},6);n.rotation.x=Math.PI/2;}
+    return p;};
+  prox(SENS[1].x,'#c9a64a','#2b62c9');prox(SENS[2].x,'#5d6670','#e8e1cf');
+  // S4 limit switch dengan tuas roda
+  const ls=new THREE.Group();ls.position.set(SENS[3].x,0,-1.2);g.add(ls);box(ls,0.08,1.2,0.08,'#5d646c',0,0.6,-0.1,{metalness:.6});box(ls,0.4,0.5,0.3,'#d0302a',0,1.35,0);box(ls,0.4,0.16,0.3,'#8f969c',0,1.66,0,{metalness:.6});
+  O.lsArm=new THREE.Group();O.lsArm.position.set(0,1.4,0.16);ls.add(O.lsArm);box(O.lsArm,0.06,0.06,0.6,'#cfd3d8',0,0,0.3,{metalness:.8});const rl=cyl(O.lsArm,0.08,0.08,0.06,'#20262c',0,0,0.62);
+  // LED sensor
+  O.leds=SENS.map((sn,i)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.05,10,8),ledMat(0xffa21a));const z=i===0?1.3:i===3?-1.04:-1.05;const y=i===0?1.6:i===3?1.62:1.55;m.position.set(sn.x+(i===1||i===2?0:0.12),y,i===1||i===2?-1.4:z);g.add(m);return m;});
+  // pendorong pneumatik
+  const pc=new THREE.Group();pc.position.set(PUSHX,1.3,-1.75);g.add(pc);const bd=cyl(pc,0.17,0.17,0.9,'#cfd3d8',0,0,0,{metalness:.8,roughness:.25});bd.rotation.x=Math.PI/2;box(pc,0.4,0.4,0.1,'#5d646c',0,0,-0.48,{metalness:.6});box(pc,0.4,0.4,0.1,'#5d646c',0,0,0.48,{metalness:.6});
+  box(pc,0.08,1.1,0.08,'#5d646c',0,-0.75,-0.3,{metalness:.6});
+  O.rod=new THREE.Group();pc.add(O.rod);const rd=cyl(O.rod,0.05,0.05,0.9,'#e8eaec',0,0,0.75,{metalness:.95});rd.rotation.x=Math.PI/2;box(O.rod,0.45,0.4,0.06,'#2b62c9',0,-0.1,1.2);
+  // tempat sampah
+  const bin=(x,z,c,t)=>{const b=new THREE.Group();b.position.set(x,0,z);g.add(b);box(b,1.4,0.06,1.0,c,0,0.03,0);box(b,1.4,0.6,0.06,c,0,0.3,0.5);box(b,1.4,0.6,0.06,c,0,0.3,-0.5);box(b,0.06,0.6,1.0,c,0.7,0.3,0);box(b,0.06,0.6,1.0,c,-0.7,0.3,0);label(b,t,1.3,0,0.35,0.54,'#ffffff');return b;};
+  bin(PUSHX,2.2,'#2b62c9','LOGAM');bin(8.0,0,'#5d646c','LAINNYA');
+  // panel kontrol di dinding
+  const PN=buildPanel(g,-5.0,1.0,-3.1,1.0,'pab');O.pn=PN;
+  O.cnt=textPlane(0.62,0.22,(c,w,h)=>{c.fillStyle='#0d1a14';c.fillRect(0,0,w,h);c.fillStyle='#5dff8a';c.font=`700 ${h*.66}px "IBM Plex Mono",monospace`;c.textAlign='center';c.textBaseline='middle';c.fillText(String(S.pab.count).padStart(4,'0'),w/2,h/2);});O.cnt.position.set(-5.35+0.62,1.0+1.9-0.12,-3.1+0.94);g.add(O.cnt);
+  // solenoid valve 5/2 untuk pendorong
+  const vv=new THREE.Group();vv.position.set(PUSHX+0.95,0,-2.45);g.add(vv);box(vv,0.1,0.95,0.1,'#5d646c',0,0.48,-0.12,{metalness:.6});box(vv,0.9,0.32,0.3,'#9aa6b2',0,1.05,0,{metalness:.6});box(vv,0.32,0.36,0.32,'#20262c',-0.3,1.39,0);box(vv,0.26,0.2,0.26,'#5d646c',-0.3,1.66,0);
+  O.vLed=new THREE.Mesh(new THREE.SphereGeometry(0.035,10,8),ledMat(0xffa21a));O.vLed.position.set(-0.3,1.66,0.14);vv.add(O.vLed);
+  [[-0.15,0.95],[0.2,0.95]].forEach(([dx,y])=>cyl(vv,0.05,0.05,0.12,'#cfd3d8',dx,1.24,0.0,{metalness:.8}));
+  tube(g,[[PUSHX+0.8,1.27,-2.45],[PUSHX+0.6,1.6,-2.4],[PUSHX+0.2,1.55,-2.25],[PUSHX,1.47,-2.12]],0.035,'#2b62c9');
+  tube(g,[[PUSHX+1.15,1.27,-2.45],[PUSHX+1.1,1.7,-2.1],[PUSHX+0.6,1.65,-1.5],[PUSHX,1.47,-1.35]],0.035,'#2b62c9');
+  tube(g,[[PUSHX+0.95,0.9,-2.3],[PUSHX+1.3,0.6,-2.1],[PUSHX+2.0,0.15,-2.2],[8.6,0.15,-2.3]],0.035,'#2b62c9');
+  label(g,'udara 6 bar',1.0,8.0,0.05,-2.0,'#ffffff','rgba(20,32,43,.85)',0.24).rotation.x=-Math.PI/2;
+  // kabel sensor (3 kawat, berselubung abu-abu) → panel
+  const gw=i=>PN.W(PN.gland(i));
+  const kab=[[s1,1.35,-1.3],[SENS[1].x,1.32,-1.45],[SENS[2].x,1.32,-1.45],[SENS[3].x,1.62,-1.32]];
+  O.pSig=kab.map(([x,y,z],i)=>{const G=gw(i);const out=[V3(x,y,z),V3(x,y-0.25,z-0.35),V3(x,0.3,-1.9-i*0.06),V3(Math.min(x,-2.6),0.15,-2.3-i*0.06),V3(G.x,0.15,-2.55),V3(G.x,0.6,-2.6)];tube(g,out.concat([G]),0.035,'#8f969c');
+    return prep([{pts:new THREE.CatmullRomCurve3(out.concat(PN.inPath(i,2+i)),false,'centripetal').getSpacedPoints(110)}]);});
+  {const G=gw(4);const pth=PN.outPath(4,0);const out=[G,V3(G.x,0.6,-2.6),V3(G.x,0.15,-2.6),V3(PUSHX,0.12,-2.7),V3(PUSHX+0.6,0.3,-2.6),V3(PUSHX+0.65,1.7,-2.45)];tube(g,out,0.035,'#20262c');O.pSig.push(prep([{pts:new THREE.CatmullRomCurve3(pth.concat(out.slice(1)),false,'centripetal').getSpacedPoints(110)}]));}
+  tube(g,[V3(-5.0-1.3,0.0,-2.55),V3(-6.3,0.6,-2.6),PN.W(V3(-1.3,-0.12,0.5))],0.06,'#20262c');
+  O.plcLed=[PN.inLed[0],PN.inLed[1],PN.inLed[2],PN.inLed[3],PN.outLed[0]];
+  shadowAll(g);
+}
+function makeItem(m){
+  const g=new THREE.Group();T.G.pabrik.add(g);
+  if(m==='kaleng'){cyl(g,0.25,0.25,0.55,'#cfd3d8',0,0.275,0,{metalness:.9,roughness:.25});cyl(g,0.255,0.255,0.3,'#c0392b',0,0.3,0,{metalness:.3});}
+  else if(m==='isi'||m==='kosong'){const b=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.75,24),glass('#cfe8f5',m==='isi'?.4:.32));b.position.y=0.375;g.add(b);
+    if(m==='isi')cyl(g,0.185,0.185,0.55,'#3a92e0',0,0.3,0,{transparent:true,opacity:.7});cyl(g,0.08,0.12,0.12,'#cfe8f5',0,0.8,0,{transparent:true,opacity:.5});cyl(g,0.08,0.08,0.08,m==='isi'?'#2b62c9':'#27ae60',0,0.89,0);}
+  else{box(g,0.6,0.45,0.5,'#b5874f',0,0.225,0,{roughness:.9});box(g,0.08,0.46,0.51,'#d8b27a',0,0.225,0);}
+  shadowAll(g);
+  return {m,g,x:-7.0,z:0,y:T.O.pab.BY,st:'belt',det:{},metal:false,t:0};
+}
+function showScene(){
+  if(!T) return; if(typeof PAN!=='undefined'&&PAN.v)PAN.v.set(0,0,0); const key={hari:'hari',da:'da',pabrik:'pabrik'}[S.tab]||'hari';
+  Object.entries(T.G).forEach(([k,g])=>g.visible=k===key);T.cur=key;
+  if(key==='hari'){const cv=HCAM[S.hari.dev];T.cam.t=V3(STX[S.hari.dev]+cv[0],cv[1],cv[2]);T.cam.pitch=cv[3];T.cam.yaw=0.3;T.half=cv[4];}
+  else if(key==='da'){T.cam.t=V3(0.4,2.8,0);T.cam.pitch=0.16;T.cam.yaw=0.15;T.half=[5.9,3.3];}
+  else if(S.pab.view==='panel'){T.cam.t=V3(-5.0,3.3,-2.4);T.cam.pitch=0.12;T.cam.yaw=0.28;T.half=[2.7,2.6];}
+  else {T.cam.t=V3(0.2,2.5,-0.6);T.cam.pitch=0.32;T.cam.yaw=0.1;T.half=[8.4,3.4];}
+  setPins();
+}
+function setPins(){
+  T.scene.updateMatrixWorld(true);
+  const L=$('#labels');L.innerHTML='';T.pins=[];
+  const add=(html,p,cls)=>{const el=document.createElement('div');el.className='lbl'+(cls?' '+cls:'');el.innerHTML=html;L.appendChild(el);T.pins.push({el,p});};
+  if(T.cur==='hari'){const O=T.O.hari,d=S.hari.dev,x=STX[d],w=(a,b,c)=>V3(x+a,b,c);
+    if(d==='lampu'){add('LDR (sensor cahaya)',w(0.4,3.65,-0.4));add('Lampu',w(-0.42,2.85,-0.4));}
+    if(d==='pintu'){add('Sensor gerak',w(0,2.7,-0.6));add('Area deteksi',w(1.0,0.5,1.0));add('Pintu geser',w(-0.6,1.9,-0.8));}
+    if(d==='toren'){add('Pelampung',w(0.38,3.0,-0.4));add('Batas atas',w(0.6,O.tkY(90),-0.4),'pos');add('Batas bawah',w(0.6,O.tkY(25),-0.4),'pos');add('Pompa',w(-1.55,0.95,0.7));add('Keran (ketuk)',w(1.25,1.15,0.6));}
+    if(d==='parkir'){add('Sensor ultrasonik',O.car.localToWorld(V3(1.38,0.85,0)));add('Tembok',w(2.0,2.5,0));}
+    if(d==='magic'){const r=O.rc,v=(a,b,c)=>r.localToWorld(V3(a,b,c));add('Termostat magnet',v(0,0.0,0.3));add('Pemanas',v(-0.45,0.14,0.2));add('Lampu MASAK / HANGAT',v(0,0.7,0.8));}
+    if(d==='kulkas'){add('Saklar pintu (NC)',w(0.62,2.75,0.2));add('Lampu',w(0,2.2,-0.8));add('Freezer',w(0,2.75,-0.2));}}
+  else if(T.cur==='da'){const tx=-2.2,O=T.O.da;add('LSH — level switch atas (digital)',V3(tx+1.5,O.wY(80)+0.25,-0.4));add('LSL — level switch bawah (digital)',V3(tx+1.5,O.wY(20)+0.25,-0.4));add('LT — transmitter ultrasonik (analog 4–20 mA)',V3(tx,5.15,-0.4));{const W=O.pn.W;add('MCB 1P',W(V3(-1.3,4.15,0.8)));add('SMPS 24 V',W(V3(-0.75,4.35,0.9)));add('PLC',W(V3(-0.35,2.6,1.0)));add('Modul analog',W(V3(1.05,2.6,1.0)));add('HMI',V3(3.2,6.15,-1.7));}}
+  else {const nar=T.viewer.clientWidth<600;if(S.pab.view!=='panel')SENS.forEach((s,i)=>add(nar?`${s.id}`:`${s.id} · ${s.nm} <small>${s.plc}</small>`,V3(s.x,1.95,i===0?-1.15:-1.2)));add(nar?'Q0.0':'Pendorong <small>Q0.0</small>',V3(PUSHX+0.2,0.75,-1.75));{const W=T.O.pab.pn.W;if(S.pab.view==='panel'){add('MCB 1P',W(V3(-1.3,4.15,0.8)));add('SMPS 24 V',W(V3(-0.75,4.35,0.9)));add('Terminal L+ / M / PE',W(V3(0.23,4.15,0.8)));add('Terminal X1',W(V3(1.2,2.4,0.8)));add('PLC',W(V3(-0.35,2.6,1.0)));add('Rel DIN',W(V3(1.45,3.62,0.3)));add('Duct kabel',W(V3(-0.9,1.25,0.6)));add('Kabel sumber (masuk dari bawah)',W(V3(-1.3,0.1,0.6)));}else add('Panel kontrol',W(V3(0,4.75,0.6)));add(nar?'Valve':'Solenoid valve 5/2',V3(PUSHX+0.65,2.0,-2.45));}}
+}
+function bind(){
+  const cv=T.canvas,pts=new Map();let pinch=null,start=null,moved=false;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===1){start={x:e.clientX,y:e.clientY};moved=false;}if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:T.cam.zoom};moved=true;}});
+  cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const pr=pts.get(e.pointerId),cu={x:e.clientX,y:e.clientY};pts.set(e.pointerId,cu);
+    if(pts.size===1&&!PAN.drag){T.cam.yaw=Math.max(-1.3,Math.min(1.3,T.cam.yaw-(cu.x-pr.x)*0.006));T.cam.pitch=Math.max(0.05,Math.min(1.4,T.cam.pitch+(cu.y-pr.y)*0.005));if(Math.hypot(cu.x-start.x,cu.y-start.y)>6)moved=true;}
+    else if(pts.size===2&&pinch){const [a,b]=[...pts.values()];T.cam.zoom=Math.min(1.8,Math.max(0.35,pinch.z*pinch.d/Math.hypot(a.x-b.x,a.y-b.y)));}});
+  const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+  const up=e=>{if(pts.size===1&&!moved&&!PAN.did&&e.type==='pointerup'){const r=cv.getBoundingClientRect();ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,T.camera);
+      const vis=T.taps.filter(t=>{let o=t;while(o.parent&&o.parent!==T.scene)o=o.parent;return o.visible;});
+      const h=ray.intersectObjects(vis,false)[0]; if(h){const u=h.object.userData;
+        if(u.tap&&u.tap.startsWith('dev:')){const d=u.tap.slice(4);if(d!==S.hari.dev){S.hari.dev=d;showScene();render();}}
+        else if(u.tap==='keran'){S.hari.keran=!S.hari.keran;render();}}}
+    pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{e.preventDefault();T.cam.zoom=Math.min(1.8,Math.max(0.35,T.cam.zoom*Math.exp(e.deltaY*0.0012)));},{passive:false});
+  $('#bReset').addEventListener('click',()=>{if(PAN.v)PAN.v.set(0,0,0);if(PAN.v)PAN.v.set(0,0,0);T.cam.zoom=1;showScene();});
+}
+function resize(){if(!T)return;const w=T.viewer.clientWidth,h=T.viewer.clientHeight;T.renderer.setSize(w,h,false);T.camera.aspect=w/h;T.camera.updateProjectionMatrix();}
+const mtx=new THREE.Matrix4(),tmp=V3(0,0,0);
+function flow(paths,dt,speed,k,dir){paths.forEach(p=>{p.u=((p.u+dt*speed*(dir||1)/Math.max(0.5,p.len)*1.6)%1+1)%1;for(let j=0;j<p.n&&k.v<600;j++){const u=((p.u+j/p.n)%1)*p.len;let s2=1;while(s2<p.cum.length-1&&p.cum[s2]<u)s2++;const fr=(u-p.cum[s2-1])/Math.max(1e-6,p.cum[s2]-p.cum[s2-1]);tmp.copy(p.pts[s2-1]).lerp(p.pts[s2],Math.min(1,fr));mtx.makeTranslation(tmp.x,tmp.y,tmp.z);T.dots.setMatrixAt(k.v++,mtx);}});}
+
+/* ---------- simulasi waktu (berjalan juga saat tab lain dibuka) ---------- */
+function stepHari(dt){
+  const h=S.hari;
+  // toren: dua titik
+  h.level=clamp(h.level+((h.pompa?13:0)-(h.keran?8:0))*dt,0,100);
+  if(h.level<=25&&!h.pompa){h.pompa=true;}if(h.level>=90&&h.pompa){h.pompa=false;}
+  // rice cooker
+  const r=h.rc;
+  if(r.st==='masak'){if(r.air>0&&r.T>=100){r.T=100;r.air=Math.max(0,r.air-14*dt);}else r.T=Math.min(110,r.T+(r.air>0?14:6)*dt);if(r.T>=103){r.st='hangat';toastOnce('rc','Klik! Tuas lepas','Air habis → suhu naik di atas 100 °C → magnet termostat lepas → mode HANGAT.');}}
+  else if(r.st==='hangat'){r.T+= (70-r.T)*Math.min(1,dt*0.35);}
+  else {r.T+=(28-r.T)*Math.min(1,dt*0.2);}
+}
+let toastSeen={};function toastOnce(k,t,m){if(toastSeen[k]&&performance.now()-toastSeen[k]<4000)return;toastSeen[k]=performance.now();toast('ok',t,'<br>'+m);}
+function stepPabrik(dt){
+  const P=S.pab,O=T?T.O.pab:null;if(!O)return;
+  O.t+=dt;
+  if(P.auto&&P.run){O.spawnT-=dt;if(O.spawnT<=0){if(spawn(rnd(Object.keys(MAT)),true))O.spawnT=1.7;else O.spawnT=0.3;}}
+  const sp=1.3;let changed=false;
+  O.items.forEach(it=>{
+    const px=it.x;
+    if(it.st==='belt'){if(P.run)it.x+=sp*dt;
+      if(it.metal&&P.push&&px<PUSHX&&it.x>=PUSHX){it.st='push';it.t=0;O.pushT=0.45;P.logam++;}
+      if(it.x>7.15){it.st='fall';it.t=0;}}
+    else if(it.st==='push'){it.t+=dt;it.z=Math.min(2.2,it.z+4.2*dt);if(it.z>0.95){it.y=Math.max(0.08,it.y-4*dt);}if(it.y<=0.08&&it.z>=2.2){it.st='done';it.t=0;}}
+    else if(it.st==='fall'){it.t+=dt;it.x+=sp*0.8*dt;it.y=Math.max(0.08,it.y-4.5*dt*it.t*2);if(it.y<=0.08){it.st='done';it.t=0;}}
+    else if(it.st==='done'){it.t+=dt;}
+    // deteksi
+    SENS.forEach(s=>{const inZone=it.st==='belt'&&Math.abs(it.x-s.x)<0.33;const d=inZone&&s.det(it.m);
+      if(d)it.det[s.id]=true;
+      if(s.id==='S2'&&d)it.metal=true;
+      if(it.st==='belt'&&px<s.x+0.5&&it.x>=s.x+0.5){const k=it.m+'|'+s.id;const v=!!it.det[s.id];if(P.seen[k]!==v){P.seen[k]=v;changed=true;}}});
+    it.g.position.set(it.x,it.y,it.z);
+  });
+  O.items=O.items.filter(it=>{if(it.st==='done'&&it.t>2.5){T.G.pabrik.remove(it.g);it.g.traverse(m=>{if(m.isMesh){m.geometry.dispose();m.material.dispose();}});return false;}return true;});
+  // input PLC
+  const inp=SENS.map(s=>O.items.some(it=>it.st==='belt'&&Math.abs(it.x-s.x)<0.33&&s.det(it.m)));
+  if(inp[0]&&!O.prev.s1){P.count++;redraw(O.cnt);}O.prev.s1=inp[0];
+  O.inp=inp;O.pushT=Math.max(0,O.pushT-dt);
+  if(changed)updateObs();
+}
+function spawn(m,quiet){const O=T.O.pab;if(O.items.some(it=>it.st==='belt'&&it.x<-6.1)){if(!quiet)toast('warn','Tunggu sebentar','<br>Benda sebelumnya belum jauh.');return false;}O.items.push(makeItem(m));return true;}
+
+let last=performance.now(),tPrev=performance.now(),uiT=0,beepT=0,ringT=0;
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000);last=t;
+  const c=T.cam,tt=Math.tan(THREE.MathUtils.degToRad(T.camera.fov/2)),a=T.camera.aspect;
+  const half=T.half||[6,3];
+  const gd=Math.max(half[0]/(tt*a),half[1]/tt)*c.zoom;c.d+=(gd-c.d)*(1-Math.exp(-dt*5));
+  const tg=PAN.v?c.t.clone().add(PAN.v):c.t; T.camera.position.set(tg.x+c.d*Math.cos(c.pitch)*Math.sin(c.yaw),tg.y+c.d*Math.sin(c.pitch),tg.z+c.d*Math.cos(c.pitch)*Math.cos(c.yaw));T.camera.lookAt(tg);
+  {let rem=Math.min(0.3,(t-tPrev)/1000);tPrev=t;while(rem>1e-4){const h2=Math.min(0.05,rem);stepHari(h2);stepPabrik(h2);rem-=h2;}}
+  const k={v:0},h=S.hari,f=Math.min(1,dt*6);
+  if(T.cur==='hari'){const O=T.O.hari;
+    // lampu
+    const cx=h.cahaya/100;O.skyM.color.setRGB(0.05+0.32*cx,0.08+0.45*cx,0.16+0.62*cx);O.sun.visible=cx>0.2;O.sun.position.y=1.6+2.2*cx;O.moon.visible=cx<0.35;
+    const on=lampOn();O.lampM.emissiveIntensity+=((on?2.2:0)-O.lampM.emissiveIntensity)*f;O.lampG.material.opacity=O.lampM.emissiveIntensity/2.2;O.lampG.scale.setScalar(0.5+1.6*O.lampG.material.opacity);O.lampL.intensity=O.lampG.material.opacity*2;
+    // pintu
+    const pz=0.55+h.jarak*0.5;O.person.position.set(1.0,0.16,pz);const op=doorSense();
+    O.doorL.position.x+=((op?-1.4:-0.5)-O.doorL.position.x)*f;O.doorR.position.x+=((op?1.4:0.5)-O.doorR.position.x)*f;
+    O.pirLed.material.emissiveIntensity=op?2:0;O.coneM.color.setHex(op?0x6fd38d:0xbcc6cf);O.coneM.opacity=op?0.22:0.1;
+    // toren
+    const wy=1.5*h.level/100;O.water.scale.y=Math.max(0.001,wy);O.water.position.y=2.3+wy/2;O.float.position.y=clamp(O.tkY(h.level),O.tkY(25)+0.08,O.tkY(90)-0.08);
+    O.stream.visible=h.keran;O.pumpG.position.y=0.16+(h.pompa?Math.sin(t/25)*0.006:0);if(h.pompa)flow(O.pPipe,dt,1.6,k);
+    // parkir
+    O.car.position.set(O.carX(h.parkir),0.16,0);ringT+=dt;const bi=beepInfo(h.parkir);
+    O.rings.forEach((r,i)=>{const ph=((ringT*0.9+i/4)%1);const sx=O.car.position.x+1.42,L=1.85-sx;r.position.set(sx+L*ph,0.76,0);r.scale.setScalar(0.6+ph*1.4);r.material.opacity=(1-ph)*0.8;});
+    if(h.dev==='parkir'&&S.tab==='hari'){beepT-=dt;if(bi[1]===-1){tone(true);}else{tone(false);if(bi[1]>0&&beepT<=0){beep();beepT=bi[1];}}}else tone(false);
+    // rice cooker
+    const r=h.rc;O.heatM.emissiveIntensity=r.st==='masak'?1.6:r.st==='hangat'?0.35:0;O.ledMasak.material.emissiveIntensity=r.st==='masak'?2:0;O.ledHangat.material.emissiveIntensity=r.st==='hangat'?2:0;
+    O.lever.position.y+=(((r.st==='masak')?0.24:0.36)-O.lever.position.y)*Math.min(1,dt*12);O.riceWater.scale.y=Math.max(0.01,r.air/100);O.riceWater.position.y=0.5+0.05*r.air/100;
+    O.steam.forEach((s2,i)=>{const on2=r.T>=90&&r.st!=='off';const ph=((t/1600)+i/3)%1;s2.position.y=1.45+ph*0.9;s2.material.opacity=on2?(1-ph)*0.6:0;s2.scale.setScalar(0.3+ph*0.6);});
+    // kulkas
+    O.fdoor.rotation.y+=((h.kulkasBuka?-1.95:0)-O.fdoor.rotation.y)*f;const fo=O.fdoor.rotation.y<-0.12;O.fLightM.emissiveIntensity=fo?1.5:0;O.fLight.intensity=fo?0.9:0;O.fGlow.material.opacity=fo?0.55:0;O.plunger.position.z=(-0.5+0.66)+(fo?0.06:-0.02);}
+  else if(T.cur==='da'){const O=T.O.da,d=S.da;
+    const wy=3.9*d.lvl/100;O.water.scale.y=Math.max(0.001,wy);O.water.position.y=0.36+wy/2;
+    O.sw.forEach(s=>{const on=d.lvl>=s.p;s.fl.rotation.z+=((on?0.55:-0.45)-s.fl.rotation.z)*f;s.led.material.emissiveIntensity=on?2:0;});
+    ringT+=dt;const top=4.2,bot=O.wY(d.lvl)+0.05;O.pn.inLed[0].material.emissiveIntensity=LSL()?2.4:0;O.pn.inLed[1].material.emissiveIntensity=LSH()?2.4:0;O.pn.aiLed.material.emissiveIntensity=d.putus?(Math.floor(t/300)%2?2.4:0):2;O.pn.aiLed.material.emissive.setHex(d.putus?0xff3b2f:0x3cff6e);O.rings.forEach((r,i)=>{const ph=((ringT*0.8+i/4)%1);r.position.y=top-(top-bot)*ph;r.material.opacity=d.putus?0:(1-ph)*0.7;r.scale.setScalar(0.6+ph*2.2);});
+    if(LSL())flow(O.pK1,dt,1.2,k);if(LSH())flow(O.pK2,dt,1.2,k);if(!d.putus)flow(O.pK3,dt,0.3+daMA()*0.08,k);}
+  else {const O=T.O.pab,P=S.pab;
+    if(P.run)O.beltTex.offset.x-=dt*1.3/14.2*6;
+    const inp=O.inp||[0,0,0,0];
+    O.leds.forEach((l,i)=>l.material.emissiveIntensity=inp[i]?2.4:0);O.plcLed.forEach((l,i)=>l.material.emissiveIntensity=(i<4?inp[i]:O.pushT>0)?2.4:0);
+    O.beamM.opacity=inp[0]?0.18:0.85;O.lsArm.rotation.y+=((inp[3]?-0.6:0)-O.lsArm.rotation.y)*Math.min(1,dt*14);
+    O.rod.position.z+=((O.pushT>0.12?1.0:0)-O.rod.position.z)*Math.min(1,dt*16);
+    inp.forEach((v,i)=>{if(v)flow(O.pSig[i],dt,1.8,k);});if(O.pushT>0)flow(O.pSig[4],dt,1.8,k);O.vLed.material.emissiveIntensity=O.pushT>0?2.4:0;}
+  T.dots.count=k.v;T.dots.instanceMatrix.needsUpdate=true;
+  T.renderer.render(T.scene,T.camera);
+  const W=T.viewer.clientWidth,Hh=T.viewer.clientHeight,v=V3(0,0,0);
+  T.pins.forEach(p=>{v.copy(p.p).project(T.camera);if(v.z>1){p.el.style.opacity=0;return;}p.el.style.opacity=1;p.el.style.transform=`translate(${(v.x+1)/2*W}px,${(1-v.y)/2*Hh}px) translate(-50%,-100%)`;});
+  uiT-=dt;if(uiT<=0){uiT=0.15;live();}
+  requestAnimationFrame(loop);
+}
+
+/* ================= SUARA ================= */
+let actx=null,tg=null,tosc=null;
+function ensureAudio(){if(actx)return;try{actx=new (window.AudioContext||window.webkitAudioContext)();tg=actx.createGain();tg.gain.value=0;tg.connect(actx.destination);tosc=actx.createOscillator();tosc.type='sine';tosc.frequency.value=2400;tosc.connect(tg);tosc.start();}catch(e){actx=null;}}
+function beep(){if(!actx||!S.hari.sound)return;try{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=2400;g.gain.value=0.05;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+0.07);}catch(e){}}
+function tone(on){if(!actx)return;try{tg.gain.setTargetAtTime(on&&S.hari.sound?0.04:0,actx.currentTime,0.02);}catch(e){}}
+document.addEventListener('pointerdown',ensureAudio,{once:true});
+
+/* ================= UI ================= */
+const TABS=[['pre','Tes Awal'],['hari','Di Sekitarmu'],['da','Digital & Analog'],['pabrik','Di Pabrik'],['post','Tes Akhir']];
+function toast(sev,t,m){const box=$('#toast');const d=document.createElement('div');d.className='tst '+(sev||'');d.innerHTML=`<b>${t}</b>${m||''}`;box.appendChild(d);while(box.children.length>2)box.removeChild(box.firstChild);setTimeout(()=>d.remove(),5200);}
+function renderTabs(){const done={pre:S.test.pre.done,hari:S.visited.hari,da:S.visited.da,pabrik:S.visited.pabrik,post:S.test.post.done};
+  $('#tabs').innerHTML=TABS.map(([k,t],i)=>`<button data-t="${k}" class="${S.tab===k?'active':''} ${done[k]?'done':''}"><span class="n">${i+1}</span>${t}</button>`).join('');}
+function setTab(t){S.tab=t;if(['hari','da','pabrik'].includes(t)){S.visited[t]=true;save();}if(T)showScene();renderTabs();render();window.scrollTo({top:0,behavior:'smooth'});}
+/* ---- tes ---- */
+function grade(kind){const st=S.test[kind];return QUEST.map((q,i)=>{const a=st.ans[i];if(a==null)return {right:false,sure:false,cat:'bt',misc:null};const opt=q.o[a];const right=opt[1]===1;const sure=st.conf[i]==='y';return {right,sure,cat:right?(sure?'ok':'rg'):(sure?'sp':'bt'),misc:right?null:opt[1]};});}
+function miscSummary(kind){const m={};grade(kind).forEach(x=>{if(x.misc){m[x.misc]=m[x.misc]||{n:0,sure:0};m[x.misc].n++;if(x.sure)m[x.misc].sure++;}});return m;}
+function testHTML(kind){
+  const st=S.test[kind],isPost=kind==='post';
+  if(!isPost&&!S.started&&!st.done&&st.ans.length===0)
+    return `<div class="card"><h2>Tes awal: sensor</h2><div class="goal">10 soal singkat tentang sensor di rumah dan di pabrik. Tidak dinilai untuk rapor — hasilnya menunjukkan bagian yang perlu dipelajari.</div>
+      <p class="muted">Setiap soal: pilih jawaban, lalu pilih <b>Yakin</b> atau <b>Menebak</b>. Jawab jujur.</p>
+      <div class="field"><label class="lbl2" for="fNama" style="margin:6px 0 0">Nama murid</label><input id="fNama" value="${esc(S.name)}" placeholder="Nama lengkap"></div>
+      <div class="field"><label class="lbl2" for="fKelas" style="margin:6px 0 0">Kelas</label><input id="fKelas" value="${esc(S.kelas)}" placeholder="mis. XI TOI 1"></div>
+      <div class="row"><button class="btn primary" id="bStart">Mulai tes</button></div></div>`;
+  if(st.done) return resultHTML(kind);
+  const order=isPost?(st.order||(st.order=shuffle([...Array(QUEST.length).keys()]))):[...Array(QUEST.length).keys()];
+  const qi=order[st.i],q=QUEST[qi];if(!st.optOrder)st.optOrder={};
+  const oo=isPost?(st.optOrder[qi]||(st.optOrder[qi]=shuffle([0,1,2,3]))):[0,1,2,3];const a=st.ans[qi],cf=st.conf[qi];
+  return `<div class="card"><h2>${isPost?'Tes akhir':'Tes awal'} · soal ${st.i+1} dari ${QUEST.length}</h2>
+    <div class="qnav">${order.map((x,k)=>`<span class="${k===st.i?'cur':(st.ans[x]!=null?'ans':'')}">${k+1}</span>`).join('')}</div>
+    <div class="qtext">${q.q}</div>
+    <div class="opts" id="qOpts">${oo.map((oi,k)=>`<button class="opt ${a===oi?'on':''}" data-o="${oi}"><span class="k">${'ABCD'[k]}</span><span>${q.o[oi][0]}</span></button>`).join('')}</div>
+    <span class="lbl2">Seberapa yakin kamu?</span>
+    <div class="conf" id="qConf"><button data-c="y" class="${cf==='y'?'on':''}">Yakin</button><button data-c="n" class="${cf==='n'?'on':''}">Menebak / ragu</button></div>
+    <div class="row"><button class="btn" id="bPrev" ${st.i===0?'disabled':''}>← Sebelumnya</button><button class="btn primary" id="bNextQ" ${a==null||!cf?'disabled':''}>${st.i===QUEST.length-1?'Selesai':'Berikutnya →'}</button></div></div>`;
+}
+function resultHTML(kind){
+  const g=grade(kind),score=g.filter(x=>x.right).length,cats={ok:0,rg:0,bt:0,sp:0};g.forEach(x=>cats[x.cat]++);
+  const ms=miscSummary(kind),isPost=kind==='post',keys=Object.keys(ms);
+  let h=`<div class="card"><h2>Hasil ${isPost?'tes akhir':'tes awal'}${S.name?' · '+esc(S.name):''}</h2>
+    <div class="kv"><div><dt>Skor</dt><dd>${score} / ${QUEST.length}</dd></div><div><dt>Paham</dt><dd>${cats.ok}</dd></div><div><dt>Benar tapi ragu</dt><dd>${cats.rg}</dd></div><div><dt>Belum tahu</dt><dd>${cats.bt}</dd></div><div><dt>Salah paham</dt><dd class="${cats.sp?'bad':''}">${cats.sp}</dd></div></div>
+    <p class="muted"><b>Salah paham</b> = salah tapi yakin — paling perlu diluruskan. <b>Belum tahu</b> = salah sambil menebak.</p>`;
+  if(keys.length) h+=`<h3>Yang perlu diluruskan</h3><ul class="prof">${keys.map(k=>`<li><span>${MISC[k].t}<br><button class="go" data-go="${MISC[k].go}">Pelajari di tab ${TABS.find(x=>x[0]===MISC[k].go)[1]} →</button></span><span class="tag ${ms[k].sure?'sp':'bt'}">${ms[k].sure?'salah paham':'belum tahu'}</span></li>`).join('')}</ul>`;
+  else h+=`<div class="fb ok">Tidak ditemukan salah paham. Mantap!</div>`;
+  h+=`<h3>Rincian per soal</h3><ul class="prof">${QUEST.map((q,i)=>{const x=g[i];return `<li><span style="font-size:13px">${i+1}. ${q.q}${!x.right?`<br><span style="color:var(--ok);font-size:12.5px">Jawaban benar: ${q.o.find(o=>o[1]===1)[0]}</span>`:''}</span><span class="tag ${x.cat}">${PROFILE[x.cat]}</span></li>`;}).join('')}</ul>`;
+  if(!isPost) h+=`<div class="row"><button class="btn primary" data-go="${keys.length?MISC[keys[0]].go:'hari'}">Mulai belajar →</button><button class="btn" id="bRedo">Ulangi tes awal</button></div>`;
+  h+='</div>';
+  if(isPost&&S.test.pre.done) h+=compareHTML();
+  if(isPost) h+=`<div class="row" style="margin:-4px 0 12px"><button class="btn" id="bRedoPost">Ulangi tes akhir</button></div>`;
+  return h;
+}
+function compareHTML(){
+  const gp=grade('pre'),gq=grade('post'),sp=gp.filter(x=>x.right).length,sq=gq.filter(x=>x.right).length;
+  const mp=miscSummary('pre'),mq=miscSummary('post'),fixed=Object.keys(mp).filter(k=>!mq[k]),still=Object.keys(mq);
+  const cp=c=>gp.filter(x=>x.cat===c).length,cq=c=>gq.filter(x=>x.cat===c).length,sc=S.pab.score,s2=S.da.score;
+  const txt=`REKAP SENSOR: DARI KESEHARIAN KE PABRIK\nNama  : ${S.name||'-'}\nKelas : ${S.kelas||'-'}\nTes awal : ${sp}/10 (paham ${cp('ok')}, ragu ${cp('rg')}, belum tahu ${cp('bt')}, salah paham ${cp('sp')})\nTes akhir: ${sq}/10 (paham ${cq('ok')}, ragu ${cq('rg')}, belum tahu ${cq('bt')}, salah paham ${cq('sp')})\nSalah paham yang sudah lurus: ${fixed.length?fixed.map(k=>MISC[k].t).join('; '):'-'}\nMasih perlu bimbingan: ${still.length?still.map(k=>MISC[k].t).join('; '):'-'}\nLatihan 4–20 mA: ${s2.ok}/${s2.tot} benar\nTantangan pilih sensor: ${sc.ok}/${sc.tot} benar`;
+  return `<div class="card"><h2>Perbandingan tes awal → tes akhir</h2>
+    <div class="bars"><span style="font-weight:600">Skor</span><i><b style="width:${sp*10}%"></b></i><span style="font-family:var(--f-mono)">${sp}</span><span></span><i><b class="post" style="width:${sq*10}%"></b></i><span style="font-family:var(--f-mono)">${sq}</span>
+    <span>Salah paham</span><i><b style="width:${cp('sp')*10}%"></b></i><span style="font-family:var(--f-mono)">${cp('sp')}</span><span></span><i><b class="post" style="width:${cq('sp')*10}%"></b></i><span style="font-family:var(--f-mono)">${cq('sp')}</span></div>
+    <p class="muted">Batang biru = tes awal, hijau = tes akhir.</p>
+    ${fixed.length?`<div class="fb ok"><b>Sudah diluruskan:</b><br>${fixed.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    ${still.length?`<div class="fb warn"><b>Masih perlu dibahas dengan guru:</b><br>${still.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    <h3>Rekap untuk guru</h3><p class="muted">Salin lalu kirim ke Google Classroom atau grup kelas.</p>
+    <textarea class="rekap" id="rekap" readonly>${esc(txt)}</textarea>
+    <div class="row"><button class="btn primary" id="bCopy">Salin rekap</button></div></div>`;
+}
+/* ---- tab: di sekitarmu ---- */
+function devCtl(){
+  const h=S.hari,d=h.dev;
+  if(d==='lampu') return `<span class="lbl2">Cahaya matahari</span><div class="slider"><input type="range" id="sCahaya" min="0" max="100" step="1" value="${h.cahaya}"><output id="oCahaya">${h.cahaya} %</output></div>
+    <div class="kv"><div><dt>Resistansi LDR</dt><dd id="vR">${fmtR(ldrR(h.cahaya))}</dd></div><div><dt>Lampu</dt><dd id="vL">${lampOn()?'NYALA':'mati'}</dd></div></div>
+    <div class="fb" id="fbD">${lampOn()?'Gelap → resistansi LDR <b>besar</b> → rangkaian pembanding membaca “gelap” → relay menyalakan lampu.':'Terang → resistansi LDR <b>kecil</b> → rangkaian membaca “terang” → lampu dimatikan. Geser ke kiri untuk membuat malam.'}</div>
+    <p class="muted">LDR terbuat dari bahan yang makin mudah menghantarkan listrik saat terkena cahaya. Jadi: <b>makin terang → makin kecil resistansinya</b>, makin gelap → makin besar.</p>`;
+  if(d==='pintu') return `<span class="lbl2">Jarak orang ke pintu</span><div class="slider"><input type="range" id="sJarak" min="0.3" max="6" step="0.1" value="${h.jarak}"><output id="oJarak">${nf(h.jarak,1)} m</output></div>
+    <div class="kv"><div><dt>Sensor gerak</dt><dd id="vS">${doorSense()?'ADA ORANG':'kosong'}</dd></div><div><dt>Pintu</dt><dd id="vP">${doorSense()?'terbuka':'tertutup'}</dd></div></div>
+    <div class="fb" id="fbD">${doorSense()?'Orang masuk <b>area deteksi</b> (± 2 m) → sensor mengirim sinyal → pengendali menyalakan motor → pintu bergeser terbuka.':'Belum ada orang di area deteksi. Geser orang mendekati pintu.'}</div>
+    <p class="muted">Perhatikan pembagian tugasnya: <b>sensor</b> hanya merasakan, <b>pengendali</b> memutuskan, <b>motor</b> (aktuator) yang menggeser pintu.</p>`;
+  if(d==='toren') return `<button class="big ${h.keran?'off':''}" id="hKeran">${h.keran?'🚰 KERAN TERBUKA — tekan untuk menutup':'🚰 BUKA KERAN (pakai air)'}</button>
+    <div class="kv"><div><dt>Level air</dt><dd id="vLv">${nf(h.level,0)} %</dd></div><div><dt>Pompa</dt><dd id="vPm">${h.pompa?'MENYALA':'mati'}</dd></div></div>
+    <div class="fb" id="fbD">Pompa <b>menyala</b> saat air turun ke <b>batas bawah (25 %)</b> dan baru <b>mati</b> saat air mencapai <b>batas atas (90 %)</b>.</div>
+    <p class="muted"><b>Kenapa dua titik?</b> Kalau hanya satu titik, pompa akan hidup-mati terus setiap air turun sedikit — motor cepat panas dan kontak saklar aus. Jarak antara dua titik ini disebut <b>histeresis</b>, dipakai juga di pengendali suhu dan tekanan di pabrik.</p>`;
+  if(d==='parkir'){const b=beepInfo(h.parkir);return `<span class="lbl2">Jarak bemper ke tembok</span><div class="slider"><input type="range" id="sParkir" min="0.2" max="2.5" step="0.05" value="${h.parkir}"><output id="oParkir">${nf(h.parkir,2)} m</output></div>
+    <div class="kv"><div><dt>Bunyi buzzer</dt><dd id="vB">${b[0]}</dd></div><div><dt>Waktu pantul</dt><dd id="vT">${nf(2*h.parkir/343*1000,1)} ms</dd></div></div>
+    <div class="row"><button class="btn" id="hSnd">${h.sound?'🔊 Suara':'🔇 Bisu'}</button></div>
+    <div class="fb">Sensor memancarkan gelombang suara ultrasonik, lalu menunggu pantulannya. <b>Jarak = kecepatan suara (343 m/s) × waktu pantul ÷ 2</b>. Makin dekat → pantulan makin cepat kembali → bunyi makin rapat.</div>`;}
+  if(d==='magic'){const r=h.rc;const st=['Tuas ditekan → magnet termostat menempel → pemanas utama menyala.','Air mendidih: suhu tertahan di ± 100 °C selama masih ada air.','Air habis terserap nasi → suhu naik di atas 100 °C.','± 103 °C: magnet ferit kehilangan daya tarik → tuas lepas → mode HANGAT.'];const si=r.st==='hangat'?3:r.st!=='masak'?-1:r.air<=0?2:r.T>=99.5?1:0;
+    return `<button class="big ${r.st==='masak'?'off':''}" id="hMasak">${r.st==='off'?'🍚 TEKAN TUAS MASAK':r.st==='masak'?'MEMASAK… (tekan untuk reset)':'♨️ HANGAT — tekan untuk reset'}</button>
+    <div class="kv"><div><dt>Suhu dasar panci</dt><dd id="vTc">${nf(r.T,0)} °C</dd></div><div><dt>Sisa air</dt><dd id="vAir">${nf(r.air,0)} %</dd></div><div><dt>Mode</dt><dd id="vMode">${r.st==='off'?'mati':r.st.toUpperCase()}</dd></div></div>
+    <ol class="steps4" id="rcSteps">${st.map((s,i)=>`<li class="${i===si?'on':''}"><b>${i+1}</b><span>${s}</span></li>`).join('')}</ol>
+    <p class="muted">Rice cooker tidak “tahu” nasinya matang. Ia memakai sifat fisika: selama masih ada air, suhu tidak bisa lewat 100 °C. Begitu air habis, suhu naik — itulah tanda nasi matang.</p>`;}
+  if(d==='kulkas') return `<button class="big ${h.kulkasBuka?'off':''}" id="hKulkas">${h.kulkasBuka?'TUTUP PINTU KULKAS':'BUKA PINTU KULKAS'}</button>
+    <div class="kv"><div><dt>Tombol saklar</dt><dd>${h.kulkasBuka?'lepas':'tertekan pintu'}</dd></div><div><dt>Kontak NC</dt><dd>${h.kulkasBuka?'tertutup':'terbuka'}</dd></div><div><dt>Lampu</dt><dd>${h.kulkasBuka?'NYALA':'mati'}</dd></div></div>
+    <div class="fb">Saklarnya jenis <b>NC (normally closed)</b>: saat pintu tertutup, tombolnya tertekan sehingga kontak <b>terbuka</b> dan lampu mati. Pintu dibuka → tombol lepas → kontak menutup → lampu menyala.</div>`;
+}
+function hariHTML(){
+  const D=DEV[S.hari.dev];
+  return `<div class="card"><h2>Sensor = indra mesin</h2><div class="goal">Manusia merasakan dengan mata dan kulit, berpikir dengan otak, lalu bergerak dengan tangan. Mesin juga begitu.</div>
+    <div class="flow3"><div class="s"><b>SENSOR</b><span>merasakan<br>(mata, kulit)</span></div><i>→</i><div><b>PENGENDALI</b><span>memutuskan<br>(otak)</span></div><i>→</i><div><b>AKTUATOR</b><span>bergerak / bekerja<br>(tangan, kaki)</span></div></div>
+    <p class="muted">Sensor mengubah besaran fisika (cahaya, jarak, suhu, posisi…) menjadi <b>sinyal listrik</b>. Pilih alat di bawah atau ketuk alasnya di model 3D.</p>
+    <div class="devs" id="devs">${DEVK.map(k=>`<button data-d="${k}" class="${S.hari.dev===k?'on':''}"><em>${DEV[k].ic}</em>${DEV[k].nm}</button>`).join('')}</div></div>
+    <div class="card"><h2>${D.ic} ${D.full}</h2>${devCtl()}
+    <div class="map" style="margin-top:10px"><b>Sensor</b><span>${D.sensor}</span><b>Merasakan</b><span>${D.besaran}</span><b>Sinyal</b><span>${D.sinyal}</span><b>Alur kerja</b><span>${D.alur}</span></div>
+    <div class="fb ok" style="margin-top:10px"><b>🏭 Kembarannya di pabrik:</b><br>${D.pabrik}</div></div>
+    <div class="card"><h2>Sensor lain di sekitarmu</h2>
+    <table class="tb2"><tr><th>Di rumah / jalan</th><th>Sensor</th><th>Di pabrik</th></tr>
+    <tr><td>Layar HP mati saat ditelepon</td><td>Proximity inframerah</td><td>Fotoelektrik difus mendeteksi benda dekat</td></tr>
+    <tr><td>Termometer tembak</td><td>Inframerah suhu</td><td>Pirometer mengukur suhu logam panas</td></tr>
+    <tr><td>Timbangan digital</td><td>Load cell</td><td>Timbangan truk, mesin pengisi karung</td></tr>
+    <tr><td>Kartu e-toll / e-KTP</td><td>RFID / NFC</td><td>Pelacakan produk dan palet</td></tr>
+    <tr><td>Detektor logam satpam</td><td>Prinsip induktif</td><td>Proximity induktif di konveyor</td></tr>
+    <tr><td>Setrika</td><td>Bimetal</td><td>Overload relay termal pelindung motor</td></tr>
+    <tr><td>AC ruangan</td><td>Thermistor</td><td>Sensor suhu ruang panel, pendingin mesin</td></tr></table>
+    <div class="row"><button class="btn primary" data-go="da">Lanjut: Digital & Analog →</button></div></div>`;
+}
+/* ---- tab: digital & analog ---- */
+function sensorSVG(){
+  const d=S.da,pnp=d.tipe==='pnp',on=d.ada;const bk=on?(pnp?'+24 V':'0 V'):'tidak aktif';
+  const inOn=on;const com=pnp?'0 V':'+24 V';
+  return `<svg viewBox="0 0 640 250" font-family="IBM Plex Sans, Arial" font-size="13">
+    <line x1="210" y1="40" x2="620" y2="40" stroke="#c0392b" stroke-width="3"/><text x="600" y="32" text-anchor="end" fill="#c0392b" font-weight="700">+24 V</text>
+    <line x1="210" y1="215" x2="620" y2="215" stroke="#2b62c9" stroke-width="3"/><text x="600" y="235" text-anchor="end" fill="#2b62c9" font-weight="700">0 V</text>
+    <rect x="20" y="95" width="120" height="60" rx="30" fill="#c9a64a" stroke="#7a6326"/><rect x="2" y="105" width="22" height="40" rx="4" fill="#2b62c9"/>
+    <circle cx="128" cy="112" r="7" fill="${on?'#ffb020':'#555'}"/><text x="80" y="131" text-anchor="middle" font-weight="700">${pnp?'PNP':'NPN'}</text>
+    ${on?'<rect x="-6" y="95" width="0" height="0"/>':''}
+    <path d="M140 110 C 190 110, 200 40, 230 40" stroke="#8a4b22" stroke-width="5" fill="none"/><text x="168" y="70" fill="#8a4b22" font-weight="700">BN</text>
+    <path d="M140 140 C 190 140, 200 215, 230 215" stroke="#2b62c9" stroke-width="5" fill="none"/><text x="168" y="196" fill="#2b62c9" font-weight="700">BU</text>
+    <path d="M140 125 L 400 125" stroke="#1d1f22" stroke-width="5" fill="none"/><text x="200" y="117" font-weight="700">BK (sinyal) = ${bk}</text>
+    <rect x="400" y="90" width="150" height="100" rx="8" fill="#e8eaec" stroke="#5d646c"/><text x="475" y="110" text-anchor="middle" font-weight="700">Input PLC</text>
+    <circle cx="420" cy="125" r="6" fill="#fff" stroke="#333"/><text x="432" y="129">I0.0</text><circle cx="520" cy="125" r="9" fill="${inOn?'#3cff6e':'#5a6b60'}" stroke="#2a3b33"/>
+    <circle cx="420" cy="170" r="6" fill="#fff" stroke="#333"/><text x="432" y="174">COM (${com})</text>
+    <path d="M420 176 L420 ${pnp?215:40}" stroke="${pnp?'#2b62c9':'#c0392b'}" stroke-width="3" stroke-dasharray="${pnp?'0':'0'}"/>
+    ${inOn?`<text x="475" y="205" text-anchor="middle" fill="#1f7a44" font-weight="700" font-size="12">arus ${pnp?'masuk dari sensor':'keluar ke sensor'}</text>`:''}
+    <text x="20" y="80" fill="#555">Benda: ${on?'<tspan fill="#1f7a44" font-weight="700">ADA</tspan>':'tidak ada'}</text>
+  </svg>`;
+}
+function newQ(){const r=rnd(RANGES),mA=rnd([5,6,8,10,12,14,16,18,20,4,7,9,11,13,15]);const val=r[1]+(r[2]-r[1])*(mA-4)/16;S.da.q={r,mA,val};S.da.res=null;}
+function daHTML(){
+  const d=S.da,q=d.q;
+  return `<div class="card"><h2>Digital dan analog</h2><div class="goal">Tangki ini diawasi dua jenis sensor. <b>Level switch</b> hanya bilang “sudah sampai / belum” (digital). <b>Transmitter</b> memberi angka yang terus berubah (analog).</div>
+    <span class="lbl2">Ketinggian air di tangki</span><div class="slider"><input type="range" id="sLvl" min="0" max="100" step="1" value="${d.lvl}"><output id="oLvl">${d.lvl} %</output></div>
+    <div class="kv"><div><dt>LSL (20 %)</dt><dd id="vLSL">${LSL()} · ${LSL()?'24 V':'0 V'}</dd></div><div><dt>LSH (80 %)</dt><dd id="vLSH">${LSH()} · ${LSH()?'24 V':'0 V'}</dd></div><div><dt>LT analog</dt><dd id="vMA" class="${d.putus?'bad':''}">${nf(daMA(),1)} mA</dd></div></div>
+    <canvas id="daplot" width="800" height="300"></canvas>
+    <div class="row"><button class="btn" id="bPutus">${d.putus?'🔌 Sambung kembali kabel LT':'✂️ Putuskan kabel LT'}</button></div>
+    <div class="fb ${d.putus?'bad':''}" id="fbDA">${d.putus?'Kabel putus → arus <b>0 mA</b>. Karena nilai terendah yang sah adalah 4 mA, PLC langsung tahu ini <b>gangguan</b>, bukan tangki kosong.':'Rumus: <b>nilai = (mA − 4) ÷ 16 × rentang</b>. Tangki kosong = <b>4 mA</b>, penuh = <b>20 mA</b>. Kenapa mulai dari 4, bukan 0? Supaya kabel putus (0 mA) bisa dibedakan dari tangki kosong.'}</div></div>
+    <div class="card"><h2>Kabel sensor 3 kawat: PNP dan NPN</h2><div class="goal">Proximity dan fotoelektrik di pabrik umumnya punya 3 kabel: <b>cokelat (BN) +24 V</b>, <b>biru (BU) 0 V</b>, <b>hitam (BK) sinyal</b> ke PLC.</div>
+    <span class="lbl2">Jenis keluaran</span><div class="seg" id="dTipe"><button data-v="pnp" class="${d.tipe==='pnp'?'on':''}">PNP (sourcing)</button><button data-v="npn" class="${d.tipe==='npn'?'on':''}">NPN (sinking)</button></div>
+    <div class="row"><button class="btn primary" id="bAda">${d.ada?'Singkirkan benda':'Dekatkan benda ke sensor'}</button></div>
+    <div class="svgw">${sensorSVG()}</div>
+    <div class="fb">${d.tipe==='pnp'?'<b>PNP</b>: saat mendeteksi, sensor <b>memberi +24 V</b> ke kabel hitam. COM input PLC disambung ke <b>0 V</b>. Paling umum di Indonesia dan Eropa.':'<b>NPN</b>: saat mendeteksi, sensor <b>menarik kabel hitam ke 0 V</b>. COM input PLC disambung ke <b>+24 V</b>. Banyak dipakai di mesin buatan Jepang.'} Pasang jenis yang salah → input PLC tidak pernah menyala.</div></div>
+    <div class="card"><h2>Latihan 4–20 mA</h2><div class="stat"><div><b>${d.score.ok}</b><span>benar</span></div><div><b>${d.score.tot}</b><span>soal</span></div><div><b>${d.score.tot?Math.round(d.score.ok/d.score.tot*100):0}%</b><span>skor</span></div></div>
+    ${q?`<div class="qtext">Transmitter ${q.r[0]} rentang <b>${q.r[1]}–${q.r[2]} ${q.r[3]}</b> mengirim <b>${q.mA} mA</b>. Berapa nilai yang terukur?</div>
+      <div class="numin"><input id="fAns" inputmode="decimal" placeholder="jawaban (${q.r[3]})"><button class="btn primary" id="bCek">Cek</button></div>
+      ${d.res?`<div class="fb ${d.res.ok?'ok':'bad'}">${d.res.ok?'Tepat!':'Belum tepat.'} (${q.mA} − 4) ÷ 16 × ${q.r[2]-q.r[1]}${q.r[1]?' + '+q.r[1]:''} = <b>${nf(q.val,q.val%1?2:0)} ${q.r[3]}</b></div>`:''}`:'<p class="muted">Latih cara membaca sinyal analog seperti yang ditanyakan di TKA dan uji kompetensi.</p>'}
+    <div class="row"><button class="btn ${q?'':'primary'}" id="bQ">${q?'Soal berikutnya':'Mulai latihan'}</button><button class="btn" data-go="pabrik">Lanjut: Di Pabrik →</button></div></div>`;
+}
+function drawPlot(){
+  const cv=$('#daplot');if(!cv)return;const c=cv.getContext('2d'),W=cv.width,H=cv.height,d=S.da;
+  c.fillStyle='#06110d';c.fillRect(0,0,W,H);const x0=60,x1=W-20,X=p=>x0+(x1-x0)*p/100;
+  c.strokeStyle='#183126';c.lineWidth=1;for(let p=0;p<=100;p+=10){c.beginPath();c.moveTo(X(p),18);c.lineTo(X(p),H-30);c.stroke();}
+  c.font='600 15px "IBM Plex Mono",monospace';c.fillStyle='#7fa392';c.textAlign='center';[0,20,50,80,100].forEach(p=>c.fillText(p+'%',X(p),H-10));
+  // digital
+  const dig=(th,y0,hgt,colr,nm)=>{c.strokeStyle=colr;c.lineWidth=3;c.beginPath();c.moveTo(X(0),y0);c.lineTo(X(th),y0);c.lineTo(X(th),y0-hgt);c.lineTo(X(100),y0-hgt);c.stroke();c.fillStyle=colr;c.textAlign='left';c.fillText(nm,6,y0-hgt/2+5);};
+  dig(20,92,40,'#5dff8a','LSL');dig(80,160,40,'#ffd21a','LSH');
+  // analog
+  const ya=m=>H-36-(m/20)*90;c.strokeStyle='#6fd3ff';c.lineWidth=3;c.beginPath();c.moveTo(X(0),ya(4));c.lineTo(X(100),ya(20));c.stroke();c.fillStyle='#6fd3ff';c.fillText('LT',6,ya(10));
+  c.textAlign='right';c.fillText('4 mA',X(0)+52,ya(4)+18);c.fillText('20 mA',X(100),ya(20)-8);
+  c.strokeStyle='#ff6b5b';c.lineWidth=2;c.setLineDash([6,5]);c.beginPath();c.moveTo(X(d.lvl),14);c.lineTo(X(d.lvl),H-30);c.stroke();c.setLineDash([]);
+  c.fillStyle='#ff6b5b';c.beginPath();c.arc(X(d.lvl),ya(daMA()||0.01),7,0,7);c.fill();
+}
+/* ---- tab: pabrik ---- */
+function obsHTML(){const P=S.pab;return `<table class="tb2 obs" id="obs"><tr><th>Benda</th>${SENS.map(s=>`<th>${s.id}<br>${s.nm}</th>`).join('')}</tr>${Object.keys(MAT).map(m=>`<tr><td>${MAT[m].ic} ${MAT[m].nm}</td>${SENS.map(s=>{const v=P.seen[m+'|'+s.id];return v==null?'<td class="u">·</td>':`<td class="${v?'y':'n'}">${v?'✓':'✗'}</td>`;}).join('')}</tr>`).join('')}</table>`;}
+function updateObs(){const el=$('#obs');if(el)el.outerHTML=obsHTML();const n=Object.keys(S.pab.seen).length;const p=$('#obsN');if(p)p.textContent=n+' / 16';}
+function pabHTML(){
+  const P=S.pab,ch=P.ch;
+  return `<div class="card"><h2>Konveyor pemilah</h2><div class="goal">Kirim benda ke konveyor dan amati LED tiap sensor. Kaleng logam akan didorong pendorong pneumatik ke kotak <b>LOGAM</b> — sinyal sensor induktif diolah PLC lalu menggerakkan aktuator.</div>
+    <span class="lbl2">Kirim benda</span><div class="devs" id="spawn">${Object.keys(MAT).map(m=>`<button data-m="${m}"><em>${MAT[m].ic}</em>${MAT[m].nm}</button>`).join('')}<button data-m="acak"><em>🎲</em>${P.auto?'Acak: ON':'Acak otomatis'}</button><button data-m="run"><em>${P.run?'⏸':'▶'}</em>${P.run?'Hentikan':'Jalankan'} konveyor</button></div>
+    <div class="row"><button class="btn primary" id="bView">${P.view==='panel'?'← Lihat konveyor':'🔍 Lihat panel kontrol'}</button></div>
+    <div class="row"><button class="btn" id="bPush">${P.push?'Pendorong: AKTIF':'Pendorong: NONAKTIF'}</button></div>
+    <div class="kv"><div><dt>Hitungan fotoelektrik</dt><dd id="vCnt">${P.count}</dd></div><div><dt>Kaleng dipisah</dt><dd id="vLog">${P.logam}</dd></div></div></div>
+    <div class="card"><h2>Tabel pengamatan</h2><p class="muted">Terisi otomatis setiap benda melewati sensor. Terisi: <b id="obsN">${Object.keys(P.seen).length} / 16</b>. Kirim keempat jenis benda.</p>${obsHTML()}
+    <p class="muted" style="margin-top:8px">Botol kosong tidak terbaca sensor kapasitif pada setelan ini: dinding plastiknya tipis dan udara di dalamnya hampir tidak mengubah kapasitansi. Karena itulah kapasitif dipakai untuk <b>memeriksa isi botol</b>.</p></div>
+    <div class="card"><h2>Rangkaian di panel kontrol</h2><div class="goal">Sensor tidak bekerja sendirian. Ikuti jalur listriknya dari PLN sampai ke sensor dan aktuator.</div>
+    <ol class="steps4"><li><b>1</b><span><b>Kabel sumber 220 VAC</b> masuk panel dari bawah → <b>MCB 1 fasa</b> (pengaman hubung singkat).</span></li>
+    <li><b>2</b><span>MCB → <b>SMPS 24 VDC</b> di rel DIN. SMPS mengubah 220 VAC menjadi 24 VDC stabil.</span></li>
+    <li><b>3</b><span>SMPS → terminal blok <b>L+</b> (+24 V) dan <b>M</b> (0 V), lalu dibagi ke PLC dan semua sensor. PE ke terminal hijau.</span></li>
+    <li><b>4</b><span>Sensor 3 kawat: <b>cokelat → L+</b>, <b>biru → M</b>, <b>hitam (sinyal) → terminal X1 → input PLC</b> I0.0–I0.3.</span></li>
+    <li><b>5</b><span>PLC mengolah sinyal, lalu output <b>Q0.0</b> → X1 → koil <b>solenoid valve 5/2</b> → udara 6 bar menggerakkan silinder pendorong.</span></li></ol>
+    <p class="muted">Kabel sensor masuk panel lewat <b>gland</b> di bawah, berjalan di dalam <b>duct kabel</b>, dan semua komponen dijepit di <b>rel DIN</b> 35 mm. Tekan “Lihat panel kontrol” untuk melihat dari dekat.</p></div>
+    ${noteLab('Kabel sensor 3 kawat (cokelat-biru-hitam) adalah warna bawaan pabrik sensor dan tidak diganti; ujungnya tetap diberi skun Y dan tube marking sesuai alamat input PLC, mis. I0.1.')}
+    <div class="card"><h2>Kenali sensornya</h2><div class="map">
+      <b>Fotoelektrik</b><span>berkas cahaya (merah/inframerah). Benda memotong berkas → aktif. Jarak bisa jauh; jenis through-beam, retro-reflektif, dan difus.</span>
+      <b>Proximity induktif</b><span>medan magnet bolak-balik di ujung sensor; hanya <b>logam</b> yang mengganggu medannya. Jarak 2–15 mm, tahan kotor dan oli.</span>
+      <b>Proximity kapasitif</b><span>merasakan perubahan kapasitansi; mendeteksi logam <b>dan</b> bukan logam (air, plastik, kayu, biji-bijian). Sensitivitas diatur dengan sekrup potensio.</span>
+      <b>Limit switch</b><span>saklar mekanis yang harus <b>disentuh</b> benda. Sederhana dan kuat, tetapi bisa aus.</span>
+      <b>Ultrasonik</b><span>gelombang suara, mengukur jarak (analog). Untuk level silo dan tangki.</span>
+      <b>Termokopel / RTD</b><span>mengukur suhu (analog). Untuk oven, mesin injeksi, tangki pemanas.</span></div></div>
+    <div class="card"><h2>Tantangan: pilih sensor yang tepat</h2><div class="stat"><div><b>${P.score.ok}</b><span>benar</span></div><div><b>${P.score.tot}</b><span>soal</span></div><div><b>${P.score.tot?Math.round(P.score.ok/P.score.tot*100):0}%</b><span>skor</span></div></div>
+    ${ch?`<div class="qtext">${ch[0]}</div><div class="tchips" id="pOpt">${OPTS.map(o=>`<button data-o="${o}" class="${P.last?(o===ch[1]?'ok':(P.last.pick===o?'no':'')):''}">${o}</button>`).join('')}</div>
+      ${P.last?`<div class="fb ${P.last.ok?'ok':'bad'}">${P.last.ok?'Tepat!':'Belum tepat — jawabannya <b>'+ch[1]+'</b>.'} ${ch[2]}</div>`:''}`:''}
+    <div class="row"><button class="btn primary" id="pNext">${ch?'Soal berikutnya':'Mulai tantangan'}</button></div></div>
+    <div class="card"><h2>Lanjut</h2><p class="muted">Sinyal sensor masuk ke PLC, lalu PLC menggerakkan aktuator. Lihat contohnya di simulasi pneumatik dan panel motor.</p>
+    <div class="row"><a class="btn primary" href="https://lht-sky.github.io/guruvokasi/pneumatik-tycoon/" target="_blank" rel="noopener" style="text-decoration:none">Pneumatik Tycoon →</a><button class="btn" data-go="post">Ke tes akhir</button></div></div>`;
+}
+/* ---- render ---- */
+function render(){
+  let h='';
+  if(S.tab==='pre') h=testHTML('pre');
+  else if(S.tab==='post'){h=S.test.pre.done||S.test.post.done?testHTML('post'):`<div class="card"><h2>Tes akhir</h2><div class="fb warn">Kerjakan dulu tes awal supaya hasilnya bisa dibandingkan.</div><div class="row"><button class="btn primary" data-go="pre">Ke tes awal</button></div></div>`;
+    if(S.test.pre.done&&!S.test.post.done&&S.test.post.ans.length===0&&!S.postStarted) h=`<div class="card"><h2>Tes akhir</h2><div class="goal">Soal yang sama dengan tes awal, urutannya diacak. Bandingkan hasilnya.</div><p class="muted">Sudah menjelajah: ${['hari','da','pabrik'].filter(k=>S.visited[k]).length}/3 tab materi.</p><div class="row"><button class="btn primary" id="bStartPost">Mulai tes akhir</button></div></div>`;}
+  else if(S.tab==='hari') h=hariHTML(); else if(S.tab==='da') h=daHTML(); else h=pabHTML();
+  $('#pane').innerHTML=h;updateChip();if(S.tab==='da')drawPlot();
+}
+function updateChip(){
+  const c=$('#vchip'),h=S.hari;
+  if(S.tab==='hari'){const d=h.dev;let s='';
+    if(d==='lampu')s=`<span>Cahaya <b>${h.cahaya} %</b></span><span>Lampu <b>${lampOn()?'NYALA':'mati'}</b></span>`;
+    else if(d==='pintu')s=`<span>Jarak <b>${nf(h.jarak,1)} m</b></span><span>Pintu <b>${doorSense()?'terbuka':'tertutup'}</b></span>`;
+    else if(d==='toren')s=`<span>Level <b>${nf(h.level,0)} %</b></span><span>Pompa <b>${h.pompa?'ON':'OFF'}</b></span>`;
+    else if(d==='parkir')s=`<span>Jarak <b>${nf(h.parkir,2)} m</b></span>`;
+    else if(d==='magic')s=`<span>Suhu <b>${nf(h.rc.T,0)} °C</b></span><span><b>${h.rc.st==='off'?'mati':h.rc.st.toUpperCase()}</b></span>`;
+    else s=`<span>Pintu <b>${h.kulkasBuka?'terbuka':'tertutup'}</b></span>`;c.innerHTML=s;}
+  else if(S.tab==='da') c.innerHTML=`<span>Level <b>${S.da.lvl} %</b></span><span>LT <b>${nf(daMA(),1)} mA</b></span>`;
+  else if(S.tab==='pabrik') c.innerHTML=`<span>Hitungan <b>${S.pab.count}</b></span><span>Logam <b>${S.pab.logam}</b></span>`;
+  else c.innerHTML='';
+}
+let lastSi=-2;
+function live(){
+  const h=S.hari,set=(id,v)=>{const e=document.getElementById(id);if(e&&e.textContent!==v)e.textContent=v;};
+  if(S.tab==='hari'){
+    if(h.dev==='toren'){set('vLv',nf(h.level,0)+' %');set('vPm',h.pompa?'MENYALA':'mati');}
+    if(h.dev==='magic'){const r=h.rc;set('vTc',nf(r.T,0)+' °C');set('vAir',nf(r.air,0)+' %');set('vMode',r.st==='off'?'mati':r.st.toUpperCase());
+      const si=r.st==='hangat'?3:r.st!=='masak'?-1:r.air<=0?2:r.T>=99.5?1:0;if(si!==lastSi){lastSi=si;document.querySelectorAll('#rcSteps li').forEach((el,i)=>el.classList.toggle('on',i===si));const b=$('#hMasak');if(b){b.textContent=r.st==='off'?'🍚 TEKAN TUAS MASAK':r.st==='masak'?'MEMASAK… (tekan untuk reset)':'♨️ HANGAT — tekan untuk reset';b.classList.toggle('off',r.st==='masak');}}}
+    updateChip();}
+  if(S.tab==='pabrik'){set('vCnt',String(S.pab.count));set('vLog',String(S.pab.logam));updateChip();}
+  if(S.tab==='da'&&T&&T.O.da){const sc=T.O.da.screen;const key=S.da.lvl+'|'+S.da.putus;if(sc.userData.k!==key){sc.userData.k=key;redraw(sc);}}
+}
+function sliderUpd(id){
+  const h=S.hari;
+  if(id==='sCahaya'){set2('oCahaya',h.cahaya+' %');set2('vR',fmtR(ldrR(h.cahaya)));set2('vL',lampOn()?'NYALA':'mati');const f=$('#fbD');if(f)f.innerHTML=lampOn()?'Gelap → resistansi LDR <b>besar</b> → rangkaian pembanding membaca “gelap” → relay menyalakan lampu.':'Terang → resistansi LDR <b>kecil</b> → rangkaian membaca “terang” → lampu dimatikan. Geser ke kiri untuk membuat malam.';}
+  if(id==='sJarak'){set2('oJarak',nf(h.jarak,1)+' m');set2('vS',doorSense()?'ADA ORANG':'kosong');set2('vP',doorSense()?'terbuka':'tertutup');const f=$('#fbD');if(f)f.innerHTML=doorSense()?'Orang masuk <b>area deteksi</b> (± 2 m) → sensor mengirim sinyal → pengendali menyalakan motor → pintu bergeser terbuka.':'Belum ada orang di area deteksi. Geser orang mendekati pintu.';}
+  if(id==='sParkir'){set2('oParkir',nf(h.parkir,2)+' m');set2('vB',beepInfo(h.parkir)[0]);set2('vT',nf(2*h.parkir/343*1000,1)+' ms');}
+  if(id==='sLvl'){const d=S.da;set2('oLvl',d.lvl+' %');set2('vLSL',LSL()+' · '+(LSL()?'24 V':'0 V'));set2('vLSH',LSH()+' · '+(LSH()?'24 V':'0 V'));set2('vMA',nf(daMA(),1)+' mA');drawPlot();}
+  updateChip();
+}
+function set2(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+
+/* ---------- event ---------- */
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.t);});
+$('#pane').addEventListener('input',e=>{const id=e.target.id,v=+e.target.value;
+  if(id==='fNama'){S.name=e.target.value;save();return;}if(id==='fKelas'){S.kelas=e.target.value;save();return;}
+  if(id==='sCahaya')S.hari.cahaya=v;else if(id==='sJarak')S.hari.jarak=v;else if(id==='sParkir')S.hari.parkir=v;else if(id==='sLvl')S.da.lvl=v;else return;sliderUpd(id);});
+$('#pane').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='fAns'){const b=$('#bCek');if(b)b.click();}});
+$('#pane').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const p=b.parentElement&&b.parentElement.id;
+  if(b.dataset.go){setTab(b.dataset.go);return;}
+  if(b.id==='bStart'){S.started=true;S.test.pre={ans:[],conf:[],i:0,done:false};render();return;}
+  if(b.id==='bStartPost'){S.postStarted=true;S.test.post={ans:[],conf:[],i:0,done:false,order:null};render();return;}
+  const kind=S.tab==='post'?'post':'pre',st=S.test[kind],order=kind==='post'&&st.order?st.order:[...Array(QUEST.length).keys()];
+  if(b.closest('#qOpts')){st.ans[order[st.i]]=+b.dataset.o;save();render();return;}
+  if(p==='qConf'){st.conf[order[st.i]]=b.dataset.c;save();render();return;}
+  if(b.id==='bPrev'){st.i=Math.max(0,st.i-1);render();return;}
+  if(b.id==='bNextQ'){if(st.i<QUEST.length-1)st.i++;else{st.done=true;toast('ok','Tes selesai','');renderTabs();}save();render();return;}
+  if(b.id==='bRedo'){S.test.pre={ans:[],conf:[],i:0,done:false};S.started=true;save();renderTabs();render();return;}
+  if(b.id==='bRedoPost'){S.test.post={ans:[],conf:[],i:0,done:false,order:null};S.postStarted=true;save();renderTabs();render();return;}
+  if(b.id==='bCopy'){const ta=$('#rekap');(navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(()=>toast('ok','Rekap tersalin','')).catch(()=>{ta.select();toast('warn','Teks sudah dipilih','<br>Tekan Ctrl+C / tahan lalu Salin.');});return;}
+  // keseharian
+  if(p==='devs'){S.hari.dev=b.dataset.d;showScene();render();return;}
+  if(b.id==='hKeran'){S.hari.keran=!S.hari.keran;render();return;}
+  if(b.id==='hSnd'){S.hari.sound=!S.hari.sound;render();return;}
+  if(b.id==='hMasak'){const r=S.hari.rc;if(r.st==='off'){r.st='masak';r.air=100;}else{r.st='off';r.air=100;}lastSi=-2;render();return;}
+  if(b.id==='hKulkas'){S.hari.kulkasBuka=!S.hari.kulkasBuka;render();return;}
+  // digital analog
+  if(b.id==='bPutus'){S.da.putus=!S.da.putus;render();return;}
+  if(p==='dTipe'){S.da.tipe=b.dataset.v;render();return;}
+  if(b.id==='bAda'){S.da.ada=!S.da.ada;render();return;}
+  if(b.id==='bQ'){newQ();render();const f=$('#fAns');if(f)f.focus();return;}
+  if(b.id==='bCek'){const d=S.da;if(!d.q||d.res)return;const v=parseFloat(String(($('#fAns')||{}).value||'').replace(',','.'));if(isNaN(v)){toast('warn','Isi angka dulu','');return;}const ok=Math.abs(v-d.q.val)<=Math.max(0.01*(d.q.r[2]-d.q.r[1]),0.05);d.score.tot++;if(ok)d.score.ok++;d.res={ok};render();return;}
+  // pabrik
+  if(p==='spawn'){const m=b.dataset.m;if(m==='acak'){S.pab.auto=!S.pab.auto;if(S.pab.auto)S.pab.run=true;render();return;}if(m==='run'){S.pab.run=!S.pab.run;render();return;}if(T){if(!S.pab.run){S.pab.run=true;render();}spawn(m);}return;}
+  if(b.id==='bView'){S.pab.view=S.pab.view==='panel'?'konv':'panel';if(T)showScene();render();return;}
+  if(b.id==='bPush'){S.pab.push=!S.pab.push;render();return;}
+  if(b.id==='pNext'){const P=S.pab;let c;do{c=rnd(CHAL);}while(P.ch&&c===P.ch);P.ch=c;P.last=null;render();return;}
+  if(p==='pOpt'){const P=S.pab;if(!P.ch||P.last)return;const ok=b.dataset.o===P.ch[1];P.score.tot++;if(ok)P.score.ok++;P.last={ok,pick:b.dataset.o};render();return;}
+});
+
+/* ---------- mulai ---------- */
+try{init3D();}catch(err){$('#loading').textContent='Model 3D tidak dapat dimuat di perangkat ini. Tes dan latihan tetap bisa digunakan.';console.error(err);}
+renderTabs();render();
+})();
+</script>
+</body>
+</html>

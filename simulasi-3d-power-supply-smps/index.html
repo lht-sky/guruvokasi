@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi 3D Power Supply Industri (SMPS) 24 VDC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#e3e8ec; --ink:#14202b; --muted:#56636e; --line:#d2dae0; --soft:#eef2f5;
+  --accent:#0a62a8; --yellow:#f3b52f; --ok:#24834b; --okbg:#eef8f1; --bad:#bb3a2c; --badbg:#fdf0ee; --warn:#b8650f; --warnbg:#fff5e6;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+header.top{background:#171f28;color:#e6ebf0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #2d3946}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand img{width:44px;height:44px;flex:none}
+.eyebrow2{font:600 12px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+h1{margin:2px 0 0;font:700 24px/1.1 var(--f-display);letter-spacing:.01em}
+.meta{display:grid;justify-items:end;gap:4px;text-align:right;flex:none}
+.dims{font:500 12px var(--f-mono);color:var(--yellow);border:1px solid #4a3d18;border-radius:4px;padding:3px 7px;white-space:nowrap}
+.guru{font-size:12.5px;color:#c3ccd5}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(380px,1fr);gap:16px;padding:16px;max-width:1440px;margin:0 auto;align-items:start}
+.stage{position:sticky;top:12px}
+.viewer{position:relative;height:min(74vh,660px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(#eef2f5,#c9d2da)}
+#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;font:600 12px/1.25 var(--f-body);background:rgba(20,32,43,.88);color:#fff;border-radius:7px;padding:3px 7px;white-space:nowrap;text-align:center}
+.lbl small{display:block;font:500 11px var(--f-mono);color:#f3d36a}
+.lbl.pos{background:#c42b22}.lbl.neg{background:#23272c}.lbl.big{font-size:14px;padding:5px 10px;background:#0a62a8}
+.lbl.hot{background:#b8321f}
+.hud{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.tool{border:1px solid var(--line);background:rgba(251,252,253,.94);padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+#toast{position:absolute;right:10px;top:52px;z-index:5;width:min(calc(100% - 20px),380px);display:grid;gap:6px;pointer-events:none}
+.tst{background:var(--ink);color:#fff;padding:9px 13px;border-radius:8px;font-size:13.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.22);border-left:4px solid #4aa3e0;animation:tin .25s ease-out}
+.tst b{display:block}.tst.bad{border-left-color:#ff5a45}.tst.ok{border-left-color:#4cc47e}.tst.warn{border-left-color:#f3b52f}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+.vchip{position:absolute;left:10px;bottom:10px;background:rgba(20,32,43,.92);color:#e6ebf0;border-radius:8px;padding:7px 11px;font:600 13px var(--f-mono);display:flex;gap:14px;flex-wrap:wrap}
+.vchip b{color:var(--yellow);font-size:16px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#dfe5ea;color:var(--muted);font-weight:600;text-align:center;padding:20px}
+.panel{min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#d6dde4;border-radius:10px;padding:4px;margin-bottom:12px}
+.tabs button{border:0;background:transparent;border-radius:7px;padding:7px 2px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.2}
+.tabs button .n{display:block;font:600 11px var(--f-mono);color:#8a97a2}
+.tabs button.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,32,43,.12)}
+.tabs button.done .n::after{content:" ✓";color:var(--ok)}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.card h2{font:700 21px/1.1 var(--f-display);letter-spacing:.02em;margin:0 0 6px}
+.card h3{font:700 15px/1.2 var(--f-display);letter-spacing:.04em;margin:12px 0 4px;color:var(--accent);text-transform:uppercase}
+.muted{color:var(--muted);font-size:13.5px;margin:4px 0 0;line-height:1.5}
+.goal{background:var(--soft);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;font-size:14px;margin:6px 0 4px}
+.seg{display:flex;flex-wrap:wrap;background:var(--soft);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:7px 8px;border-radius:6px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.lbl2{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.fb{border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5;background:var(--soft);margin-top:10px}
+.fb:empty{display:none}.fb.ok{background:var(--okbg)}.fb.bad{background:var(--badbg)}.fb.warn{background:var(--warnbg)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px;margin-top:10px}
+.kv div{background:var(--soft);border-radius:6px;padding:7px 9px}
+.kv dt{font-size:11.5px;color:var(--muted)}
+.kv dd{margin:0;font:600 15px var(--f-mono)}
+.kv dd.bad{color:var(--bad)}
+.analog{background:#f4f9fd;border:1px solid #cfe2f1;border-radius:10px;margin-top:10px;padding:8px}
+.analog canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.analog .cap{font-size:13px;color:#24506f;padding:4px 4px 0;line-height:1.45}
+.map{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px;margin-top:6px}
+.map b{color:var(--accent)}
+.cells{display:flex;gap:6px;flex-wrap:wrap}
+.cells button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;font:600 13px var(--f-mono);cursor:pointer}
+.cells button.rev{background:var(--badbg);border-color:#e4a59c;color:var(--bad)}
+#scopeA{display:block;width:100%;height:auto;aspect-ratio:10/5;background:#06110d;border-radius:8px;margin-top:10px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.slider{display:flex;align-items:center;gap:10px}
+.slider output{font:600 14px var(--f-mono);min-width:72px;text-align:right;color:var(--accent)}
+/* tes */
+.qnav{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0 10px}
+.qnav span{width:26px;height:26px;border-radius:6px;background:var(--soft);display:grid;place-items:center;font:600 12px var(--f-mono);color:var(--muted)}
+.qnav span.cur{background:var(--ink);color:#fff}.qnav span.ans{background:#d6e6f5;color:var(--accent)}
+.qtext{font-weight:600;font-size:16px;line-height:1.45}
+.opts{display:grid;gap:7px;margin-top:10px}
+.opt{text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:10px 12px;font-size:14.5px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.opt .k{font:700 13px var(--f-mono);background:var(--soft);border-radius:5px;padding:1px 7px;flex:none}
+.opt.on{border-color:var(--accent);background:#eef5fc}
+.opt.on .k{background:var(--accent);color:#fff}
+.conf{display:flex;gap:6px;margin-top:10px}
+.conf button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:8px;font-weight:600;font-size:13.5px;cursor:pointer}
+.conf button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.field{display:grid;gap:4px;margin-top:8px}
+.field input{border:1.5px solid var(--line);border-radius:8px;padding:9px 12px}
+.prof{list-style:none;margin:8px 0 0;padding:0}
+.prof li{border-top:1px solid var(--line);padding:8px 0;font-size:14px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.prof li:first-child{border-top:0}
+.tag{font:600 11.5px var(--f-mono);padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag.sp{background:var(--badbg);color:var(--bad)}.tag.bt{background:var(--warnbg);color:var(--warn)}.tag.ok{background:var(--okbg);color:var(--ok)}.tag.rg{background:#eef5fc;color:var(--accent)}
+.prof .go{font-size:12.5px;color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:0;padding:0}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:13.5px;margin-top:8px}
+.bars i{display:block;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.bars i b{display:block;height:100%;background:var(--accent)}
+.bars i b.post{background:var(--ok)}
+textarea.rekap{width:100%;min-height:150px;border:1px solid var(--line);border-radius:8px;padding:9px;font:500 12.5px/1.5 var(--f-mono);background:#fbfcfd;margin-top:8px}
+/* sortir */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+.sc{border:1.5px solid var(--line);border-radius:10px;padding:9px;background:#fff;display:grid;gap:6px}
+.sc .ic{font-size:26px;line-height:1}
+.sc .nm{font-weight:600;font-size:13.5px;line-height:1.3}
+.sc .bb{display:flex;gap:4px}
+.sc .bb button{flex:1;border:1px solid var(--line);background:var(--soft);border-radius:6px;padding:5px;font:700 12.5px var(--f-mono);cursor:pointer}
+.sc.right{border-color:#9fd0b2;background:var(--okbg)}.sc.wrong{border-color:#e4a59c;background:var(--badbg)}
+.sc .why{font-size:12px;color:var(--muted);line-height:1.35}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px;line-height:1.6}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:0;gap:0}
+  .stage{top:0;z-index:20}
+  .viewer{height:36vh;min-height:230px;border-radius:0;border:none;border-bottom:1px solid var(--line)}
+  .panel{padding:12px}
+  header.top{padding:8px 12px}
+  .brand img{width:36px;height:36px}
+  h1{font-size:18px}.eyebrow2{font-size:10.5px}
+  .meta .guru,.dims .full{display:none}
+  .tabs button{font-size:12px}
+  .vchip{font-size:11.5px;gap:10px;padding:5px 8px}.vchip b{font-size:14px}
+}
+
+.tabs{grid-template-columns:repeat(6,1fr)}
+@media (max-width:560px){.tabs{grid-template-columns:repeat(3,1fr)}}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:4px 0 8px}
+.stat b{display:block;font:700 24px/1.1 var(--f-display)}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+.parts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.parts button{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 5px;font:600 13px/1.2 var(--f-body);cursor:pointer}
+.parts button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.parts button.seen:not(.on){border-color:#9fd0b2;background:#f1faf4}
+.stg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}
+.stg button{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:6px 4px;font:600 12.5px/1.2 var(--f-body);cursor:pointer;text-align:left}
+.stg button b{display:block;font:700 12px var(--f-mono);color:var(--muted)}
+.stg button.on{border-color:#e9a90b;background:#fff8e6}
+.stg button.on b{color:#b07a00}
+#wave{display:block;width:100%;height:auto;aspect-ratio:8/3;background:#06110d;border-radius:8px;margin-top:10px}
+.zone{display:flex;gap:6px;margin-top:8px;font-size:12.5px;font-weight:600}
+.zone span{flex:1;border-radius:8px;padding:6px 8px}
+.zone .hv{background:#fdeeeb;color:#9a2f22;border:1px solid #f0b8ae}
+.zone .lv{background:#eaf7ef;color:#1f6b3d;border:1px solid #a9d9bb}
+.steps{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:5px}
+.steps li{border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13.5px;display:flex;gap:8px;align-items:flex-start}
+.steps li b{font:700 12px var(--f-mono);background:var(--soft);border-radius:5px;padding:1px 6px;flex:none}
+.steps li.done{border-color:#9fd0b2;background:#f1faf4}
+.steps li.done b{background:#1f9a4b;color:#fff}
+.steps li.cur{border-color:#e9a90b;background:#fff8e6}
+.tchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tchips button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:7px 10px;font:600 13px var(--f-body);cursor:pointer}
+.tchips button.ok{background:var(--okbg);border-color:#9fd0b2}
+.tchips button.no{background:var(--badbg);border-color:#e4a59c}
+.loads{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+.loads td{padding:5px 4px;border-bottom:1px solid var(--line)}
+.loads td:nth-child(2),.loads td:nth-child(4){font-family:var(--f-mono);text-align:right;white-space:nowrap}
+.qty{display:inline-flex;align-items:center;gap:4px}
+.qty button{width:26px;height:26px;border:1px solid var(--line);border-radius:6px;background:#fff;font-weight:700;cursor:pointer}
+.qty span{min-width:20px;text-align:center;font-family:var(--f-mono);font-weight:600}
+.meterlcd{font:700 26px var(--f-mono);background:#c8d6c0;color:#1d2a1b;border-radius:8px;padding:8px 12px;text-align:right;margin-top:8px;border:2px solid #9aae90}
+.pad{position:absolute;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:4px;z-index:4;user-select:none;-webkit-user-select:none}
+.pad button{border:1px solid var(--line);background:rgba(251,252,253,.92);border-radius:8px;font-size:14px;font-weight:700;color:#14202b;cursor:pointer;padding:0;touch-action:none;box-shadow:0 2px 6px rgba(20,32,43,.12)}
+.pad button:active{background:#14202b;color:#fff}
+.pad .c{font-size:11px}
+@media (max-width:900px){.pad{grid-template-columns:repeat(3,30px);grid-template-rows:repeat(3,30px);gap:3px;right:8px;bottom:8px}}
+</style>
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "zasgkur533");
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <img src="data:image/webp;base64,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" alt="Logo Teknik Otomasi Industri">
+    <div>
+      <div class="eyebrow2">SMK 2 Triple J · Teknik Otomasi Industri</div>
+      <h1>Simulasi 3D Power Supply Industri (SMPS) 24 VDC</h1>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="dims"><span class="full">Sistem Kontrol Elektronik · </span>Fase F</span>
+  </div>
+</header>
+<main class="layout">
+  <section class="stage">
+    <div class="viewer" id="viewer">
+      <canvas id="c" aria-label="Model 3D power supply switching 24 VDC"></canvas>
+      <div id="labels"></div>
+      <div class="pad" id="pad" aria-label="Geser dan zoom tampilan"><button data-p="zi" title="Perbesar">+</button><button data-p="u" title="Geser ke atas">▲</button><button data-p="zo" title="Perkecil">−</button><button data-p="l" title="Geser ke kiri">◀</button><button data-p="c" class="c" title="Kembali ke tengah">⌂</button><button data-p="r" title="Geser ke kanan">▶</button><span></span><button data-p="d" title="Geser ke bawah">▼</button><span></span></div>
+      <div class="hud"><button class="tool" id="bReset">⌂</button></div>
+      <div id="toast"></div>
+      <div class="vchip" id="vchip"></div>
+      <div id="loading">Memuat model 3D…</div>
+    </div>
+  </section>
+  <section class="panel">
+    <nav class="tabs" id="tabs"></nav>
+    <div id="pane"></div>
+  </section>
+</main>
+<footer>Media pembelajaran interaktif · Program Keahlian Teknik Elektronika · Konsentrasi Teknik Otomasi Industri · SMKS 2 Triple J<br>Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+/* ===== geser (pan) tampilan: 2 jari di HP, klik kanan/Shift+geser di laptop, atau tombol panah ===== */
+const PAN={v:null,drag:false,did:false};
+function panBy(dx,dy){
+  if(!T||!PAN.v) return; const cam=T.camera, h=T.viewer.clientHeight||1;
+  const tg=T.cam.t.clone().add(PAN.v), dist=cam.position.distanceTo(tg), s=2*dist*Math.tan(THREE.MathUtils.degToRad(cam.fov/2))/h;
+  const right=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,0), up=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,1);
+  PAN.v.addScaledVector(right,-dx*s).addScaledVector(up,dy*s); if(PAN.v.length()>30) PAN.v.setLength(30);
+}
+function setupPan(){
+  PAN.v=new THREE.Vector3();
+  const cv=T.canvas, P=new Map(); let mid=null,last=null;
+  const midp=()=>{const [a,b]=[...P.values()];return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};};
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  cv.addEventListener('pointerdown',e=>{P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1){PAN.did=false;PAN.drag=(e.button===2||e.button===1||e.shiftKey);last={x:e.clientX,y:e.clientY};}
+    if(P.size===2){mid=midp();PAN.did=true;}});
+  cv.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1&&PAN.drag){const dx=e.clientX-last.x,dy=e.clientY-last.y;if(Math.abs(dx)+Math.abs(dy)>0)PAN.did=true;panBy(dx,dy);last={x:e.clientX,y:e.clientY};}
+    else if(P.size===2){const m=midp();if(mid)panBy(m.x-mid.x,m.y-mid.y);mid=m;}});
+  const up=e=>{P.delete(e.pointerId);if(P.size<2)mid=null;if(P.size===0)PAN.drag=false;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  // tombol panah (tahan untuk terus bergeser)
+  const pad=document.getElementById('pad'); let rep=null;
+  const act=k=>{const st=Math.max(10,T.viewer.clientHeight*0.03);
+    if(k==='u')panBy(0,st);else if(k==='d')panBy(0,-st);else if(k==='l')panBy(st,0);else if(k==='r')panBy(-st,0);
+    else if(k==='zi')T.cam.zoom=Math.max(0.35,T.cam.zoom*0.92);else if(k==='zo')T.cam.zoom=Math.min(1.8,T.cam.zoom*1.08);else if(k==='c'){PAN.v.set(0,0,0);T.cam.zoom=1;}};
+  const stop=()=>{clearInterval(rep);rep=null;};
+  pad.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();const k=b.dataset.p;act(k);stop();if(k!=='c')rep=setInterval(()=>act(k),45);});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>pad.addEventListener(ev,stop));
+}
+
+const $=s=>document.querySelector(s);
+const nf=(x,d=1)=>Number(x).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ================= TES DIAGNOSTIK ================= */
+const MISC={
+  m1:{t:'Terminal input AC (L, N) dan output DC (+V, −V) belum dikenali',go:'luar'},
+  m2:{t:'Kabel PE (arde) dianggap tidak perlu karena keluarannya DC',go:'pasang'},
+  m3:{t:'Belum paham kenapa trafo SMPS kecil (bekerja di frekuensi tinggi)',go:'kerja'},
+  m4:{t:'Tidak tahu kapasitor besar di sisi input masih bertegangan tinggi setelah PSU dicabut',go:'kerja'},
+  m5:{t:'Belum paham umpan balik: tegangan output dijaga tetap walau beban berubah',go:'kerja'},
+  m6:{t:'Memilih kapasitas PSU tanpa menjumlah beban dan tanpa cadangan',go:'pasang'},
+  m7:{t:'LED DC OK menyala dianggap pasti semua beban mendapat 24 V',go:'ganggu'},
+  m8:{t:'PSU yang masuk mode proteksi (hiccup) saat hubung singkat dikira rusak',go:'ganggu'},
+  m9:{t:'Cara mengukur tegangan output dengan multimeter belum benar',go:'pasang'},
+  m10:{t:'Dua terminal +V dan dua −V dianggap berbeda fungsi, padahal tersambung paralel',go:'luar'}
+};
+const QUEST=[
+  {q:'Pada power supply panel, terminal <b>L</b> dan <b>N</b> berfungsi untuk…',o:[['Masukan listrik AC dari MCB',1],['Keluaran 24 VDC ke sensor','m1'],['Sambungan arde','m1'],['Mengatur tegangan keluaran','m1']]},
+  {q:'Kabel PE (hijau-kuning) pada power supply…',o:[['Boleh tidak dipasang karena keluarannya DC','m2'],['Wajib dipasang: menyalurkan arus bocor ke tanah agar badan PSU tidak menyetrum',1],['Dipakai untuk menaikkan tegangan','m2'],['Sama dengan terminal −V','m2']]},
+  {q:'Trafo di dalam SMPS jauh lebih kecil daripada trafo adaptor biasa karena…',o:[['Dayanya memang kecil','m3'],['Tidak memakai inti','m3'],['Bekerja pada frekuensi tinggi (puluhan kHz)',1],['Hanya hiasan, yang bekerja IC','m3']]},
+  {q:'Power supply baru saja dicabut dari listrik. Bagian dalam yang masih berbahaya disentuh adalah…',o:[['Kapasitor besar di sisi input — bisa masih ±325 VDC',1],['Terminal keluaran 24 V','m4'],['LED DC OK','m4'],['Tidak ada, langsung aman','m4']]},
+  {q:'Beban bertambah (lebih banyak relay menyala). Tegangan keluaran SMPS yang baik akan…',o:[['Turun banyak sebanding beban','m5'],['Naik','m5'],['Tetap ±24 V karena ada rangkaian umpan balik',1],['Langsung mati','m5']]},
+  {q:'Total arus beban 24 V di panel 3,6 A. Power supply yang paling tepat adalah…',o:[['2,5 A','m6'],['3,5 A','m6'],['5 A',1],['Berapa saja, yang penting 24 V','m6']]},
+  {q:'LED DC OK menyala, tetapi sensor di ujung kabel tidak mendapat tegangan. Kemungkinan besar…',o:[['PSU pasti rusak','m7'],['Kabel +V atau −V ke sensor putus / kendur',1],['Tegangan PLN terlalu tinggi','m7'],['LED DC OK rusak','m7']]},
+  {q:'Keluaran PSU terhubung singkat. Power supply yang baik akan…',o:[['Masuk mode proteksi, lalu normal lagi setelah hubung singkat dihilangkan',1],['Rusak permanen','m8'],['Menaikkan tegangan','m8'],['Tetap memberi arus sebesar-besarnya','m8']]},
+  {q:'Mengukur tegangan keluaran PSU dengan multimeter: selektor dan probe yang benar…',o:[['V AC, probe di L dan N','m9'],['Ampere, probe di +V dan −V','m9'],['Ohm, saat PSU menyala','m9'],['V DC, probe merah di +V dan hitam di −V',1]]},
+  {q:'PSU punya dua terminal +V dan dua terminal −V. Artinya…',o:[['Satu 24 V, satu 12 V','m10'],['Tersambung di dalam, untuk membagi kabel',1],['Satu masukan, satu keluaran','m10'],['Satu cadangan kalau yang lain rusak','m10']]}
+];
+const PROFILE={sp:'Salah paham',bt:'Belum tahu',rg:'Benar tapi ragu',ok:'Paham'};
+
+/* ================= DATA ================= */
+const PART={
+  L:{nm:'L (fasa)',g:'in',t:'Masukan listrik AC dari MCB, kabel fasa. SMPS industri umumnya menerima <b>100–240 VAC</b>, 50/60 Hz — dipakai di negara mana pun.'},
+  N:{nm:'N (netral)',g:'in',t:'Kabel netral dari MCB. Bersama L menjadi masukan AC.'},
+  PE:{nm:'⏚ PE (arde)',g:'in',t:'Disambung ke rel arde panel dengan kabel <b>hijau-kuning</b>. Kalau ada kebocoran ke badan logam, arus bocor dialirkan ke tanah sehingga badan PSU tidak menyetrum. Filter EMI di dalam juga butuh PE.'},
+  VP:{nm:'+V (dua terminal)',g:'out',t:'Keluaran <b>+24 VDC</b>. Ada dua terminal +V yang tersambung di dalam — gunanya membagi kabel supaya satu terminal tidak dijejali banyak kabel.'},
+  VN:{nm:'−V (dua terminal)',g:'out',t:'Keluaran <b>0 V</b> (negatif / common). Dua terminal −V juga tersambung di dalam. Di panel biasanya diberi tanda <b>M</b> atau <b>0V</b>.'},
+  ADJ:{nm:'V.ADJ',g:'set',t:'Potensio kecil untuk menyetel tegangan keluaran, biasanya <b>±10 %</b> (± 21,6–28,8 V). Diputar pelan dengan obeng minus kecil sambil diukur multimeter.'},
+  OK:{nm:'LED DC OK',g:'set',t:'Menyala hijau bila keluaran DC normal. <b>Hanya menunjukkan kondisi di terminal PSU</b> — belum tentu tegangan sampai ke beban.'},
+  LBL:{nm:'Label rating',g:'info',t:'Data penting: masukan 100–240 VAC, keluaran <b>24 V ⎓ 5 A = 120 W</b>. Arus beban total tidak boleh melebihi 5 A terus-menerus.'},
+  VENT:{nm:'Lubang ventilasi',g:'info',t:'Udara panas keluar lewat atas, udara dingin masuk dari bawah. Beri jarak ± 2–4 cm di atas dan bawah PSU; jangan ditutup kabel atau duct.'},
+  DIN:{nm:'Klip rel DIN',g:'info',t:'Dipasang dengan dikaitkan ke rel DIN 35 mm lalu ditekan. Dilepas dengan menarik pengunci di bawah memakai obeng.'}
+};
+const PARTK=Object.keys(PART);
+const STG=[
+  {n:'Masukan & proteksi',nm:'Sekring, NTC, filter EMI',x:-3.3,t:'Listrik 220 VAC masuk lewat <b>sekring</b> (pengaman hubung singkat), <b>NTC</b> (membatasi lonjakan arus saat dinyalakan), dan <b>filter EMI</b> (choke + kapasitor X/Y) yang menahan gangguan frekuensi tinggi agar tidak kembali ke jala-jala.',w:'ac'},
+  {n:'Penyearah',nm:'Dioda jembatan',x:-2.0,t:'<b>Dioda jembatan</b> membalik setengah gelombang negatif menjadi positif — hasilnya DC berdenyut.',w:'fw'},
+  {n:'Kapasitor bulk',nm:'Elco 400 V',x:-1.05,t:'<b>Elco besar 400 V</b> meratakan denyut menjadi DC tinggi <b>± 310–325 V</b>. Kapasitor ini menyimpan muatan dan <b>tetap bertegangan</b> beberapa saat setelah PSU dicabut.',w:'hvdc'},
+  {n:'Saklar cepat',nm:'MOSFET + IC PWM',x:0.0,t:'<b>MOSFET</b> dinyala-matikan oleh <b>IC PWM</b> puluhan ribu kali per detik (± 65 kHz). DC tinggi “dicacah” menjadi gelombang kotak. Lebar pulsa (duty cycle) inilah yang diatur.',w:'sq'},
+  {n:'Trafo frekuensi tinggi',nm:'Trafo inti ferit',x:1.15,t:'<b>Trafo ferit</b> menurunkan tegangan dan <b>memisahkan</b> sisi tegangan tinggi dari sisi 24 V (isolasi). Karena frekuensinya tinggi, trafonya jauh lebih kecil dan ringan dibanding trafo 50 Hz.',w:'sec'},
+  {n:'Penyearah output',nm:'Dioda Schottky',x:2.2,t:'<b>Dioda Schottky</b> (cepat, rugi kecil) menyearahkan pulsa dari trafo.',w:'rect'},
+  {n:'Filter output',nm:'Induktor + elco',x:3.15,t:'<b>Induktor</b> dan <b>elco</b> meratakan pulsa menjadi <b>24 VDC</b> halus dengan riak sangat kecil.',w:'dc'},
+  {n:'Umpan balik',nm:'TL431, optocoupler, V.ADJ',x:1.6,t:'Tegangan keluaran terus dibandingkan dengan acuan (<b>TL431</b> + <b>V.ADJ</b>). Hasilnya dikirim lewat <b>optocoupler</b> (cahaya, tetap terisolasi) ke IC PWM. Keluaran turun → pulsa dilebarkan; naik → pulsa dipersempit.',w:'fb'}
+];
+const LOADS=[['PLC kecil',0.5],['HMI 7 inci',0.4],['Sensor proximity',0.03],['Koil relay 24 V',0.04],['Lampu pilot 24 V',0.02],['Solenoid valve',0.25],['Modul input/output',0.15]];
+const SIZES=[1.25,2.5,5,10,20];
+const STEPS=[
+  {q:'Langkah 1 — PSU dipasang di…',o:['Rel DIN, dikaitkan atas lalu ditekan','Ditempel dengan double tape','Diletakkan di dasar panel'],a:0,id:'mount',why:'Kaitkan bagian atas klip ke rel DIN 35 mm, lalu tekan bagian bawah sampai terkunci.'},
+  {q:'Langkah 2 — Kabel hijau-kuning (PE) dari rel arde dipasang ke terminal…',o:['L','N','⏚ (PE)','−V'],a:2,id:'pe',why:'Pasang PE lebih dulu — ini pengaman. Badan logam PSU tersambung ke tanah.'},
+  {q:'Langkah 3 — Kabel kuning bertube marking “L1” (fasa dari MCB) dipasang ke terminal…',o:['L','N','+V','⏚'],a:0,id:'l',why:'Fasa ke L. Kabel L dan N sama-sama kuning, jadi <b>baca tube marking-nya</b>. Pastikan MCB dalam posisi OFF.'},
+  {q:'Langkah 4 — Kabel kuning bertube marking “N” (netral dari MCB) dipasang ke terminal…',o:['+V','N','L','−V'],a:1,id:'n',why:'Netral ke N. Masukan AC lengkap: L, N, PE.'},
+  {q:'Langkah 5 — Terminal +V disambung ke terminal blok distribusi bertanda…',o:['L+ (+24 V)','M (0 V)','PE'],a:0,id:'vp',why:'+V ke terminal blok <b>L+</b>. Dari sini +24 V dibagi ke PLC, relay, dan sensor (kabel kontrol biru, tube “L+”).'},
+  {q:'Langkah 6 — Terminal −V disambung ke terminal blok bertanda…',o:['L+','M (0 V)','N'],a:1,id:'vn',why:'−V ke terminal blok <b>M</b> (0 V) dengan kabel biru bertube “M”. Jangan disambung ke N — N adalah sisi AC!'},
+  {q:'Langkah 7 — Sebelum MCB dinyalakan, yang harus dicek adalah…',o:['Semua sekrup kencang, tidak ada kabel AC tertukar dengan DC','Langsung nyalakan saja','Lepas kabel PE dulu'],a:0,id:'cek',why:'Tarik pelan setiap kabel (uji tarik), cocokkan tube marking dengan gambar. Lalu MCB dinaikkan → LED DC OK menyala.'},
+  {q:'Langkah 8 — Mengukur tegangan keluaran, selektor multimeter di…',o:['V AC (V~)','V DC (V⎓)','A (ampere)','Ω (ohm)'],a:1,id:'ukur',why:'V DC, probe merah di +V, hitam di −V. Kalau belum 24,0 V, putar V.ADJ pelan sambil membaca multimeter.'}
+];
+const CASES=[
+  {id:'a',t:'Panel dinyalakan, semua beban 24 V mati.',led:'off',r:{in:'0 V AC',out:'0,0 V DC',beban:'0,0 V DC'},o:['MCB untuk PSU turun / OFF — tidak ada masukan AC','PSU rusak, langsung ganti','V.ADJ terlalu rendah','Kabel −V putus'],a:0,why:'Masukan AC 0 V → PSU memang tidak mendapat listrik. Cek MCB, sekring, dan kabel L/N dulu sebelum menyalahkan PSU.'},
+  {id:'b',t:'Semua beban 24 V mati. LED DC OK padam.',led:'off',r:{in:'221 V AC',out:'0,0 V DC',beban:'0,0 V DC'},o:['MCB turun','PSU rusak di dalam (mis. sekring dalam putus) — ganti unit','Kabel beban kendur','Beban terlalu kecil'],a:1,why:'Masukan ada, keluaran 0 V tanpa hubung singkat di beban → PSU rusak. <b>Jangan membuka casing</b>: kapasitor dalam bisa masih bertegangan tinggi. Ganti unit dengan rating sama.'},
+  {id:'c',t:'LED DC OK berkedip, tegangan keluaran naik-turun, terdengar “tik-tik”.',led:'blink',r:{in:'220 V AC',out:'0–24 V naik-turun',beban:'0–24 V naik-turun'},o:['PSU kepanasan karena lama menyala','Hubung singkat atau beban berlebih di keluaran — PSU masuk mode proteksi (hiccup)','Tegangan PLN naik-turun','Lampu LED rusak'],a:1,why:'Mode <b>hiccup</b>: PSU mencoba menyala, mendeteksi arus berlebih, lalu memutus — berulang. Lepas beban satu per satu untuk mencari yang hubung singkat. PSU-nya sendiri biasanya tidak rusak.'},
+  {id:'d',t:'LED DC OK menyala, tapi satu sensor proximity tidak hidup.',led:'on',r:{in:'220 V AC',out:'24,0 V DC',beban:'0,0 V DC (di kaki sensor)'},o:['PSU kurang besar','Kabel +V/−V ke sensor putus atau sekrup terminal kendur','Tegangan PSU terlalu tinggi','Harus ganti PSU'],a:1,why:'PSU sehat (24 V di terminalnya), tetapi tegangan tidak sampai ke sensor → masalah di jalur kabel. Ukur bertahap: terminal blok L+/M → kabel → kaki sensor.'},
+  {id:'e',t:'Relay di ujung panel kadang tidak mau menarik. Semua lain normal.',led:'on',r:{in:'220 V AC',out:'22,0 V DC',beban:'20,6 V DC (di koil relay)'},o:['Tegangan keluaran terlalu rendah + jatuh tegangan di kabel panjang — setel V.ADJ ke 24 V, ukur di beban','PSU hubung singkat','Ganti relay','MCB turun'],a:0,why:'Keluaran baru 22 V dan masih turun di kabel. Setel <b>V.ADJ</b> pelan sampai beban terjauh mendapat ± 24 V, atau perbesar penampang kabel.'},
+  {id:'f',t:'PSU terasa sangat panas dan sesekali mati sendiri, lalu menyala lagi.',led:'on',r:{in:'220 V AC',out:'24,0 V DC',beban:'Arus 4,9 A dari 5 A'},o:['Beban hampir penuh dan ventilasi tertutup — PSU memutus karena panas (proteksi suhu)','V.ADJ rusak','Kabel PE lepas','Masukan AC terlalu rendah'],a:0,why:'Beban 98 % ditambah ventilasi tertutup → proteksi suhu bekerja. Beri jarak ventilasi, kurangi beban, atau ganti PSU yang lebih besar (cadangan ± 30 %).'}
+];
+
+/* ================= STATE ================= */
+const S={tab:'pre',name:'',kelas:'',
+  test:{pre:{ans:[],conf:[],i:0,done:false},post:{ans:[],conf:[],i:0,done:false,order:null}},
+  luar:{sel:'L',seen:{L:true}},
+  kerja:{st:0,all:false,load:60,adj:24.0,cut:true},
+  pasang:{step:0,done:{},pick:null,meter:null,adj:23.3,qty:[1,0,6,4,3,2,1],powered:false},
+  gg:{i:-1,pick:null,score:{ok:0,tot:0},order:null},
+  visited:{}};
+try{const sv=JSON.parse(localStorage.getItem('toi-smps-v1')||'null');if(sv){Object.assign(S.test,sv.test||{});S.name=sv.name||'';S.kelas=sv.kelas||'';S.visited=sv.visited||{};}}catch(e){}
+function save(){try{localStorage.setItem('toi-smps-v1',JSON.stringify({test:S.test,name:S.name,kelas:S.kelas,visited:S.visited}));}catch(e){}}
+function loadA(){return LOADS.reduce((a,l,i)=>a+l[1]*S.pasang.qty[i],0);}
+function kerjaState(){const k=S.kerja,over=k.load>105;const d=clamp(0.18+0.0028*k.load+(k.adj-24)*0.012,0.12,0.48);return {over,duty:over?0:d,vout:over?0:k.adj-0.004*k.load*0.05,iout:5*k.load/100};}
+
+/* ================= 3D ================= */
+let T=null;
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+const M=(h,o)=>new THREE.MeshStandardMaterial(Object.assign({color:col(h),roughness:.55,metalness:0},o||{}));
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.userData={c,draw};return t;}
+function glowSprite(rgb){const t=canvasTex(128,128,g=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,`rgba(${rgb},.95)`);gr.addColorStop(.35,`rgba(${rgb},.45)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,128,128);});return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));}
+function shadowAll(o){o.traverse(m=>{if(m.isMesh&&!m.userData.noShadow){m.castShadow=true;m.receiveShadow=true;}});}
+function box(g,w,h,d,c,x,y,z,o){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(c,o));m.position.set(x,y,z);g.add(m);return m;}
+function cyl(g,r1,r2,h,c,x,y,z,o,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg||24),M(c,o));m.position.set(x,y,z);g.add(m);return m;}
+function tube(g,pts,r,c,o){const cu=new THREE.CatmullRomCurve3(pts.map(p=>p.isVector3?p.clone():V3(...p)),false,'centripetal');const m=new THREE.Mesh(new THREE.TubeGeometry(cu,Math.max(24,pts.length*14),r,8,false),c==='PE'?peMat():M(c,o));g.add(m);return {m,cu};}
+let _peTex=null;function peMat(){if(!_peTex){_peTex=canvasTex(8,64,(c,w,h)=>{for(let i=0;i<4;i++){c.fillStyle=i%2?'#2e9b3e':'#f2d21a';c.fillRect(0,i*h/4,w,h/4);}});_peTex.wrapS=_peTex.wrapT=THREE.RepeatWrapping;}return new THREE.MeshStandardMaterial({map:_peTex,roughness:.5});}
+
+function textPlane(w,h,draw){const t=canvasTex(Math.round(w*110),Math.round(h*110),draw);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,roughness:.7,transparent:true}));m.userData.noShadow=true;return m;}
+function redraw(m){const t=m.material.map,u=t.userData;const g=u.c.getContext('2d');g.clearRect(0,0,u.c.width,u.c.height);u.draw(g,u.c.width,u.c.height);t.needsUpdate=true;}
+function label(g,txt,w,x,y,z,fg,bg,hh){const p=textPlane(w,hh||0.36,(c,W,H)=>{if(bg){c.fillStyle=bg;c.fillRect(0,0,W,H);}c.fillStyle=fg||'#14202b';c.font=`700 ${H*.62}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText(txt,W/2,H/2);});p.position.set(x,y,z);g.add(p);return p;}
+function ledMat(hex){return M('#2a2f35',{emissive:new THREE.Color(hex),emissiveIntensity:0});}
+function prep(paths){paths.forEach(p=>{let L=0;const c=[0];for(let i=1;i<p.pts.length;i++){L+=p.pts[i].distanceTo(p.pts[i-1]);c.push(L);}p.len=L;p.cum=c;p.n=Math.max(1,Math.round(L/0.35));p.u=0;});return paths;}
+
+/* ---------- model PSU DIN-rail (dipakai di beberapa adegan) ---------- */
+function makePSU(parent,sc,taps){
+  const g=new THREE.Group();g.scale.setScalar(sc);parent.add(g);const R={g,term:{}};
+  const W=1.7,H=3.6,D=2.0;
+  const vent=canvasTex(128,256,(c,w,h)=>{c.fillStyle='#aab2ba';c.fillRect(0,0,w,h);c.fillStyle='#2a2f35';for(let i=0;i<14;i++)c.fillRect(w*.15,8+i*17.5,w*.7,8);});
+  const bodyM=new THREE.MeshStandardMaterial({color:col('#b4bcc4'),metalness:.55,roughness:.4});const ventM=new THREE.MeshStandardMaterial({map:vent,metalness:.4,roughness:.5});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(W,H,D),[ventM,ventM,ventM,ventM,bodyM,bodyM]);body.position.set(0,0,0);g.add(body);R.body=body;
+  if(taps){body.userData.part='VENT';taps.push(body);}
+  // muka depan plastik
+  const fp=box(g,W-0.06,H-0.06,0.08,'#3a4048',0,0,D/2+0.02,{roughness:.6});
+  const lab=textPlane(1.3,1.05,(c,w,h)=>{c.fillStyle='#e9edf0';c.fillRect(0,0,w,h);c.fillStyle='#14202b';c.textAlign='center';c.textBaseline='middle';c.font=`700 ${h*.17}px "Barlow Condensed",Arial`;c.fillText('POWER SUPPLY',w/2,h*.14);c.font=`700 ${h*.2}px "Barlow Condensed",Arial`;c.fillText('24 V ⎓ 5 A',w/2,h*.36);c.font=`600 ${h*.1}px "IBM Plex Mono",monospace`;c.fillText('OUTPUT 120 W',w/2,h*.55);c.fillText('INPUT 100–240 VAC',w/2,h*.71);c.fillText('50/60 Hz  1,2 A',w/2,h*.85);});
+  lab.position.set(0,-0.15,D/2+0.065);g.add(lab);if(taps){lab.userData.part='LBL';taps.push(lab);}
+  // terminal
+  const termRow=(names,y,sign)=>{names.forEach((n,i)=>{const x=(i-(names.length-1)/2)*0.38;const hb=box(g,0.34,0.42,0.3,'#20262c',x,y,D/2+0.12);hb.userData.part=n==='+V'?'VP':n==='−V'?'VN':n==='⏚'?'PE':n;if(taps)taps.push(hb);
+    const s=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.11,0.06,16),M('#cfd3d8',{metalness:.9,roughness:.25,emissive:new THREE.Color(0xffb020),emissiveIntensity:0}));s.rotation.x=Math.PI/2;s.position.set(x,y,D/2+0.29);g.add(s);box(g,0.16,0.025,0.02,'#555',x,y,D/2+0.33);
+    const key=n==='+V'?'VP':n==='−V'?'VN':n==='⏚'?'PE':n;s.userData.part=key;if(taps)taps.push(s);(R.term[n]=R.term[n]||[]).push(s);
+    label(g,n,0.36,x,y+sign*0.34,D/2+0.07,'#ffffff',null,0.24);});};
+  termRow(['+V','+V','−V','−V'],1.45,-1);termRow(['L','N','⏚'],-1.45,1);
+  R.led=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,8),ledMat(0x3cff6e));R.led.position.set(-0.4,0.82,D/2+0.08);g.add(R.led);label(g,'DC OK',0.5,-0.4,0.62,D/2+0.07,'#ffffff',null,0.2);
+  R.ledG=glowSprite('80,255,120');R.ledG.position.copy(R.led.position);R.ledG.scale.setScalar(0.5);g.add(R.ledG);
+  const adj=cyl(g,0.11,0.11,0.08,'#e8e1cf',0.4,0.82,D/2+0.08);adj.rotation.x=Math.PI/2;box(g,0.03,0.17,0.02,'#555',0.4,0.82,D/2+0.13);label(g,'V.ADJ',0.5,0.4,0.62,D/2+0.07,'#ffffff',null,0.2);R.adj=adj;
+  if(taps){R.led.userData.part='OK';adj.userData.part='ADJ';taps.push(R.led,adj);}
+  const clip=box(g,1.0,0.5,0.12,'#20262c',0,-1.3,-D/2-0.06);box(g,0.3,0.12,0.14,'#c0392b',0,-1.62,-D/2-0.06);if(taps){clip.userData.part='DIN';taps.push(clip);}
+  R.W=W;R.H=H;R.D=D;
+  R.tp=(n,i)=>{const s=R.term[n][i||0];return s.getWorldPosition(V3(0,0,0));};
+  return R;
+}
+function setLed(R,st,t){const on=st==='on'||(st==='blink'&&Math.floor(t/350)%2===0);R.led.material.emissiveIntensity=on?2.5:0;R.ledG.material.opacity=on?0.8:0;}
+
+function fitEnd(g,cu,atStart,s){s=s||1;const L=Math.max(0.01,cu.getLength()),u=atStart?0:1,us=atStart?Math.min(0.5,0.14*s/L):Math.max(0.5,1-0.14*s/L);const tg=cu.getTangentAt(u).normalize();const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),tg);
+  const sl=new THREE.Mesh(new THREE.CylinderGeometry(0.062*s,0.062*s,0.16*s,12),M('#f4f4f2',{roughness:.6}));sl.quaternion.copy(q);sl.position.copy(cu.getPointAt(us));g.add(sl);
+  const sk=new THREE.Mesh(new THREE.BoxGeometry(0.085*s,0.11*s,0.025*s),M('#d9dde1',{metalness:.9,roughness:.3}));sk.quaternion.copy(q);sk.position.copy(cu.getPointAt(u));g.add(sk);}
+function noteLab(extra){return `<div class="card"><h2>Catatan wiring · standar Lab TOI</h2><div class="map">
+  <b>Rangkaian daya</b><span>kabel <b>kuning</b> — jalur listrik utama AC: MCB → power supply / kontaktor → motor / beban.</span>
+  <b>Rangkaian kontrol</b><span>kabel <b>biru</b> — 24 VDC, koil, tombol, sensor, input–output PLC.</span>
+  <b>PE (arde)</b><span>kabel <b>hijau-kuning</b>, khusus pengaman, tidak dipakai untuk fungsi lain.</span>
+  <b>Ujung kabel</b><span>wajib <b>skun Y</b> (dipres dengan tang skun) dan <b>tube marking</b> berisi alamat kabel, mis. L1, N, L+, M, A1, 13, I0.0. Karena warna satu rangkaian sama, <b>tube marking-lah yang membedakan</b> kabel.</span>
+  <b>Terminal &amp; kabel masuk</b><span>terminal blok TB-1512; kabel sumber masuk panel <b>dari bawah</b> (mencegah air dan debu masuk).</span></div>${extra?`<p class="muted">${extra}</p>`:''}</div>`;}
+function init3D(){
+  if(typeof THREE==='undefined') throw new Error('three');
+  const canvas=$('#c'),viewer=$('#viewer');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.95;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,0.1,250);
+  const pmrem=new THREE.PMREMGenerator(renderer),env=new THREE.Scene();
+  const sky=new THREE.SphereGeometry(50,32,16),pa=sky.attributes.position,cols=[];const lo=new THREE.Color(0x2c3540),hi=new THREE.Color(0xf2f5f8);
+  for(let i=0;i<pa.count;i++){const t=(pa.getY(i)/50+1)/2;const c=lo.clone().lerp(hi,Math.pow(t,.8));cols.push(c.r,c.g,c.b);}
+  sky.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));env.add(new THREE.Mesh(sky,new THREE.MeshBasicMaterial({side:THREE.BackSide,vertexColors:true})));
+  const pm=new THREE.MeshBasicMaterial({color:new THREE.Color(1.6,1.6,1.6),side:THREE.DoubleSide});
+  [[0,32,12,40,12],[-34,8,22,14,30],[30,-4,-20,10,24]].forEach(([x,y,z,w,h])=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),pm);m.position.set(x,y,z);m.lookAt(0,0,0);env.add(m);});
+  scene.environment=pmrem.fromScene(env,0.03).texture;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x6a7580,0.35));
+  const key=new THREE.DirectionalLight(0xfff6ea,0.75);key.position.set(6,16,10);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-12,right:12,top:10,bottom:-10,near:1,far:60});key.shadow.bias=-0.0006;scene.add(key);
+  const fill=new THREE.DirectionalLight(0xd6e4ff,0.3);fill.position.set(-10,6,-6);scene.add(fill);
+  const bench=new THREE.Mesh(new THREE.BoxGeometry(30,0.6,20),M('#5f7c70',{roughness:.85}));bench.position.y=-0.3;bench.receiveShadow=true;scene.add(bench);
+  const G={luar:new THREE.Group(),kerja:new THREE.Group(),pasang:new THREE.Group()};Object.values(G).forEach(g=>scene.add(g));
+  const dots=new THREE.InstancedMesh(new THREE.SphereGeometry(0.05,8,6),new THREE.MeshBasicMaterial({color:0xffd21a,toneMapped:false}),700);dots.count=0;dots.frustumCulled=false;scene.add(dots);
+  T={renderer,scene,camera,canvas,viewer,G,dots,key,pins:[],taps:[],O:{},half:[5,3],cam:{yaw:0.3,pitch:0.3,zoom:1,t:V3(0,1,0),d:18}};
+  buildLuar();buildKerja();buildPasang();
+  bind();setupPan();new ResizeObserver(resize).observe(viewer);resize();
+  showScene();
+  $('#loading').style.display='none';
+  requestAnimationFrame(loop);
+}
+/* ---------- adegan 1: bagian luar ---------- */
+function buildLuar(){
+  const g=T.G.luar,O=T.O.luar={};
+  box(g,8,7,0.2,'#b9c2ca',0,3.5,-2.0);box(g,6,0.35,0.25,'#cfd3d8',0,2.6,-1.8,{metalness:.8});
+  O.R=makePSU(g,1.0,T.taps);O.R.g.position.set(0,2.6,-0.62);O.R.adj.material.emissive=new THREE.Color(0xffb020);
+  // adaptor lama sebagai pembanding ukuran
+  const ad=new THREE.Group();ad.position.set(2.9,0,0.6);g.add(ad);box(ad,1.5,1.0,1.2,'#20262c',0,0.5,0);box(ad,1.0,0.5,0.9,'#2b62c9',0,1.2,0);
+  O.adLbl=label(ad,'Trafo 50 Hz 120 W ± 2 kg',2.3,0,0.06,0.62,'#ffffff','rgba(20,32,43,.85)',0.3);O.adLbl.rotation.x=-Math.PI/2;O.adLbl.position.set(0,0.02,1.0);
+  shadowAll(g);
+}
+/* ---------- adegan 2: PCB dibelah ---------- */
+function buildKerja(){
+  const g=T.G.kerja,O=T.O.kerja={grp:[]};
+  // casing transparan
+  O.case=new THREE.Mesh(new THREE.BoxGeometry(9.8,2.4,4.4),new THREE.MeshStandardMaterial({color:col('#b4bcc4'),transparent:true,opacity:.12,depthWrite:false,metalness:.3}));O.case.position.set(0,1.45,0);O.case.userData.noShadow=true;g.add(O.case);
+  // PCB + zona
+  box(g,9.6,0.1,4.2,'#1e6b3f',0,0.3,0,{roughness:.7});
+  const zone=(x0,x1,c)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,4.0),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.22,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set((x0+x1)/2,0.36,0);g.add(m);};
+  zone(-4.7,0.75,0xff4a3a);zone(1.55,4.7,0x3cff8a);
+  const gapL=label(g,'CELAH ISOLASI',1.9,1.15,0.37,1.95,'#ffffff','rgba(20,32,43,.8)',0.26);gapL.rotation.x=-Math.PI/2;
+  const zl1=label(g,'SISI TEGANGAN TINGGI',2.8,-2.0,0.37,-1.85,'#ffffff','rgba(160,40,30,.85)',0.3);zl1.rotation.x=-Math.PI/2;
+  const zl2=label(g,'SISI AMAN 24 V',2.2,3.1,0.37,-1.85,'#ffffff','rgba(30,110,60,.9)',0.3);zl2.rotation.x=-Math.PI/2;
+  const Y=0.35,grp=()=>{const q=new THREE.Group();g.add(q);O.grp.push(q);return q;};
+  // 0 masukan & proteksi
+  let q=grp();
+  box(q,0.5,0.5,1.3,'#2f6fb0',-4.35,Y+0.25,0);[-0.4,0,0.4].forEach(z=>{const s=cyl(q,0.08,0.08,0.06,'#cfd3d8',-4.35,Y+0.52,z,{metalness:.9});});
+  const fz=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,0.65,16),new THREE.MeshStandardMaterial({color:col('#dfeaf0'),transparent:true,opacity:.5,roughness:.1}));fz.rotation.x=Math.PI/2;fz.position.set(-3.75,Y+0.22,-0.5);q.add(fz);
+  [-0.82,-0.18].forEach(z=>{const cp=cyl(q,0.11,0.11,0.12,'#cfd3d8',-3.75,Y+0.22,z-0.0,{metalness:.9});cp.rotation.x=Math.PI/2;});const wire=cyl(q,0.01,0.01,0.6,'#555',-3.75,Y+0.22,-0.5);wire.rotation.x=Math.PI/2;
+  cyl(q,0.16,0.16,0.07,'#3a4048',-3.75,Y+0.35,0.55).rotation.x=Math.PI/2;
+  const ch=new THREE.Mesh(new THREE.TorusGeometry(0.32,0.14,12,24),M('#2a2f35',{roughness:.6}));ch.rotation.y=Math.PI/2;ch.position.set(-3.05,Y+0.45,0.15);q.add(ch);
+  const cw=new THREE.Mesh(new THREE.TorusGeometry(0.32,0.155,6,24,Math.PI*0.8),M('#c8793e',{metalness:.8}));cw.rotation.y=Math.PI/2;cw.position.copy(ch.position);q.add(cw);
+  box(q,0.55,0.4,0.25,'#e8c33a',-3.05,Y+0.2,-0.85);
+  // 1 dioda jembatan
+  q=grp();box(q,0.75,0.12,0.75,'#20262c',-2.0,Y+0.45,0);box(q,0.85,0.35,0.85,'#cfd3d8',-2.0,Y+0.62,0,{metalness:.8});for(let i=0;i<5;i++)box(q,0.85,0.35,0.05,'#bfc6cc',-2.0,Y+0.95,-0.35+i*0.175,{metalness:.8});
+  [[-0.25,-0.25],[0.25,-0.25],[-0.25,0.25],[0.25,0.25]].forEach(([dx,dz])=>box(q,0.03,0.4,0.03,'#bbb',-2.0+dx,Y+0.2,dz));
+  const bl=label(q,'~ + − ~',0.75,-2.0,Y+0.52,0.38,'#ffffff',null,0.18);
+  // 2 kapasitor bulk
+  q=grp();cyl(q,0.45,0.45,1.55,'#20262c',-1.05,Y+0.78,0,{roughness:.4});cyl(q,0.43,0.43,0.02,'#9aa1a8',-1.05,Y+1.56,0,{metalness:.8});
+  const bt=textPlane(0.7,0.9,(c,w,h)=>{c.fillStyle='#20262c';c.fillRect(0,0,w,h);c.fillStyle='#e9edf0';c.textAlign='center';c.font=`700 ${h*.2}px "Barlow Condensed",Arial`;c.fillText('400 V',w/2,h*.35);c.font=`600 ${h*.14}px "IBM Plex Mono",monospace`;c.fillText('150 µF',w/2,h*.6);c.fillStyle='#c0392b';c.fillRect(0,h*.78,w,h*.1);});bt.position.set(-1.05,Y+0.85,0.46);q.add(bt);
+  // 3 MOSFET + heatsink + IC PWM
+  q=grp();box(q,1.0,1.1,0.12,'#cfd3d8',0.0,Y+0.6,-0.5,{metalness:.85});for(let i=0;i<5;i++)box(q,1.0,1.1,0.04,'#c3cad0',0.0,Y+0.6,-0.65-i*0.1,{metalness:.85});
+  box(q,0.36,0.46,0.1,'#20262c',0.0,Y+0.62,-0.4);[-0.1,0,0.1].forEach(dx=>box(q,0.04,0.3,0.03,'#bbb',dx,Y+0.2,-0.36));
+  box(q,0.5,0.12,0.25,'#20262c',0.05,Y+0.11,0.7);for(let i=0;i<4;i++){box(q,0.03,0.08,0.06,'#bbb',-0.13+i*0.12,Y+0.06,0.56);box(q,0.03,0.08,0.06,'#bbb',-0.13+i*0.12,Y+0.06,0.84);}
+  // 4 trafo ferit
+  q=grp();box(q,0.95,0.7,0.8,'#e8c33a',1.15,Y+0.45,0);box(q,1.05,0.18,0.62,'#2a2f35',1.15,Y+0.89,0);box(q,1.05,0.18,0.62,'#2a2f35',1.15,Y+0.09,0);box(q,0.14,0.72,0.62,'#2a2f35',0.67,Y+0.49,0);box(q,0.14,0.72,0.62,'#2a2f35',1.63,Y+0.49,0);
+  for(let i=0;i<4;i++)box(q,0.03,0.3,0.03,'#bbb',0.75+i*0.27,Y+0.05,-0.42);
+  // 5 dioda Schottky + heatsink
+  q=grp();box(q,0.8,0.9,0.1,'#cfd3d8',2.2,Y+0.5,-0.4,{metalness:.85});for(let i=0;i<4;i++)box(q,0.8,0.9,0.04,'#c3cad0',2.2,Y+0.5,-0.53-i*0.1,{metalness:.85});box(q,0.34,0.42,0.1,'#20262c',2.2,Y+0.55,-0.3);
+  // 6 filter output
+  q=grp();const ind=new THREE.Mesh(new THREE.TorusGeometry(0.28,0.12,12,24),M('#c8793e',{metalness:.8,roughness:.3}));ind.rotation.x=Math.PI/2;ind.position.set(2.95,Y+0.15,0.15);q.add(ind);
+  cyl(q,0.24,0.24,0.75,'#2b62c9',3.55,Y+0.38,-0.25,{roughness:.4});cyl(q,0.24,0.24,0.75,'#2b62c9',3.55,Y+0.38,0.4,{roughness:.4});
+  box(q,0.5,0.5,1.6,'#2f6fb0',4.35,Y+0.25,0);[-0.6,-0.2,0.2,0.6].forEach(z=>cyl(q,0.08,0.08,0.06,'#cfd3d8',4.35,Y+0.52,z,{metalness:.9}));
+  // 7 umpan balik
+  q=grp();box(q,0.35,0.16,0.25,'#f2f2f0',1.15,Y+0.08,1.45);label(q,'OPTO',0.5,1.15,Y+0.17,1.45,'#14202b',null,0.16).rotation.x=-Math.PI/2;
+  cyl(q,0.09,0.09,0.2,'#20262c',2.6,Y+0.1,1.45);const tp=cyl(q,0.16,0.16,0.14,'#2b62c9',3.2,Y+0.07,1.45);box(q,0.03,0.04,0.2,'#e9edf0',3.2,Y+0.16,1.45);
+  // jalur arus utama dan umpan balik
+  const P=(x,z,y)=>V3(x,Y+(y||0.12),z);
+  O.main=[[P(-4.35,0.4,0.55),P(-3.75,0,0.25),P(-3.05,0.15,0.75)],[P(-2.6,0,0.2),P(-2.0,0,0.35)],[P(-1.5,0,0.2),P(-1.05,0.45,0.2)],[P(-0.6,0.2,0.2),P(0.0,-0.3,0.3)],[P(0.5,0,0.2),P(1.15,0,0.95)],[P(1.7,0,0.2),P(2.2,-0.3,0.3)],[P(2.6,0,0.2),P(2.95,0.15,0.3),P(3.55,0.1,0.85)],[P(4.0,0,0.2),P(4.35,0.2,0.55)]];
+  O.paths=[];let prev=null;O.main.forEach((seg,i)=>{const pts=(prev?[prev]:[]).concat(seg);const cu=new THREE.CatmullRomCurve3(pts);O.paths.push(prep([{pts:cu.getSpacedPoints(Math.max(8,pts.length*8))}])[0]);prev=seg[seg.length-1];});
+  const fb=new THREE.CatmullRomCurve3([P(3.55,0.6,0.3),P(3.2,1.45,0.2),P(2.6,1.45,0.2),P(1.15,1.45,0.25),P(0.05,0.7,0.2)]);O.pFb=prep([{pts:fb.getSpacedPoints(50)}]);
+  tube(g,fb.getSpacedPoints(30).map(v=>V3(v.x,Y+0.06,v.z)),0.025,'#c8a24a',{metalness:.8});
+  // sorotan tahap
+  O.hl=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial({color:0xffc21a,transparent:true,opacity:.14,depthWrite:false}));g.add(O.hl);
+  O.hlE=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0xffb000}));g.add(O.hlE);
+  O.hlBox=[[-3.75,1.5,2.3],[-2.0,1.0,1.3],[-1.05,1.0,1.3],[0.05,1.0,2.1],[1.15,1.0,1.4],[2.2,0.95,1.3],[3.55,1.6,2.2],[2.2,2.7,0.8]].map(([x,w,d],i)=>({x,w,d,z:i===7?1.45:i===3?0.0:0}));
+  // pembanding trafo
+  const big=new THREE.Group();big.position.set(-2.6,0,-3.6);g.add(big);box(big,1.9,1.5,1.3,'#7d858d',0,0.75,0,{metalness:.6});box(big,0.9,1.0,1.45,'#c8793e',0,0.75,0,{metalness:.8});
+  const bl2=label(big,'Trafo 50 Hz (120 W) ± 2 kg',2.8,0,0.02,1.15,'#ffffff','rgba(20,32,43,.85)',0.32);bl2.rotation.x=-Math.PI/2;
+  const sm=new THREE.Group();sm.position.set(0.6,0,-3.6);g.add(sm);box(sm,0.6,0.45,0.5,'#e8c33a',0,0.25,0);box(sm,0.7,0.12,0.4,'#2a2f35',0,0.52,0);box(sm,0.7,0.12,0.4,'#2a2f35',0,0.06,0);
+  const sl=label(sm,'Trafo ferit 65 kHz (120 W) ± 60 g',3.2,0,0.02,0.6,'#ffffff','rgba(20,32,43,.85)',0.32);sl.rotation.x=-Math.PI/2;
+  shadowAll(g);
+}
+/* ---------- adegan 3: panel ---------- */
+function buildPasang(){
+  const g=T.G.pasang,O=T.O.pas={wires:{}};
+  box(g,9,6.4,0.15,'#e2e5e8',0,3.4,-1.4);[[4.6],[2.1]].forEach(([y])=>box(g,8.4,0.3,0.2,'#cfd3d8',0,y,-1.25,{metalness:.8}));
+  // duct
+  box(g,8.4,0.5,0.55,'#9aa1a8',0,3.35,-1.0);box(g,0.5,4.6,0.55,'#9aa1a8',-4.1,3.2,-1.0);box(g,8.4,0.5,0.55,'#9aa1a8',0,0.9,-1.0);
+  // MCB 2P
+  const mcb=new THREE.Group();mcb.position.set(-3.1,4.6,-0.95);g.add(mcb);box(mcb,0.9,1.4,1.0,'#f2f2f0',0,0,0);box(mcb,0.5,0.25,0.12,'#2a2f35',0,0.05,0.55);O.mcbLev=box(mcb,0.4,0.18,0.25,'#1f9a4b',0,-0.05,0.68);label(mcb,'MCB 2P 6 A',0.85,0,-0.45,0.51,'#14202b',null,0.22);
+  [-0.22,0.22].forEach(x=>{box(mcb,0.18,0.08,0.05,'#cfd3d8',x,0.6,0.51,{metalness:.9});box(mcb,0.18,0.08,0.05,'#cfd3d8',x,-0.6,0.51,{metalness:.9});});O.mcb=mcb;
+  // PSU
+  O.R=makePSU(g,0.42,T.taps);O.R.g.position.set(-1.3,4.6,-0.75);O.R.g.visible=false;O.ghost=box(g,0.76,1.56,0.88,'#ffd21a',-1.3,4.6,-0.75,{transparent:true,opacity:.3,depthWrite:false});O.ghost.userData.tap='mount';T.taps.push(O.ghost);O.anim=1;
+  // terminal blok TB-1512
+  O.tb={};const tbn=['L+','L+','L+','M','M','M','PE'];tbn.forEach((n,i)=>{const x=0.6+i*0.4;const c=n==='PE'?'#2e9b3e':n==='M'?'#dbe6f3':'#2b62c9';const tbm=box(g,0.36,1.0,0.8,c,x,4.6,-0.95);tbm.userData.tb=n;T.taps.push(tbm);box(g,0.36,0.08,0.82,'#e8b23a',x,4.6,-0.95);
+    [0.3,-0.3].forEach(dy=>{const s=cyl(g,0.08,0.08,0.05,'#cfd3d8',x,4.6+dy,-0.53,{metalness:.9});s.rotation.x=Math.PI/2;});label(g,n,0.36,x,5.25,-0.6,'#14202b',null,0.22);(O.tb[n]=O.tb[n]||[]).push(V3(x,4.6+0.3,-0.5),V3(x,4.6-0.3,-0.5));});
+  // rel arde
+  box(g,1.6,0.15,0.2,'#c8793e',-3.0,0.35,-1.2,{metalness:.8});label(g,'REL ARDE',1.0,-3.0,0.55,-1.08,'#14202b',null,0.22);
+  // beban: PLC, relay, sensor
+  const plc=new THREE.Group();plc.position.set(1.4,2.1,-0.95);g.add(plc);box(plc,2.2,1.4,0.9,'#e8eaec',0,0,0);box(plc,2.0,0.3,0.05,'#2b62c9',0,0.45,0.46);label(plc,'PLC 24 VDC',1.2,-0.3,0.45,0.49,'#ffffff',null,0.22);
+  O.plcLed=new THREE.Mesh(new THREE.SphereGeometry(0.06,10,8),ledMat(0x3cff6e));O.plcLed.position.set(0.7,0.0,0.47);plc.add(O.plcLed);label(plc,'RUN',0.4,0.7,-0.18,0.47,'#14202b',null,0.16);
+  const rl=new THREE.Group();rl.position.set(-1.6,2.1,-0.95);g.add(rl);box(rl,0.7,1.1,0.8,'#e8eaec',0,0,0);box(rl,0.55,0.75,0.5,'#cfe6f2',0,0.1,0.4,{transparent:true,opacity:.7});O.rlLed=new THREE.Mesh(new THREE.SphereGeometry(0.05,10,8),ledMat(0xff3b2f));O.rlLed.position.set(0.2,-0.4,0.42);rl.add(O.rlLed);label(rl,'RELAY',0.6,0,-0.43,0.41,'#14202b',null,0.16);
+  const se=new THREE.Group();se.position.set(3.9,0.6,0.6);g.add(se);const sb=cyl(se,0.13,0.13,0.7,'#c9a64a',0,0.35,0,{metalness:.8});box(se,0.6,0.08,0.6,'#5d646c',0,0.04,0);O.seLed=new THREE.Mesh(new THREE.SphereGeometry(0.05,10,8),ledMat(0xffa21a));O.seLed.position.set(0,0.72,0.1);se.add(O.seLed);
+  // multimeter
+  const mm=new THREE.Group();mm.position.set(-3.4,0.06,1.5);mm.rotation.x=-1.25;g.add(mm);box(mm,1.1,1.8,0.3,'#e3b21c',0,0.9,0);box(mm,0.95,1.65,0.32,'#2a2f35',0,0.9,0);
+  O.lcd=textPlane(0.8,0.38,(c,w,h)=>{c.fillStyle='#c8d6c0';c.fillRect(0,0,w,h);c.fillStyle='#1d2a1b';c.font=`700 ${h*.6}px "IBM Plex Mono",monospace`;c.textAlign='right';c.textBaseline='middle';c.fillText(O.lcdTxt||'– – – –',w*.94,h*.55);});O.lcd.position.set(0,1.4,0.17);mm.add(O.lcd);
+  const dial=cyl(mm,0.28,0.28,0.06,'#20262c',0,0.75,0.17);dial.rotation.x=Math.PI/2;O.dialPtr=box(mm,0.05,0.24,0.03,'#e9edf0',0,0.85,0.21);O.mm=mm;
+  O.probes=new THREE.Group();g.add(O.probes);
+  // kabel masuk dari bawah (sumber)
+  tube(g,[[-4.1,-0.1,-0.7],[-4.1,1.2,-0.75],[-4.1,3.2,-0.75],[-3.6,5.6,-0.6],[-3.32,5.25,-0.45]],0.07,'#20262c');
+  O.pPLN=prep([{pts:new THREE.CatmullRomCurve3([V3(-4.1,-0.1,-0.7),V3(-4.1,3.2,-0.75),V3(-3.6,5.6,-0.6),V3(-3.32,5.25,-0.45)]).getSpacedPoints(50)}]);
+  shadowAll(g);
+}
+function addWire(id){
+  const O=T.O.pas,R=O.R;if(O.wires[id])return;T.scene.updateMatrixWorld(true);const g=new THREE.Group();T.G.pasang.add(g);
+  const mk=(pts,c,txt,tagAt)=>{const t=tube(g,pts,0.035,c);fitEnd(g,t.cu,false,0.8);fitEnd(g,t.cu,true,0.8);if(txt){const lb=label(g,txt,0.5,0,0,0,'#14202b','#ffffff',0.2);lb.position.copy(tagAt);lb.position.z+=0.05;}return t;};
+  const up=v=>v.clone().add(V3(0,0,0.18));
+  if(id==='pe'){const a=R.tp('⏚');O.wires.pe=mk([V3(-2.4,0.42,-1.05),V3(-2.0,0.9,-0.75),V3(-1.6,3.4,-0.75),a.clone().add(V3(0,-0.4,0.2)),up(a)],'PE','PE',a.clone().add(V3(0.0,-0.55,0.25)));}
+  if(id==='l'){const a=R.tp('L');O.wires.l=mk([V3(-3.32,3.95,-0.4),V3(-3.3,3.45,-0.75),V3(-2.0,3.45,-0.7),a.clone().add(V3(0,-0.5,0.25)),up(a)],'#e8c21a','L1',a.clone().add(V3(-0.2,-0.6,0.28)));}
+  if(id==='n'){const a=R.tp('N');O.wires.n=mk([V3(-2.88,3.95,-0.4),V3(-2.9,3.4,-0.75),V3(-1.8,3.4,-0.7),a.clone().add(V3(0,-0.5,0.25)),up(a)],'#e8c21a','N',a.clone().add(V3(0.1,-0.65,0.28)));}
+  if(id==='vp'){const a=R.tp('+V');const b=O.tb['L+'][0];O.wires.vp=mk([up(a),a.clone().add(V3(0,0.5,0.25)),V3(-0.6,5.55,-0.5),b.clone().add(V3(0,0.45,0.2)),up(b)],'#1f4fa8','L+',b.clone().add(V3(0,0.75,0.25)));
+    // distribusi ke PLC, relay, sensor
+    const d1=mk([up(O.tb['L+'][1]),O.tb['L+'][1].clone().add(V3(0,-0.4,0.2)),V3(0.8,3.35,-0.45),V3(1.0,2.85,-0.45)],'#1f4fa8');const d2=mk([up(O.tb['L+'][3]),V3(1.4,3.2,-0.45),V3(-1.0,3.1,-0.45),V3(-1.6,2.7,-0.5)],'#1f4fa8');
+    const d3=mk([up(O.tb['L+'][5]),V3(1.6,3.2,-0.45),V3(3.7,2.0,-0.3),V3(3.9,1.2,0.6),V3(3.9,0.95,0.6)],'#8a4b22');O.dist=[d1,d2,d3];}
+  if(id==='vn'){const a=R.tp('−V');const b=O.tb['M'][0];O.wires.vn=mk([up(a),a.clone().add(V3(0,0.65,0.3)),V3(0.0,5.7,-0.45),b.clone().add(V3(0,0.45,0.2)),up(b)],'#1f4fa8','M',b.clone().add(V3(0,0.75,0.25)));
+    mk([up(O.tb['M'][1]),V3(2.0,3.25,-0.4),V3(1.8,2.85,-0.45)],'#1f4fa8');mk([up(O.tb['M'][3]),V3(1.9,3.15,-0.4),V3(-1.2,3.05,-0.4),V3(-1.45,2.7,-0.5)],'#1f4fa8');mk([up(O.tb['M'][5]),V3(2.1,3.1,-0.4),V3(3.8,1.9,-0.25),V3(4.0,1.0,0.65)],'#2b62c9');}
+  O.wires[id]=g;shadowAll(g);
+}
+function setProbes(a,b){const O=T.O.pas;O.probes.children.slice().forEach(m=>{O.probes.remove(m);m.geometry.dispose();});if(!a)return;T.scene.updateMatrixWorld(true);
+  const base=O.mm.localToWorld(V3(0,0.3,0.2));[[a,'#d0302a',-0.2],[b,'#20262c',0.2]].forEach(([p,c,dx])=>{const s=base.clone().add(V3(dx,0,0));tube(O.probes,[s,s.clone().add(V3(0,0.6,0.6)),p.clone().add(V3(0,-0.3,0.9)),p.clone().add(V3(0,0,0.35))],0.025,c);const tip=cyl(O.probes,0.04,0.015,0.35,c,p.x,p.y,p.z+0.2);tip.rotation.x=Math.PI/2;});}
+
+function showScene(){
+  if(!T) return; if(typeof PAN!=='undefined'&&PAN.v)PAN.v.set(0,0,0);
+  const key={luar:'luar',kerja:'kerja',pasang:'pasang',ganggu:'pasang'}[S.tab]||'luar';
+  Object.entries(T.G).forEach(([k,g])=>g.visible=k===key);T.cur=key;
+  if(key==='luar'){T.cam.t=V3(0.5,2.4,0);T.cam.pitch=0.12;T.cam.yaw=0.38;T.half=[3.6,2.6];}
+  else if(key==='kerja'){T.cam.t=V3(0,0.6,-0.6);T.cam.pitch=0.75;T.cam.yaw=0.05;T.half=[5.4,3.6];}
+  else {const sid=S.tab==='pasang'?(STEPS[S.pasang.step]||{}).id:null;if(sid==='mount'){T.cam.t=V3(-1.0,4.4,0);T.cam.pitch=0.12;T.cam.yaw=0.12;T.half=[3.2,2.0];}else if(['pe','l','n','vp','vn'].includes(sid)){T.cam.t=V3(-0.3,4.3,0);T.cam.pitch=0.1;T.cam.yaw=0.1;T.half=[2.7,1.8];}else{T.cam.t=V3(0,3.0,0);T.cam.pitch=0.14;T.cam.yaw=0.15;T.half=[4.9,3.5];}}
+  if(S.tab==='ganggu'){ggApply();}else if(key==='pasang'){pasApply();}
+  setPins();
+}
+function setPins(){
+  T.scene.updateMatrixWorld(true);
+  const L=$('#labels');L.innerHTML='';T.pins=[];
+  const add=(html,p,cls)=>{const el=document.createElement('div');el.className='lbl'+(cls?' '+cls:'');el.innerHTML=html;L.appendChild(el);T.pins.push({el,p});};
+  if(T.cur==='luar'){const R=T.O.luar.R,sel=S.luar.sel;const P=k=>{if(k==='VP')return R.tp('+V',0).add(V3(0.19,0.35,0));if(k==='VN')return R.tp('−V',0).add(V3(0.19,0.35,0));if(k==='L')return R.tp('L').add(V3(-0.2,-0.42,0));if(k==='N')return R.tp('N').add(V3(0,-0.85,0));if(k==='PE')return R.tp('⏚').add(V3(0.2,-0.42,0));if(k==='OK')return R.led.getWorldPosition(V3(0,0,0)).add(V3(-0.35,0.18,0));if(k==='ADJ')return R.adj.getWorldPosition(V3(0,0,0)).add(V3(0.35,0.18,0));if(k==='LBL')return R.g.localToWorld(V3(0,0.4,1.1));if(k==='VENT')return R.g.localToWorld(V3(0.86,1.2,0));if(k==='DIN')return R.g.localToWorld(V3(0,-1.6,-1.1));};
+    PARTK.forEach(k=>add(PART[k].nm.replace(' (dua terminal)',''),P(k),k===sel?'big':(PART[k].g==='in'?'pos':PART[k].g==='out'?'neg':'')));
+    add('Trafo 50 Hz (pembanding)',V3(2.9,1.6,0.6));}
+  else if(T.cur==='kerja'){const O=T.O.kerja;STG.forEach((s,i)=>{const b=O.hlBox[i];const on=i===S.kerja.st&&!S.kerja.all;add(on?`${i+1} · ${s.n}`:`${i+1}`,V3(b.x,i===7?0.9:2.05,b.z+(i===7?0:0)),i===S.kerja.st&&!S.kerja.all?'big':'');});}
+  else {const O=T.O.pas;if(S.tab==='pasang'&&!S.pasang.done.mount)add('👆 Ketuk: pasang PSU di sini',V3(-1.3,5.55,-0.5),'big');if(S.tab!=='pasang'||S.pasang.done.mount)add('Power supply',V3(-1.3,5.65,-0.5));add('MCB',V3(-3.1,5.5,-0.6));add('Terminal blok TB-1512',V3(1.8,5.55,-0.6));add('PLC',V3(1.4,2.95,-0.5));add('Relay',V3(-1.6,2.85,-0.5));add('Sensor',V3(3.9,1.55,0.6));add('Multimeter',O.mm.localToWorld(V3(0,1.9,0.2)));}
+}
+function bind(){
+  const cv=T.canvas,pts=new Map();let pinch=null,start=null,moved=false;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===1){start={x:e.clientX,y:e.clientY};moved=false;}if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:T.cam.zoom};moved=true;}});
+  cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const pr=pts.get(e.pointerId),cu={x:e.clientX,y:e.clientY};pts.set(e.pointerId,cu);
+    if(pts.size===1&&!PAN.drag){T.cam.yaw=Math.max(-1.4,Math.min(1.4,T.cam.yaw-(cu.x-pr.x)*0.006));T.cam.pitch=Math.max(0.02,Math.min(1.45,T.cam.pitch+(cu.y-pr.y)*0.005));if(Math.hypot(cu.x-start.x,cu.y-start.y)>6)moved=true;}
+    else if(pts.size===2&&pinch){const [a,b]=[...pts.values()];T.cam.zoom=Math.min(1.8,Math.max(0.3,pinch.z*pinch.d/Math.hypot(a.x-b.x,a.y-b.y)));}});
+  const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+  const up=e=>{if(pts.size===1&&!moved&&!PAN.did&&e.type==='pointerup'){const r=cv.getBoundingClientRect();ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,T.camera);
+      const vis=T.taps.filter(t=>{let o=t;while(o){if(!o.visible)return false;o=o.parent;}return true;});
+      const h=ray.intersectObjects(vis,false)[0];if(h){const u=h.object.userData;if(u.part&&S.tab==='luar'){selPart(u.part);}else if(S.tab==='pasang'){const key=u.tap==='mount'?'mount':u.tb?'TB:'+u.tb:u.part||null;if(key)pasTap(key);}}}
+    pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{e.preventDefault();T.cam.zoom=Math.min(1.8,Math.max(0.3,T.cam.zoom*Math.exp(e.deltaY*0.0012)));},{passive:false});
+  $('#bReset').addEventListener('click',()=>{if(PAN.v)PAN.v.set(0,0,0);if(PAN.v)PAN.v.set(0,0,0);T.cam.zoom=1;showScene();});
+}
+function resize(){if(!T)return;const w=T.viewer.clientWidth,h=T.viewer.clientHeight;T.renderer.setSize(w,h,false);T.camera.aspect=w/h;T.camera.updateProjectionMatrix();}
+const mtx=new THREE.Matrix4(),tmp=V3(0,0,0);
+function flow(paths,dt,speed,k){paths.forEach(p=>{p.u=((p.u+dt*speed/Math.max(0.5,p.len)*1.6)%1+1)%1;for(let j=0;j<p.n&&k.v<700;j++){const u=((p.u+j/p.n)%1)*p.len;let s2=1;while(s2<p.cum.length-1&&p.cum[s2]<u)s2++;const fr=(u-p.cum[s2-1])/Math.max(1e-6,p.cum[s2]-p.cum[s2-1]);tmp.copy(p.pts[s2-1]).lerp(p.pts[s2],Math.min(1,fr));mtx.makeTranslation(tmp.x,tmp.y,tmp.z);T.dots.setMatrixAt(k.v++,mtx);}});}
+
+/* ---------- penerapan keadaan panel ---------- */
+const TAPKEY={mount:'mount',pe:'PE',l:'L',n:'N',vp:'TB:L+',vn:'TB:M'};
+const TAPHINT={mount:'Ketuk <b>kotak kuning berkedip</b> di rel DIN (sebelah kanan MCB) untuk memasang PSU.',pe:'Ketuk terminal yang tepat di <b>bagian bawah PSU</b>.',l:'Ketuk terminal yang tepat di <b>bagian bawah PSU</b>.',n:'Ketuk terminal yang tepat di <b>bagian bawah PSU</b>.',vp:'Ketuk <b>terminal blok</b> yang tepat di kanan PSU.',vn:'Ketuk <b>terminal blok</b> yang tepat di kanan PSU.'};
+function stepOk(){const P=S.pasang,cur=STEPS[P.step];P.done[cur.id]=true;P.pick=null;P.step++;if(cur.id==='ukur'){P.meter=nf(P.adj,1);}
+  if(T){if(cur.id==='mount'){const O=T.O.pas;O.anim=0;O.R.g.visible=true;O.ghost.visible=false;}showScene();if(cur.id==='cek')toast('ok','MCB dinaikkan','<br>LED DC OK menyala, PLC RUN.');}render();}
+function pasTap(key){const P=S.pasang,cur=STEPS[P.step];if(!cur)return;const want=TAPKEY[cur.id];
+  if(!want){toast('warn','Langkah ini dijawab di panel','<br>Pilih jawabannya di bawah model 3D.');return;}
+  if(key===want){stepOk();return;}
+  P.pick=-1;toast('bad','Bukan di situ','<br>'+TAPHINT[cur.id].replace(/<[^>]+>/g,''));render();}
+function pasApply(){const O=T.O.pas,P=S.pasang;O.R.g.visible=!!P.done.mount;O.ghost.visible=!P.done.mount;if(P.done.mount&&O.anim>=1){O.R.g.position.set(-1.3,4.6,-0.75);O.R.g.rotation.x=0;}['pe','l','n','vp','vn'].forEach(id=>{if(P.done[id])addWire(id);if(O.wires[id])O.wires[id].visible=!!P.done[id];});
+  if(S.tab==='pasang'){if(P.done.ukur){setProbes(O.R.tp('+V',1),O.R.tp('−V',1));}else setProbes(null);O.lcdTxt=P.meter||'– – – –';redraw(O.lcd);}}
+function ggApply(){const O=T.O.pas;O.R.g.visible=true;O.ghost.visible=false;['pe','l','n','vp','vn'].forEach(id=>{addWire(id);O.wires[id].visible=true;});
+  const c=CASES[S.gg.i];if(!c){setProbes(null);O.lcdTxt='– – – –';redraw(O.lcd);return;}
+  const R=O.R;let a,b,txt;
+  if(c.id==='a'||c.id==='b'){a=O.mcb.localToWorld(V3(0.22,-0.6,0.55));b=O.mcb.localToWorld(V3(-0.22,-0.6,0.55));txt=c.r.in.replace(' AC','');}
+  else if(c.id==='d'){a=V3(3.95,0.95,0.75);b=V3(3.85,0.95,0.75);txt='0.00';}
+  else if(c.id==='e'){a=V3(-1.75,2.4,-0.5);b=V3(-1.45,2.4,-0.5);txt='20.6';}
+  else {a=R.tp('+V',1);b=R.tp('−V',1);txt=c.id==='c'?'--.-':'24.0';}
+  setProbes(a,b);O.lcdTxt=txt;redraw(O.lcd);}
+
+let last=performance.now(),uiT=0;
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000);last=t;
+  const c=T.cam,tt=Math.tan(THREE.MathUtils.degToRad(T.camera.fov/2)),a=T.camera.aspect,half=T.half;
+  const gd=Math.max(half[0]/(tt*a),half[1]/tt)*c.zoom;c.d+=(gd-c.d)*(1-Math.exp(-dt*5));
+  const tg=PAN.v?c.t.clone().add(PAN.v):c.t; T.camera.position.set(tg.x+c.d*Math.cos(c.pitch)*Math.sin(c.yaw),tg.y+c.d*Math.sin(c.pitch),tg.z+c.d*Math.cos(c.pitch)*Math.cos(c.yaw));T.camera.lookAt(tg);
+  const k={v:0};
+  if(T.cur==='luar'){const R=T.O.luar.R;setLed(R,'on',t);Object.values(R.term).flat().forEach(s=>{const sel=S.luar.sel;const on=(sel==='VP'&&s.userData.part==='VP')||(sel==='VN'&&s.userData.part==='VN')||s.userData.part===sel;s.material.emissiveIntensity=on?0.8+0.4*Math.sin(t/160):0;});
+    R.adj.material.emissiveIntensity=S.luar.sel==='ADJ'?0.6+0.3*Math.sin(t/160):0;}
+  else if(T.cur==='kerja'){const O=T.O.kerja,K=S.kerja,ks=kerjaState();
+    const st=K.all?-1:K.st;
+    if(st>=0){const b=O.hlBox[st];O.hl.visible=O.hlE.visible=true;O.hl.position.set(b.x,1.0,b.z);O.hl.scale.set(b.w,1.4,b.d);O.hlE.position.copy(O.hl.position);O.hlE.scale.copy(O.hl.scale);}else{O.hl.visible=O.hlE.visible=false;}
+    O.case.visible=!K.cut;
+    if(!ks.over||Math.floor(t/400)%3===0){const upto=K.all||st===7?O.paths.length:Math.min(O.paths.length,st+1);flow(O.paths.slice(0,upto),dt,1.2,k);if(K.all||st===7)flow([O.pFb],dt,0.8,k);}}
+  else {const O=T.O.pas,P=S.pasang;let st='off';
+    if(O.ghost.visible)O.ghost.material.opacity=0.22+0.18*Math.sin(t/220);
+    if(O.anim<1){O.anim=Math.min(1,O.anim+dt/1.3);const a=O.anim,ez=x=>x*x*(3-2*x),L=(p,q,u)=>p+(q-p)*u;let y,z,r;
+      if(a<0.55){const u=ez(a/0.55);y=L(5.3,4.72,u);z=L(0.3,-0.75,u);r=L(-0.8,-0.32,u);}else{const u=ez((a-0.55)/0.45);y=L(4.72,4.6,u);z=-0.75;r=L(-0.32,0,u);}
+      O.R.g.position.set(-1.3,y,z);O.R.g.rotation.x=r;if(a>=1)toast('ok','Klik! PSU terkunci di rel DIN','<br>Kait bagian atas ke rel dulu, lalu tekan bagian bawah sampai berbunyi klik.');}
+    if(S.tab==='ganggu'){const cc=CASES[S.gg.i];st=cc?cc.led:'on';}else st=P.done.cek?'on':'off';
+    setLed(O.R,st,t);const pw=st==='on'||(st==='blink'&&Math.floor(t/350)%2===0);const loadOn=S.tab==='ganggu'?(pw&&CASES[S.gg.i]?.id!=='d'):pw;
+    O.plcLed.material.emissiveIntensity=loadOn?2:0;O.rlLed.material.emissiveIntensity=loadOn&&!(S.tab==='ganggu'&&CASES[S.gg.i]?.id==='e'&&Math.floor(t/900)%2)?2:0;O.seLed.material.emissiveIntensity=(loadOn&&!(S.tab==='ganggu'&&CASES[S.gg.i]?.id==='d'))?2:0;
+    O.mcbLev.position.y=(S.tab==='ganggu'&&CASES[S.gg.i]?.id==='a')?-0.12:(st!=='off'||S.tab==='ganggu')?0.08:-0.12;
+    if(st!=='off'||S.tab==='ganggu'&&CASES[S.gg.i]?.id!=='a')flow(O.pPLN,dt,1.0,k);}
+  T.dots.count=k.v;T.dots.instanceMatrix.needsUpdate=true;
+  T.renderer.render(T.scene,T.camera);
+  const W=T.viewer.clientWidth,Hh=T.viewer.clientHeight,v=V3(0,0,0);
+  T.pins.forEach(p=>{v.copy(p.p).project(T.camera);if(v.z>1){p.el.style.opacity=0;return;}p.el.style.opacity=1;p.el.style.transform=`translate(${(v.x+1)/2*W}px,${(1-v.y)/2*Hh}px) translate(-50%,-100%)`;});
+  uiT-=dt;if(uiT<=0){uiT=0.1;if(S.tab==='kerja')drawWave(t);}
+  requestAnimationFrame(loop);
+}
+
+/* ================= UI ================= */
+const TABS=[['pre','Tes Awal'],['luar','Kenali'],['kerja','Cara Kerja'],['pasang','Pasang & Pakai'],['ganggu','Cari Gangguan'],['post','Tes Akhir']];
+function toast(sev,t,m){const box=$('#toast');const d=document.createElement('div');d.className='tst '+(sev||'');d.innerHTML=`<b>${t}</b>${m||''}`;box.appendChild(d);while(box.children.length>2)box.removeChild(box.firstChild);setTimeout(()=>d.remove(),5200);}
+function renderTabs(){const done={pre:S.test.pre.done,luar:S.visited.luar,kerja:S.visited.kerja,pasang:S.visited.pasang,ganggu:S.visited.ganggu,post:S.test.post.done};
+  $('#tabs').innerHTML=TABS.map(([k,t],i)=>`<button data-t="${k}" class="${S.tab===k?'active':''} ${done[k]?'done':''}"><span class="n">${i+1}</span>${t}</button>`).join('');}
+function setTab(t){S.tab=t;if(['luar','kerja','pasang','ganggu'].includes(t)){S.visited[t]=true;save();}if(T)showScene();renderTabs();render();window.scrollTo({top:0,behavior:'smooth'});}
+function selPart(k){S.luar.sel=k;S.luar.seen[k]=true;render();if(T)setPins();}
+/* ---- tes ---- */
+function grade(kind){const st=S.test[kind];return QUEST.map((q,i)=>{const a=st.ans[i];if(a==null)return {right:false,sure:false,cat:'bt',misc:null};const opt=q.o[a];const right=opt[1]===1;const sure=st.conf[i]==='y';return {right,sure,cat:right?(sure?'ok':'rg'):(sure?'sp':'bt'),misc:right?null:opt[1]};});}
+function miscSummary(kind){const m={};grade(kind).forEach(x=>{if(x.misc){m[x.misc]=m[x.misc]||{n:0,sure:0};m[x.misc].n++;if(x.sure)m[x.misc].sure++;}});return m;}
+function testHTML(kind){
+  const st=S.test[kind],isPost=kind==='post';
+  if(!isPost&&!S.started&&!st.done&&st.ans.length===0)
+    return `<div class="card"><h2>Tes awal: power supply</h2><div class="goal">10 soal singkat tentang power supply 24 VDC di panel. Tidak dinilai untuk rapor — hasilnya menunjukkan bagian yang perlu dipelajari.</div>
+      <p class="muted">Setiap soal: pilih jawaban, lalu pilih <b>Yakin</b> atau <b>Menebak</b>. Jawab jujur.</p>
+      <div class="field"><label class="lbl2" for="fNama" style="margin:6px 0 0">Nama murid</label><input id="fNama" value="${esc(S.name)}" placeholder="Nama lengkap"></div>
+      <div class="field"><label class="lbl2" for="fKelas" style="margin:6px 0 0">Kelas</label><input id="fKelas" value="${esc(S.kelas)}" placeholder="mis. XI TOI 1"></div>
+      <div class="row"><button class="btn primary" id="bStart">Mulai tes</button></div></div>`;
+  if(st.done) return resultHTML(kind);
+  const order=isPost?(st.order||(st.order=shuffle([...Array(QUEST.length).keys()]))):[...Array(QUEST.length).keys()];
+  const qi=order[st.i],q=QUEST[qi];if(!st.optOrder)st.optOrder={};
+  const oo=isPost?(st.optOrder[qi]||(st.optOrder[qi]=shuffle([0,1,2,3]))):[0,1,2,3];const a=st.ans[qi],cf=st.conf[qi];
+  return `<div class="card"><h2>${isPost?'Tes akhir':'Tes awal'} · soal ${st.i+1} dari ${QUEST.length}</h2>
+    <div class="qnav">${order.map((x,k)=>`<span class="${k===st.i?'cur':(st.ans[x]!=null?'ans':'')}">${k+1}</span>`).join('')}</div>
+    <div class="qtext">${q.q}</div>
+    <div class="opts" id="qOpts">${oo.map((oi,k)=>`<button class="opt ${a===oi?'on':''}" data-o="${oi}"><span class="k">${'ABCD'[k]}</span><span>${q.o[oi][0]}</span></button>`).join('')}</div>
+    <span class="lbl2">Seberapa yakin kamu?</span>
+    <div class="conf" id="qConf"><button data-c="y" class="${cf==='y'?'on':''}">Yakin</button><button data-c="n" class="${cf==='n'?'on':''}">Menebak / ragu</button></div>
+    <div class="row"><button class="btn" id="bPrev" ${st.i===0?'disabled':''}>← Sebelumnya</button><button class="btn primary" id="bNextQ" ${a==null||!cf?'disabled':''}>${st.i===QUEST.length-1?'Selesai':'Berikutnya →'}</button></div></div>`;
+}
+function resultHTML(kind){
+  const g=grade(kind),score=g.filter(x=>x.right).length,cats={ok:0,rg:0,bt:0,sp:0};g.forEach(x=>cats[x.cat]++);
+  const ms=miscSummary(kind),isPost=kind==='post',keys=Object.keys(ms);
+  let h=`<div class="card"><h2>Hasil ${isPost?'tes akhir':'tes awal'}${S.name?' · '+esc(S.name):''}</h2>
+    <div class="kv"><div><dt>Skor</dt><dd>${score} / ${QUEST.length}</dd></div><div><dt>Paham</dt><dd>${cats.ok}</dd></div><div><dt>Benar tapi ragu</dt><dd>${cats.rg}</dd></div><div><dt>Belum tahu</dt><dd>${cats.bt}</dd></div><div><dt>Salah paham</dt><dd class="${cats.sp?'bad':''}">${cats.sp}</dd></div></div>
+    <p class="muted"><b>Salah paham</b> = salah tapi yakin — paling perlu diluruskan. <b>Belum tahu</b> = salah sambil menebak.</p>`;
+  if(keys.length) h+=`<h3>Yang perlu diluruskan</h3><ul class="prof">${keys.map(k=>`<li><span>${MISC[k].t}<br><button class="go" data-go="${MISC[k].go}">Pelajari di tab ${TABS.find(x=>x[0]===MISC[k].go)[1]} →</button></span><span class="tag ${ms[k].sure?'sp':'bt'}">${ms[k].sure?'salah paham':'belum tahu'}</span></li>`).join('')}</ul>`;
+  else h+=`<div class="fb ok">Tidak ditemukan salah paham. Mantap!</div>`;
+  h+=`<h3>Rincian per soal</h3><ul class="prof">${QUEST.map((q,i)=>{const x=g[i];return `<li><span style="font-size:13px">${i+1}. ${q.q}${!x.right?`<br><span style="color:var(--ok);font-size:12.5px">Jawaban benar: ${q.o.find(o=>o[1]===1)[0]}</span>`:''}</span><span class="tag ${x.cat}">${PROFILE[x.cat]}</span></li>`;}).join('')}</ul>`;
+  if(!isPost) h+=`<div class="row"><button class="btn primary" data-go="${keys.length?MISC[keys[0]].go:'luar'}">Mulai belajar →</button><button class="btn" id="bRedo">Ulangi tes awal</button></div>`;
+  h+='</div>';
+  if(isPost&&S.test.pre.done) h+=compareHTML();
+  if(isPost) h+=`<div class="row" style="margin:-4px 0 12px"><button class="btn" id="bRedoPost">Ulangi tes akhir</button></div>`;
+  return h;
+}
+function compareHTML(){
+  const gp=grade('pre'),gq=grade('post'),sp=gp.filter(x=>x.right).length,sq=gq.filter(x=>x.right).length;
+  const mp=miscSummary('pre'),mq=miscSummary('post'),fixed=Object.keys(mp).filter(k=>!mq[k]),still=Object.keys(mq);
+  const cp=c=>gp.filter(x=>x.cat===c).length,cq=c=>gq.filter(x=>x.cat===c).length,sc=S.gg.score,nd=Object.keys(S.pasang.done).length;
+  const txt=`REKAP POWER SUPPLY INDUSTRI (SMPS) 24 VDC\nNama  : ${S.name||'-'}\nKelas : ${S.kelas||'-'}\nTes awal : ${sp}/10 (paham ${cp('ok')}, ragu ${cp('rg')}, belum tahu ${cp('bt')}, salah paham ${cp('sp')})\nTes akhir: ${sq}/10 (paham ${cq('ok')}, ragu ${cq('rg')}, belum tahu ${cq('bt')}, salah paham ${cq('sp')})\nSalah paham yang sudah lurus: ${fixed.length?fixed.map(k=>MISC[k].t).join('; '):'-'}\nMasih perlu bimbingan: ${still.length?still.map(k=>MISC[k].t).join('; '):'-'}\nLangkah pemasangan selesai: ${nd}/8\nCari gangguan: ${sc.ok}/${sc.tot} benar`;
+  return `<div class="card"><h2>Perbandingan tes awal → tes akhir</h2>
+    <div class="bars"><span style="font-weight:600">Skor</span><i><b style="width:${sp*10}%"></b></i><span style="font-family:var(--f-mono)">${sp}</span><span></span><i><b class="post" style="width:${sq*10}%"></b></i><span style="font-family:var(--f-mono)">${sq}</span>
+    <span>Salah paham</span><i><b style="width:${cp('sp')*10}%"></b></i><span style="font-family:var(--f-mono)">${cp('sp')}</span><span></span><i><b class="post" style="width:${cq('sp')*10}%"></b></i><span style="font-family:var(--f-mono)">${cq('sp')}</span></div>
+    <p class="muted">Batang biru = tes awal, hijau = tes akhir.</p>
+    ${fixed.length?`<div class="fb ok"><b>Sudah diluruskan:</b><br>${fixed.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    ${still.length?`<div class="fb warn"><b>Masih perlu dibahas dengan guru:</b><br>${still.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    <h3>Rekap untuk guru</h3><p class="muted">Salin lalu kirim ke Google Classroom atau grup kelas.</p>
+    <textarea class="rekap" id="rekap" readonly>${esc(txt)}</textarea>
+    <div class="row"><button class="btn primary" id="bCopy">Salin rekap</button></div></div>`;
+}
+/* ---- tab Kenali ---- */
+function luarHTML(){const L=S.luar,p=PART[L.sel],n=Object.keys(L.seen).length;
+  return `<div class="card"><h2>Kenali power supply panel</h2><div class="goal">Power supply (PSU) mengubah listrik <b>220 VAC</b> dari PLN menjadi <b>24 VDC</b> yang stabil untuk PLC, sensor, relay, lampu pilot, dan solenoid valve.</div>
+    <p class="muted">Ketuk bagian di model 3D atau pilih di bawah. Sudah dikenali: <b>${n} / ${PARTK.length}</b>.</p>
+    <div class="parts" id="parts">${PARTK.map(k=>`<button data-p="${k}" class="${L.sel===k?'on':''} ${L.seen[k]?'seen':''}">${PART[k].nm.replace(' (dua terminal)','')}</button>`).join('')}</div>
+    <div class="fb" style="margin-top:10px"><b>${p.nm}</b><br>${p.t}</div>
+    <div class="zone"><span class="hv">Bawah: masukan AC — L, N, ⏚</span><span class="lv">Atas: keluaran DC — +V, −V</span></div></div>
+    <div class="card"><h2>Kenapa disebut SMPS?</h2><div class="map"><b>SMPS</b><span><b>Switch Mode Power Supply</b> — power supply yang bekerja dengan menyalakan dan mematikan transistor sangat cepat (puluhan kHz).</span>
+    <b>Dibanding adaptor trafo</b><span>lebih kecil, lebih ringan, efisiensi ± 88–92 % (adaptor trafo linear ± 50–60 %), dan menerima masukan 100–240 VAC.</span>
+    <b>Ukurannya</b><span>umum: 24 V 1,25 A · 2,5 A · 5 A · 10 A · 20 A. Daya = 24 V × arus (5 A → 120 W).</span></div>
+    <div class="row"><button class="btn primary" data-go="kerja">Lanjut: Cara Kerja →</button></div></div>`;}
+/* ---- tab Cara kerja ---- */
+function kerjaHTML(){const K=S.kerja,s=STG[K.st],ks=kerjaState();
+  return `<div class="card"><h2>Isi power supply (dibelah)</h2><div class="goal">Ikuti perjalanan listrik dari 220 VAC sampai 24 VDC. Pilih tahap untuk melihat bentuk gelombangnya.</div>
+    <div class="stg" id="stg">${STG.map((x,i)=>`<button data-s="${i}" class="${!K.all&&K.st===i?'on':''}"><b>${i+1}</b>${x.n}</button>`).join('')}</div>
+    <div class="row"><button class="btn ${K.all?'primary':''}" id="kAll">${K.all?'Menampilkan semua tahap':'Tampilkan semua tahap'}</button><button class="btn" id="kCut">${K.cut?'Tutup casing':'Buka casing'}</button></div>
+    <canvas id="wave" width="800" height="300"></canvas>
+    <div class="fb" style="margin-top:8px"><b>${K.st+1} · ${s.n} — ${s.nm}</b><br>${s.t}</div>
+    ${K.st===2?`<div class="fb bad"><b>⚠ Bahaya:</b> kapasitor ini bisa menyimpan ± 325 V selama beberapa menit setelah PSU dicabut. Karena itu PSU rusak <b>diganti</b>, bukan dibongkar di panel.</div>`:''}
+    ${K.st===4?`<div class="fb ok"><b>Kenapa trafonya kecil?</b> Ukuran inti trafo bergantung pada frekuensi. Di 50 Hz trafo 120 W beratnya ± 2 kg. Di 65 kHz cukup inti ferit ± 60 g. Lihat dua trafo di belakang PCB.</div>`:''}
+    <div class="zone"><span class="hv">Tahap 1–4: sisi tegangan tinggi (± 325 V)</span><span class="lv">Tahap 5–7: sisi aman 24 V</span></div></div>
+    <div class="card"><h2>Coba umpan baliknya</h2><div class="goal">Ubah beban dan V.ADJ. Perhatikan lebar pulsa (duty cycle) berubah, tetapi tegangan keluaran tetap.</div>
+    <span class="lbl2">Beban (persen dari 5 A)</span><div class="slider"><input type="range" id="sLoad" min="0" max="130" step="1" value="${K.load}"><output id="oLoad">${K.load} %</output></div>
+    <span class="lbl2">V.ADJ</span><div class="slider"><input type="range" id="sAdj" min="21.6" max="28.8" step="0.1" value="${K.adj}"><output id="oAdj">${nf(K.adj,1)} V</output></div>
+    <div class="kv"><div><dt>Arus beban</dt><dd id="kI">${nf(ks.iout,2)} A</dd></div><div><dt>Duty cycle</dt><dd id="kD">${ks.over?'proteksi':nf(ks.duty*100,0)+' %'}</dd></div><div><dt>Tegangan keluaran</dt><dd id="kV" class="${ks.over?'bad':''}">${ks.over?'0 ↔ 24 V':nf(ks.vout,2)+' V'}</dd></div></div>
+    <div class="fb ${ks.over?'bad':''}" id="kFb">${ks.over?'Beban melebihi ± 105 %: proteksi arus lebih bekerja. PSU memutus, mencoba lagi, memutus lagi — <b>mode hiccup</b>. LED DC OK berkedip. Turunkan beban, PSU normal kembali.':'Beban naik → tegangan sempat turun sedikit → TL431 dan optocoupler memberi tahu IC PWM → pulsa dilebarkan → tegangan kembali. Semua terjadi ribuan kali per detik.'}</div>
+    <div class="row"><button class="btn primary" data-go="pasang">Lanjut: Pasang & Pakai →</button></div></div>`;}
+function drawWave(t){
+  const cv=$('#wave');if(!cv)return;const c=cv.getContext('2d'),W=cv.width,H=cv.height,K=S.kerja,s=STG[K.st],ks=kerjaState();
+  c.fillStyle='#06110d';c.fillRect(0,0,W,H);c.strokeStyle='#183126';c.lineWidth=1;for(let i=1;i<10;i++){c.beginPath();c.moveTo(i*W/10,0);c.lineTo(i*W/10,H);c.stroke();}for(let j=1;j<6;j++){c.beginPath();c.moveTo(0,j*H/6);c.lineTo(W,j*H/6);c.stroke();}
+  const mid=H/2,amp=H*0.38,ph=t/1000;c.lineWidth=3;c.strokeStyle='#5dff8a';c.beginPath();
+  const pl=(fn)=>{for(let x=0;x<=W;x+=2){const y=fn(x/W);x?c.lineTo(x,y):c.moveTo(x,y);}};
+  const sq=(u,f,d)=>((u*f+ph*0.6)%1)<d;
+  let title='',sub='';
+  switch(s.w){
+    case 'ac':pl(u=>mid-amp*Math.sin(2*Math.PI*(u*2+ph*0.5)));title='220 VAC · 50 Hz';sub='puncak ± 311 V';break;
+    case 'fw':pl(u=>H*0.88-amp*1.9*Math.abs(Math.sin(2*Math.PI*(u*2+ph*0.5))));title='DC berdenyut';sub='setengah gelombang negatif dibalik';break;
+    case 'hvdc':pl(u=>H*0.2+12*(((u*4+ph)%1))+0);title='DC ± 310–325 V';sub='riak kecil (100 Hz)';break;
+    case 'sq':{const d=ks.duty||0.3;pl(u=>sq(u,8,d)?H*0.18:H*0.85);title='Pulsa ± 65 kHz';sub='duty cycle '+nf(d*100,0)+' %';break;}
+    case 'sec':{const d=ks.duty||0.3;pl(u=>sq(u,8,d)?H*0.3:H*0.7);title='Sekunder trafo';sub='tegangan turun & terisolasi';break;}
+    case 'rect':{const d=ks.duty||0.3;pl(u=>sq(u,8,d)?H*0.3:H*0.85);title='Pulsa searah';sub='setelah dioda Schottky';break;}
+    case 'dc':pl(u=>H*0.4+2*Math.sin(u*80+ph*20));title=nf(ks.over?0:ks.vout,1)+' VDC';sub='riak < 0,1 V';break;
+    case 'fb':{const d=ks.duty||0.3;c.strokeStyle='#ffd21a';pl(u=>sq(u,8,d)?H*0.14:H*0.44);c.stroke();c.beginPath();c.strokeStyle='#5dff8a';pl(u=>H*0.72);title='Atas: pulsa PWM · Bawah: keluaran';sub='duty '+nf(d*100,0)+' % → '+nf(ks.vout,1)+' V';break;}
+  }
+  if(ks.over&&['sq','sec','rect','dc','fb'].includes(s.w)&&Math.floor(t/400)%3!==0){c.fillStyle='rgba(6,17,13,.85)';c.fillRect(0,0,W,H);}
+  c.stroke();
+  c.fillStyle='#e8f2ec';c.font='700 22px "IBM Plex Mono",monospace';c.textAlign='left';c.fillText(title,14,30);c.fillStyle='#7fa392';c.font='600 16px "IBM Plex Mono",monospace';c.fillText(sub,14,54);
+  if(ks.over&&['sq','sec','rect','dc','fb'].includes(s.w)){c.fillStyle='#ff6b5b';c.textAlign='right';c.fillText('PROTEKSI (hiccup)',W-14,30);}
+}
+/* ---- tab Pasang & pakai ---- */
+function pasangHTML(){const P=S.pasang,cur=STEPS[P.step],A=loadA(),need=A*1.3,rec=SIZES.find(x=>x>=need)||20;
+  const allDone=P.step>=STEPS.length;
+  return `<div class="card"><h2>Pasang power supply di panel</h2><div class="goal"><b>Cara mengerjakan:</b> ketuk bagian yang benar langsung di model 3D, <b>atau</b> pilih jawaban di bawah. Setiap langkah benar langsung terpasang di panel. Kerjakan dengan MCB <b>OFF</b>.</div>
+    <ol class="steps">${STEPS.map((s,i)=>`<li class="${P.done[s.id]?'done':i===P.step?'cur':''}"><b>${i+1}</b><span>${P.done[s.id]?s.why:s.q.replace(/^Langkah \d+ — /,'')}</span></li>`).join('')}</ol>
+    ${allDone?'':`<div class="qtext" style="margin-top:10px">${cur.q}</div>${TAPHINT[cur.id]?`<p class="muted" style="margin:4px 0 0">👆 ${TAPHINT[cur.id]}</p>`:''}<div class="tchips" id="pOpt">${cur.o.map((o,i)=>`<button data-i="${i}" class="${P.pick===i?'no':''}">${o}</button>`).join('')}</div>${P.pick!=null?`<div class="fb bad">Belum tepat. Coba lagi.</div>`:''}`}
+    <p class="muted">Warna kabel mengikuti <b>standar Lab TOI</b>: kabel daya AC <b>kuning</b> — L dan N dibedakan dengan tube marking <b>L1</b> / <b>N</b>; PE <b>hijau-kuning</b>; kabel kontrol DC <b>biru</b> dengan tube marking <b>L+</b> / <b>M</b>. Ujung kabel memakai skun Y, kabel sumber masuk panel dari bawah. Kabel sensor (cokelat-biru) adalah warna bawaan pabrik sensor.</p></div>
+    ${noteLab('Di model: kabel L1 dan N dari MCB ke PSU berwarna kuning (daya), keluaran L+ dan M ke terminal blok dan PLC berwarna biru (kontrol). Perhatikan selongsong putih (tube marking) dan skun di setiap ujung kabel.')}
+    ${P.done.ukur?`<div class="card"><h2>Setel V.ADJ</h2><div class="goal">Multimeter V DC di terminal +V dan −V. Setel sampai terbaca 24,0 V.</div>
+      <span class="lbl2">Putar V.ADJ</span><div class="slider"><input type="range" id="sPadj" min="21.6" max="28.8" step="0.1" value="${P.adj}"><output id="oPadj">${nf(P.adj,1)} V</output></div>
+      <div class="meterlcd" id="lcd">${nf(P.adj,2)} V⎓</div><div class="fb ${Math.abs(P.adj-24)<0.15?'ok':''}" id="adjFb">${Math.abs(P.adj-24)<0.15?'Pas 24 V. Untuk kabel yang sangat panjang, ukur juga di beban terjauh.':'Putar pelan. Searah jarum jam umumnya menaikkan tegangan.'}</div></div>`:''}
+    <div class="card"><h2>Hitung kapasitas power supply</h2><div class="goal">Jumlahkan arus semua beban 24 V, tambahkan cadangan <b>± 30 %</b>, lalu pilih ukuran PSU di atasnya.</div>
+    <table class="loads" id="loads">${LOADS.map((l,i)=>`<tr><td>${l[0]}</td><td>${nf(l[1],2)} A</td><td><span class="qty"><button data-q="${i}" data-d="-1">−</button><span>${P.qty[i]}</span><button data-q="${i}" data-d="1">+</button></span></td><td>${nf(l[1]*P.qty[i],2)} A</td></tr>`).join('')}</table>
+    <div class="kv"><div><dt>Total beban</dt><dd>${nf(A,2)} A</dd></div><div><dt>+ cadangan 30 %</dt><dd>${nf(need,2)} A</dd></div><div><dt>Pilih PSU</dt><dd class="${need>20?'bad':''}">${need>20?'> 20 A':'24 V '+nf(rec,rec%1?2:0)+' A'}</dd></div></div>
+    <div class="fb">${need>20?'Beban terlalu besar untuk satu PSU — bagi menjadi dua kelompok dengan PSU masing-masing.':`Dipilih <b>24 V ${nf(rec,rec%1?2:0)} A (${nf(rec*24,0)} W)</b>. Beban terpakai ${nf(A/rec*100,0)} % — sisa untuk lonjakan arus koil, solenoid, dan penambahan alat.`}</div>
+    <div class="row"><button class="btn primary" data-go="ganggu">Lanjut: Cari Gangguan →</button></div></div>`;}
+/* ---- tab Cari gangguan ---- */
+function gangguHTML(){const G=S.gg,c=CASES[G.i];
+  return `<div class="card"><h2>Cari gangguan</h2><div class="goal">Baca gejala dan hasil ukur multimeter, lalu tentukan penyebabnya. Perhatikan LED DC OK dan beban di model 3D.</div>
+    <div class="stat"><div><b>${G.score.ok}</b><span>benar</span></div><div><b>${G.score.tot}</b><span>dijawab</span></div><div><b>${CASES.length}</b><span>kasus</span></div></div>
+    ${c?`<div class="qtext">Kasus ${G.i+1}: ${c.t}</div>
+      <div class="kv"><div><dt>LED DC OK</dt><dd>${c.led==='on'?'menyala':c.led==='blink'?'berkedip':'padam'}</dd></div><div><dt>Masukan L–N</dt><dd>${c.r.in}</dd></div><div><dt>Terminal +V/−V</dt><dd>${c.r.out}</dd></div><div><dt>Di beban</dt><dd>${c.r.beban}</dd></div></div>
+      <div class="tchips" id="gOpt">${c.o.map((o,i)=>`<button data-i="${i}" class="${G.pick!=null?(i===c.a?'ok':(G.pick===i?'no':'')):''}">${o}</button>`).join('')}</div>
+      ${G.pick!=null?`<div class="fb ${G.pick===c.a?'ok':'bad'}">${G.pick===c.a?'Tepat!':'Belum tepat.'} ${c.why}</div>`:''}`:'<p class="muted">Ada 6 kasus nyata di panel. Mulai dari kasus pertama.</p>'}
+    <div class="row"><button class="btn primary" id="gNext">${!c?'Mulai kasus':G.i<CASES.length-1?'Kasus berikutnya':'Ulangi dari awal'}</button></div></div>
+    <div class="card"><h2>Urutan memeriksa</h2><ol class="steps"><li><b>1</b><span>Lihat LED DC OK dan MCB.</span></li><li><b>2</b><span>Ukur masukan L–N (V AC). Tidak ada → masalah sebelum PSU.</span></li><li><b>3</b><span>Ukur keluaran +V–−V (V DC). 0 V padahal masukan ada → lepas beban, ukur lagi.</span></li><li><b>4</b><span>Tetap 0 V tanpa beban → PSU rusak, ganti. Normal tanpa beban → cari hubung singkat di beban.</span></li><li><b>5</b><span>Keluaran normal tapi beban mati → telusuri kabel dan terminal blok.</span></li></ol>
+    <div class="row"><button class="btn" data-go="post">Ke tes akhir</button></div></div>`;}
+/* ---- render ---- */
+function render(){
+  let h='';
+  if(S.tab==='pre') h=testHTML('pre');
+  else if(S.tab==='post'){h=S.test.pre.done||S.test.post.done?testHTML('post'):`<div class="card"><h2>Tes akhir</h2><div class="fb warn">Kerjakan dulu tes awal supaya hasilnya bisa dibandingkan.</div><div class="row"><button class="btn primary" data-go="pre">Ke tes awal</button></div></div>`;
+    if(S.test.pre.done&&!S.test.post.done&&S.test.post.ans.length===0&&!S.postStarted) h=`<div class="card"><h2>Tes akhir</h2><div class="goal">Soal yang sama dengan tes awal, urutannya diacak. Bandingkan hasilnya.</div><p class="muted">Sudah menjelajah: ${['luar','kerja','pasang','ganggu'].filter(k=>S.visited[k]).length}/4 tab materi.</p><div class="row"><button class="btn primary" id="bStartPost">Mulai tes akhir</button></div></div>`;}
+  else if(S.tab==='luar') h=luarHTML(); else if(S.tab==='kerja') h=kerjaHTML(); else if(S.tab==='pasang') h=pasangHTML(); else h=gangguHTML();
+  $('#pane').innerHTML=h;updateChip();if(S.tab==='kerja')drawWave(performance.now());
+}
+function updateChip(){const c=$('#vchip');
+  if(S.tab==='luar')c.innerHTML=`<span>Input <b>100–240 VAC</b></span><span>Output <b>24 V ⎓ 5 A</b></span>`;
+  else if(S.tab==='kerja'){const ks=kerjaState();c.innerHTML=`<span>Tahap <b>${S.kerja.all?'semua':S.kerja.st+1}</b></span><span>Keluaran <b>${ks.over?'proteksi':nf(ks.vout,1)+' V'}</b></span>`;}
+  else if(S.tab==='pasang')c.innerHTML=`<span>Langkah <b>${Math.min(S.pasang.step+1,8)}/8</b></span>${!S.pasang.done.mount?'<span><b>Ketuk kotak kuning</b></span>':''}<span>DC OK <b>${S.pasang.done.cek?'menyala':'padam'}</b></span>`;
+  else if(S.tab==='ganggu')c.innerHTML=S.gg.i>=0?`<span>Kasus <b>${S.gg.i+1}/${CASES.length}</b></span><span>Multimeter <b>${T?T.O.pas.lcdTxt:''}</b></span>`:'';
+  else c.innerHTML='';}
+
+/* ---------- event ---------- */
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.t);});
+$('#pane').addEventListener('input',e=>{const id=e.target.id,v=+e.target.value;
+  if(id==='fNama'){S.name=e.target.value;save();return;}if(id==='fKelas'){S.kelas=e.target.value;save();return;}
+  if(id==='sLoad'||id==='sAdj'){if(id==='sLoad')S.kerja.load=v;else S.kerja.adj=v;const ks=kerjaState();
+    const set=(i,x)=>{const e2=document.getElementById(i);if(e2)e2.textContent=x;};set('oLoad',S.kerja.load+' %');set('oAdj',nf(S.kerja.adj,1)+' V');set('kI',nf(ks.iout,2)+' A');set('kD',ks.over?'proteksi':nf(ks.duty*100,0)+' %');set('kV',ks.over?'0 ↔ 24 V':nf(ks.vout,2)+' V');
+    const kv=$('#kV');if(kv)kv.className=ks.over?'bad':'';const fb=$('#kFb');if(fb){fb.className='fb '+(ks.over?'bad':'');fb.innerHTML=ks.over?'Beban melebihi ± 105 %: proteksi arus lebih bekerja. PSU memutus, mencoba lagi, memutus lagi — <b>mode hiccup</b>. LED DC OK berkedip. Turunkan beban, PSU normal kembali.':'Beban naik → tegangan sempat turun sedikit → TL431 dan optocoupler memberi tahu IC PWM → pulsa dilebarkan → tegangan kembali. Semua terjadi ribuan kali per detik.';}updateChip();return;}
+  if(id==='sPadj'){S.pasang.adj=v;const o=$('#oPadj');if(o)o.textContent=nf(v,1)+' V';const l=$('#lcd');if(l)l.textContent=nf(v,2)+' V⎓';const f=$('#adjFb');if(f){const ok=Math.abs(v-24)<0.15;f.className='fb '+(ok?'ok':'');f.innerHTML=ok?'Pas 24 V. Untuk kabel yang sangat panjang, ukur juga di beban terjauh.':'Putar pelan. Searah jarum jam umumnya menaikkan tegangan.';}
+    if(T){T.O.pas.lcdTxt=v.toFixed(1);redraw(T.O.pas.lcd);T.O.pas.R.adj.rotation.z=(v-24)*0.4;}return;}
+});
+$('#pane').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const p=b.parentElement&&b.parentElement.id;
+  if(b.dataset.go){setTab(b.dataset.go);return;}
+  if(b.id==='bStart'){S.started=true;S.test.pre={ans:[],conf:[],i:0,done:false};render();return;}
+  if(b.id==='bStartPost'){S.postStarted=true;S.test.post={ans:[],conf:[],i:0,done:false,order:null};render();return;}
+  const kind=S.tab==='post'?'post':'pre',st=S.test[kind],order=kind==='post'&&st.order?st.order:[...Array(QUEST.length).keys()];
+  if(b.closest('#qOpts')){st.ans[order[st.i]]=+b.dataset.o;save();render();return;}
+  if(p==='qConf'){st.conf[order[st.i]]=b.dataset.c;save();render();return;}
+  if(b.id==='bPrev'){st.i=Math.max(0,st.i-1);render();return;}
+  if(b.id==='bNextQ'){if(st.i<QUEST.length-1)st.i++;else{st.done=true;toast('ok','Tes selesai','');renderTabs();}save();render();return;}
+  if(b.id==='bRedo'){S.test.pre={ans:[],conf:[],i:0,done:false};S.started=true;save();renderTabs();render();return;}
+  if(b.id==='bRedoPost'){S.test.post={ans:[],conf:[],i:0,done:false,order:null};S.postStarted=true;save();renderTabs();render();return;}
+  if(b.id==='bCopy'){const ta=$('#rekap');(navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(()=>toast('ok','Rekap tersalin','')).catch(()=>{ta.select();toast('warn','Teks sudah dipilih','<br>Tekan Ctrl+C / tahan lalu Salin.');});return;}
+  if(p==='parts'){selPart(b.dataset.p);return;}
+  if(b.closest('#stg')){const s2=b.closest('#stg button');S.kerja.st=+s2.dataset.s;S.kerja.all=false;render();if(T)setPins();return;}
+  if(b.id==='kAll'){S.kerja.all=!S.kerja.all;render();if(T)setPins();return;}
+  if(b.id==='kCut'){S.kerja.cut=!S.kerja.cut;render();return;}
+  if(p==='pOpt'){const P=S.pasang,cur=STEPS[P.step];const i=+b.dataset.i;if(i===cur.a){stepOk();}else{P.pick=i;render();}return;}
+  if(b.dataset.q!=null){const i=+b.dataset.q;S.pasang.qty[i]=clamp(S.pasang.qty[i]+(+b.dataset.d),0,40);render();return;}
+  if(b.id==='gNext'){const G=S.gg;G.i=G.i<CASES.length-1?G.i+1:0;G.pick=null;if(T)ggApply();render();return;}
+  if(p==='gOpt'){const G=S.gg,c=CASES[G.i];if(G.pick!=null)return;G.pick=+b.dataset.i;G.score.tot++;if(G.pick===c.a)G.score.ok++;render();return;}
+});
+
+/* ---------- mulai ---------- */
+try{init3D();}catch(err){$('#loading').textContent='Model 3D tidak dapat dimuat di perangkat ini. Tes dan latihan tetap bisa digunakan.';console.error(err);}
+renderTabs();render();
+})();
+</script>
+</body>
+</html>
