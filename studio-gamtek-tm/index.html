@@ -100,6 +100,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .card small{color:var(--mute);font-size:12.5px;line-height:1.4}
 .card .st{margin-top:auto;font-size:15px;letter-spacing:2px}
 .card .tp{position:absolute;top:12px;right:12px;font-size:11px;font-weight:800;background:#0e1318;border:1px solid var(--line);border-radius:7px;padding:3px 7px;color:#b8c4ce}
+.sec{grid-column:1/-1;margin-top:10px;display:flex;flex-direction:column;gap:2px;border-left:4px solid var(--y);padding-left:10px}.sec b{font-family:'Chakra Petch';font-size:15px;letter-spacing:.06em}.sec small{color:var(--mute);font-size:12.5px}
+.card.soon{opacity:.55;cursor:default}
+.numrow{display:flex;gap:8px;margin:10px 0}.num{flex:1;min-width:0;background:#0b1015cc;border:1.5px solid var(--line);color:var(--ink);border-radius:12px;padding:11px 12px;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text}.num:focus{outline:none;border-color:var(--y)}
+.spec{font-size:12.5px;color:#c9d3db;background:#0f2747;border:1px solid #2c5a94;border-radius:10px;padding:8px 10px;margin:8px 0;line-height:1.5}.spec b{color:#fff}
 .foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;align-items:center}
 .total{margin-left:auto;color:var(--mute);font-weight:700;font-size:14px}
 #modal{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:16px;background:#05080bb8;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
@@ -153,10 +157,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 <div id="hub">
   <div class="stripe"></div>
   <div class="hubin">
-    <div class="brand"><div class="dot">TM</div><div>SMKS 2 TRIPLE "J" CITEUREUP · TEKNIK MESIN · KELAS XI · PEMANTAPAN SEBELUM CAD</div></div>
+    <div class="brand"><div class="dot">TM</div><div>SMKS 2 TRIPLE "J" CITEUREUP · TEKNIK MESIN · KELAS XI · GAMBAR TEKNIK MANUFAKTUR (CAD)</div></div>
     <div class="hero">
       <h1 class="disp">STUDIO <em>GAMTEK</em><br>3D</h1>
-      <p>Sebelum memodelkan di SolidWorks, seorang drafter harus bisa <b>membaca bentuk 3D dari gambar 2D</b>. Selesaikan 6 misi gambar teknik dasar, mulai dari jenis garis sampai gambar potongan, untuk mendapatkan <b>Lisensi Drafter Muda</b>.</p>
+      <p>Naiki <b>Tangga Drafter</b>: mulai dari pre-test, mantapkan cara <b>membaca gambar</b>, lalu <b>memodelkan part</b> di SolidWorks dan buktikan modelmu dengan angka massa seperti ujian CSWA. Kumpulkan bintang untuk mendapatkan <b>Lisensi Drafter Muda</b>.</p>
     </div>
     <div class="who">
       <input id="inName" placeholder="Nama murid" maxlength="40" autocomplete="off">
@@ -329,6 +333,7 @@ function askQ(q,done){cur.total++;let first=true;if(q.onShow)q.onShow();
           if(q.know)b.appendChild(el('div','know',q.know));
           if(q.onOk)q.onOk();
           actions(b,[{label:q.next||'Lanjut →',cls:'pri',fn:done}]);scrollEnd();}
+        else if(q.exam){x.classList.add('bad');btns.forEach((y,j)=>{y.disabled=true;if(L[j].ok)y.classList.add('ok');});sfx('bad');b.appendChild(el('div','fb bad',`<b>Belum tepat.</b> ${q.why}`));actions(b,[{label:'Lanjut →',cls:'pri',fn:done}]);scrollEnd();}
         else{x.classList.add('bad');x.disabled=true;first=false;sfx('bad');toast(o.hint||q.hint||'Belum tepat, coba lagi 🙂','bad');}};
       w.appendChild(x);btns.push(x);});
     b.appendChild(w);});}
@@ -507,33 +512,43 @@ function bracket(p){const k=.01,W=(p.w1+p.w2)*k,g=new THREE.Group();
 
 /* ================= MISSIONS ================= */
 const MIS=[
- {id:'garis',no:1,ic:'✏️',title:'Garis, Kertas & Skala',sub:'Kenali jenis garis ISO 128, ukuran kertas, dan skala gambar.',tp:'Pert. 1',
+ {id:'garis',no:1,ic:'✏️',title:'Garis, Kertas & Skala',sub:'Kenali jenis garis ISO 128, ukuran kertas, dan skala gambar.',tp:'TP-1',th:1,
   sw:'Jenis garis ini diatur di <b>Document Properties → Line Font</b>. Ukuran kertas dan skala dipilih lewat <b>Sheet Properties</b> saat membuat Drawing.'},
- {id:'fitur',no:2,ic:'🧊',title:'Berpikir Fitur',sub:'Bangun benda dari balok dasar: potong tangga, alur, dan coakan.',tp:'Pert. 2',
+ {id:'fitur',no:2,ic:'🧊',title:'Berpikir Fitur',sub:'Bangun benda dari balok dasar: potong tangga, alur, dan coakan.',tp:'TP-2',th:1,
   sw:'Urutan yang sama dipakai di Part: <b>Extruded Boss/Base</b> untuk balok dasar, lalu <b>Extruded Cut</b> untuk tangga, alur, dan coakan.'},
- {id:'proyeksi',no:3,ic:'📦',title:'Kotak Kaca Proyeksi',sub:'Buka kotak kaca dan susun pandangan proyeksi Eropa.',tp:'Pert. 3',
+ {id:'proyeksi',no:3,ic:'📦',title:'Kotak Kaca Proyeksi',sub:'Buka kotak kaca dan susun pandangan proyeksi Eropa.',tp:'TP-2',th:1,
   sw:'Di Drawing, <b>Standard 3 View</b> menyusun pandangan otomatis. Pastikan <b>Sheet Properties → Type of projection: First angle</b>.'},
- {id:'hilang',no:4,ic:'🧩',title:'Pandangan yang Hilang',sub:'Dua pandangan diketahui, temukan pandangan ketiga.',tp:'Pert. 4',
+ {id:'hilang',no:4,ic:'🧩',title:'Pandangan yang Hilang',sub:'Dua pandangan diketahui, temukan pandangan ketiga.',tp:'TP-2',th:1,
   sw:'Kemampuan ini dipakai saat memilih <b>bidang sketsa</b> (Front, Top, Right Plane) dan membaca gambar kerja sebelum mulai memodelkan.'},
- {id:'ukuran',no:5,ic:'📏',title:'Detektif Ukuran',sub:'Temukan kesalahan pemberian ukuran pada gambar kerja.',tp:'Pert. 5',
+ {id:'ukuran',no:5,ic:'📏',title:'Detektif Ukuran',sub:'Temukan kesalahan pemberian ukuran pada gambar kerja.',tp:'TP-3',th:1,
   sw:'<b>Smart Dimension</b> mengikuti aturan yang sama. Ukuran ganda membuat sketch <b>Over Defined</b>, sedangkan sketch yang lengkap menjadi <b>Fully Defined</b> (garis hitam).'},
- {id:'potongan',no:6,ic:'🔪',title:'Gambar Potongan',sub:'Belah benda berlubang dan arsir bidang potongnya.',tp:'Pert. 6',
-  sw:'Gunakan <b>Section View</b> di Drawing. Arsiran dibuat otomatis dan polanya bisa diubah lewat <b>Area Hatch/Fill</b>.'}];
+ {id:'potongan',no:6,ic:'🔪',title:'Gambar Potongan',sub:'Belah benda berlubang dan arsir bidang potongnya.',tp:'TP-3',th:1,
+  sw:'Gunakan <b>Section View</b> di Drawing. Arsiran dibuat otomatis dan polanya bisa diubah lewat <b>Area Hatch/Fill</b>.'},
+ {id:'cad',no:7,ic:'🖥️',title:'CAD Fundamentals',sub:'Pilih bidang sketsa, kenali satuan, berkas, dan design intent.',tp:'TP-4',th:2,
+  sw:'Saat membuat sketch pertama, SolidWorks menampilkan <b>Front, Top, dan Right Plane</b>. Atur satuan di <b>Options → Document Properties → Units</b>.'},
+ {id:'sketch',no:8,ic:'📐',title:'Sketch Fully Defined',sub:'Ubah sketch biru menjadi hitam dengan relasi dan ukuran yang tepat.',tp:'TP-5',th:2,
+  sw:'Status sketch terlihat di pojok kanan bawah layar. Relasi ditambah lewat <b>Add Relation</b>, ukuran lewat <b>Smart Dimension</b>.'},
+ {id:'part1',no:9,ic:'🧱',title:'Part Dasar + Tantangan Massa',sub:'Extrude, Cut, material; buktikan modelmu dengan massa.',tp:'TP-6',th:2,
+  sw:'Fitur ada di tab <b>Features</b>; material lewat klik kanan <b>Material → Edit Material</b>; massa di <b>Evaluate → Mass Properties</b>.'},
+ {id:'part2',no:10,ic:'⚙️',title:'Part Menengah + Tantangan Massa',sub:'Revolve, Pattern, Fillet; poros dan pelat flens.',tp:'TP-7',th:2,
+  sw:'<b>Revolved Boss/Base</b>, <b>Linear Pattern</b>, <b>Circular Pattern</b>, <b>Fillet</b>, dan <b>Chamfer</b> ada di tab Features.'},
+ {id:'modif',no:11,ic:'🔧',title:'Tantangan Modifikasi',sub:'Ubah dimensi kunci tanpa merusak model, lalu laporkan massa baru.',tp:'TP-8',th:2,
+  sw:'Klik dua kali fitur untuk menampilkan ukurannya, ubah angkanya, lalu tekan <b>Rebuild</b> (Ctrl+B). Hubungan antarukuran dibuat di <b>Tools → Equations</b>.'}];
 let cur=null;
 function disposeObj(o){o.traverse(m=>{if(m.geometry)m.geometry.dispose();if(m.material)[].concat(m.material).forEach(x=>{if(x.map)x.map.dispose();x.dispose();});});}
 function clearMission(){runId++;while(mg.children.length){const c=mg.children[0];mg.remove(c);disposeObj(c);}missionUpd.clear();pulsers.length=0;anims=anims.filter(a=>a.keep);hideSheet();}
 function startMission(id){closeModal();$('#hub').classList.add('hide');$('#top').classList.add('show');clearMission();rig.auto=false;
-  const m=MIS.find(x=>x.id===id);cur={id,ok:0,total:0,m};setTop(`Misi ${m.no} · ${m.title}`,'');setScore();BUILD[id]();}
+  const m=MIS.find(x=>x.id===id);cur={id,ok:0,total:0,m};setTop(`${m.th===2?'Level':'Misi'} ${m.no} · ${m.title}`,'');setScore();BUILD[id]();}
 function intro(ic,kick,title,html,start){modal(`<div class="stars">${ic}</div><div class="kick">${kick}</div><h2 class="disp">${title}</h2>${html}`,[{label:'Mulai misi →',cls:'pri',fn:start}]);}
 function finish(points,refl){const r={ok:cur.ok,total:cur.total};const q=r.total?r.ok/r.total:0;r.stars=q>=.85?3:q>=.6?2:1;
   const prev=save.res[cur.id];if(!prev||r.stars>prev.stars||(r.stars===prev.stars&&r.ok>=prev.ok))save.res[cur.id]=r;persist();
   confetti();sfx('win');hideSheet();const id=cur.id,idx=MIS.findIndex(m=>m.id===id),nx=MIS[idx+1];
-  modal(`<div class="stars">${'⭐'.repeat(r.stars)}<span style="opacity:.2">${'⭐'.repeat(3-r.stars)}</span></div><h2 class="disp" style="text-align:center">Misi ${cur.m.no} selesai!</h2>
+  modal(`<div class="stars">${'⭐'.repeat(r.stars)}<span style="opacity:.2">${'⭐'.repeat(3-r.stars)}</span></div><h2 class="disp" style="text-align:center">${cur.m.th===2?'Level':'Misi'} ${cur.m.no} selesai!</h2>
     <p style="text-align:center">Benar pada percobaan pertama: <b>${r.ok}/${r.total}</b></p>
     <div class="know"><b>Rangkuman</b><ul>${points.map(p=>`<li>${p}</li>`).join('')}</ul></div>
     <div class="sw">🖥️ <b>Jembatan ke SolidWorks:</b> ${cur.m.sw}</div>
     <div class="fb info"><b>💭 Refleksi:</b> ${refl}</div>`,
-    [{label:'↺ Ulangi',fn:()=>startMission(id)},{label:'🗺️ Peta misi',fn:goHub}].concat(nx?[{label:`Misi ${nx.no} →`,cls:'pri',fn:()=>startMission(nx.id)}]:[]));}
+    [{label:'↺ Ulangi',fn:()=>startMission(id)},{label:'🗺️ Peta misi',fn:goHub}].concat(nx?[{label:`${nx.th===2?'Level':'Misi'} ${nx.no} →`,cls:'pri',fn:()=>startMission(nx.id)}]:[]));}
 
 /* ---------- MISI 1: GARIS, KERTAS & SKALA ---------- */
 const M1BODY='<g id="m1o" class="vis"><polyline points="40,160 40,40 120,40 120,110 260,110 260,160 40,160"/></g>'+
@@ -790,7 +805,201 @@ function buildPotongan(){
   intro('🔪','Misi 6 · Pertemuan 6','Gambar Potongan','<p>Blok ini punya <b>lubang bertingkat</b> (counterbore) di dalamnya. Kalau digambar biasa, bagian dalamnya penuh garis gores yang membingungkan.</p><p>Solusinya: <b>belah benda</b> dengan bidang potong, lalu arsir bagian yang terpotong. 🔪</p>',
     ()=>ask(Q1,()=>{hideSheet();cut(()=>ask(Q2,()=>ask(Q3,()=>ask(Q4,()=>ask(Q5,()=>ask(Q6,()=>finish(['Gambar potongan memperlihatkan bagian dalam tanpa banyak garis gores.','Yang diarsir hanya material yang terkena bidang potong; lubang tidak diarsir.','Arsiran tipis, 45°, berjarak sama, dan searah untuk satu benda.','Garis potong diberi huruf (A–A) dan panah arah pandang.'],'Benda apa di bengkel yang lebih mudah dipahami bila digambar potongan? Sebutkan satu dan jelaskan alasannya.')))))));}));}
 
-const BUILD={garis:buildGaris,fitur:buildFitur,proyeksi:buildProyeksi,hilang:buildHilang,ukuran:buildUkuran,potongan:buildPotongan};
+/* ================= 2.0: PRE-TEST, TAHAP 2 (MEMODELKAN PART) ================= */
+const RHO=0.0079;
+if(!save.v){const pk=a=>a[Math.floor(Math.random()*a.length)];save.v={A:pk([70,80,90,100]),B:pk([50,60,70]),C:pk([30,40,50]),L1:pk([30,35,40,45])};persist();}
+if(!save.m)save.m={};
+const MASS={
+  js1:()=>(100*50*30-Math.PI*12.5*12.5*30-Math.PI*(225-156.25)*5)*RHO,
+  js2:(A,B,C)=>(((A*10+(B-10)*10)*C)-2*Math.PI*25*10)*RHO,
+  js3:L1=>Math.PI*(400*L1+156.25*50-25*(L1+50))*RHO,
+  js4:()=>(120*80*12-4*Math.PI*36*12-Math.PI*400*12)*RHO};
+const fmt=x=>x.toFixed(2).replace('.',',');
+const SPEC='Satuan <b>MMGS</b> · <b>2 desimal</b> · Material <b>AISI 1020</b> · Massa jenis <b>0,0079 g/mm³</b> · Semua lubang tembus kecuali disebut lain';
+
+/* input angka: lolos bila selisih <= 1% dari kunci */
+function askNum(q,done){cur.total++;let tries=0,solved=false;if(q.onShow)q.onShow();
+  sheet(b=>{head(b,q.kick,q.title,q.text);if(q.html)b.appendChild(el('div','paper',q.html));
+    b.appendChild(el('div','spec',SPEC));
+    const row=el('div','numrow');const inp=el('input','num');inp.type='text';inp.inputMode='decimal';inp.placeholder='Massa (gram), mis. 1234,56';inp.autocomplete='off';
+    const bt=el('button','btn pri','Periksa');row.appendChild(inp);row.appendChild(bt);b.appendChild(row);
+    const fb=el('div');b.appendChild(fb);
+    const skip=actions(b,[{label:'Belum bisa membuka SolidWorks? Lewati',cls:'ghost sm',fn:()=>{if(solved)return;save.m[q.id]={v:null,t:tries};persist();done();}}]);
+    bt.onclick=()=>{initAudio();if(solved)return;const v=parseFloat(String(inp.value).replace(/\s/g,'').replace(',','.'));
+      if(!isFinite(v)||v<=0){toast('Isi massa dalam gram, contoh 1234,56','bad');return;}
+      tries++;const d=(v-q.key)/q.key*100;
+      if(Math.abs(d)<=1){solved=true;sfx('ok');if(tries===1)cur.ok++;setScore();save.m[q.id]={v,d:+d.toFixed(2),t:tries};persist();inp.disabled=true;bt.disabled=true;skip.remove();
+        fb.innerHTML=`<div class="fb ok"><b>✅ Lolos${tries===1?' pada percobaan pertama':''}!</b> Selisih massamu ${fmt(Math.abs(d))}%, di dalam batas 1%. ${q.why||''}</div>`;if(q.onOk)q.onOk();
+        actions(b,[{label:'Lanjut →',cls:'pri',fn:done}]);scrollEnd();}
+      else{sfx('bad');fb.innerHTML=`<div class="fb bad"><b>Belum lolos.</b> Selisih ${fmt(Math.abs(d))}%, modelmu <b>${d>0?'terlalu berat':'terlalu ringan'}</b>. ${d>0?(q.hintHi||'Mungkin ada fitur potong yang terlewat atau kurang dalam.'):(q.hintLo||'Mungkin ada potongan yang terlalu besar atau ukuran yang kurang panjang.')} Periksa lagi model dan materialnya di SolidWorks.</div>`;scrollEnd();}};});}
+
+/* benda prismatik dengan lubang tegak (mm) */
+function prism(w,d,h,holes,seamY){const k=.008,s=new THREE.Shape();s.moveTo(-w/2*k,-d/2*k);s.lineTo(w/2*k,-d/2*k);s.lineTo(w/2*k,d/2*k);s.lineTo(-w/2*k,d/2*k);s.lineTo(-w/2*k,-d/2*k);
+  (holes||[]).forEach(([x,z,r])=>{const p=new THREE.Path();p.absarc(x*k,-z*k,r*k,0,Math.PI*2,false);s.holes.push(p);});
+  const geo=new THREE.ExtrudeGeometry(s,{depth:h*k,bevelEnabled:false,curveSegments:28});geo.rotateX(-Math.PI/2);
+  const m=mesh(geo,mat('#ff8a1f',{roughness:.5,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));
+  const ep=new THREE.EdgesGeometry(geo,25).attributes.position.array,keep=[];
+  for(let i=0;i<ep.length;i+=6){if(seamY!=null&&Math.abs(ep[i+1]-seamY*k)<1e-4&&Math.abs(ep[i+4]-seamY*k)<1e-4&&((Math.abs(Math.abs(ep[i])-w/2*k)<1e-4&&Math.abs(Math.abs(ep[i+3])-w/2*k)<1e-4)||(Math.abs(Math.abs(ep[i+2])-d/2*k)<1e-4&&Math.abs(Math.abs(ep[i+5])-d/2*k)<1e-4)))continue;keep.push(ep[i],ep[i+1],ep[i+2],ep[i+3],ep[i+4],ep[i+5]);}
+  m.add(lines(keep,0x1a1a1a));return m;}
+function modelJS1(){const g=new THREE.Group();const a=prism(100,50,5,[[0,0,15]],5);const b=prism(100,50,25,[[0,0,12.5]],0);b.position.y=5*.008;g.add(a,b);return g;}
+function modelJS2(A,B,C){const g=new THREE.Group(),k=.008;const al=prism(A,C,10,[[A/2-25,C/2-10,5],[A/2-25,-(C/2-10),5]],10);g.add(al);
+  const wg=new THREE.BoxGeometry(10*k,(B-10)*k,C*k);const wl=mesh(wg,mat('#ff8a1f',{roughness:.5,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));wl.position.set((-A/2+5)*k,(10+(B-10)/2)*k,0);
+  const ep=new THREE.EdgesGeometry(wg).attributes.position.array,keep=[];for(let i=0;i<ep.length;i+=6){if(ep[i+1]<0&&ep[i+4]<0&&!(ep[i]>0&&ep[i+3]>0))continue;keep.push(...ep.slice(i,i+6));}wl.add(lines(keep,0x1a1a1a));g.add(wl);return g;}
+function modelJS3(L1){const g=new THREE.Group(),k=.008;const mk=(r,l,x)=>{const geo=new THREE.CylinderGeometry(r*k,r*k,l*k,40);geo.rotateZ(Math.PI/2);const m=mesh(geo,mat('#ff8a1f',{roughness:.45,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));m.position.x=x*k;m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo,25),new THREE.LineBasicMaterial({color:0x1a1a1a})));return m;};
+  const T=L1+50;g.add(mk(20,L1,-T/2+L1/2));g.add(mk(12.5,50,-T/2+L1+25));
+  [-1,1].forEach(sg=>{const c=new THREE.Mesh(new THREE.CircleGeometry(5*k,24),new THREE.MeshBasicMaterial({color:0x1a1a1a}));c.rotation.y=sg*Math.PI/2;c.position.x=sg*(T/2*k+.0008);g.add(c);});
+  g.position.y=20*k;const w=new THREE.Group();w.add(g);return w;}
+function modelJS4(){return prism(120,80,12,[[0,0,20],[-45,-25,6],[45,-25,6],[-45,25,6],[45,25,6]]);}
+
+/* gambar kerja jobsheet */
+function drawJS1(){return svgWrap('0 0 370 255',
+  '<text class="lb" x="60" y="14">PANDANGAN DEPAN</text><rect class="vis" x="60" y="30" width="200" height="60"/>'+
+  '<g class="hid"><line x1="135" y1="30" x2="135" y2="80"/><line x1="185" y1="30" x2="185" y2="80"/><line x1="130" y1="80" x2="130" y2="90"/><line x1="190" y1="80" x2="190" y2="90"/><line x1="130" y1="80" x2="190" y2="80"/></g>'+
+  '<line class="cen" x1="160" y1="22" x2="160" y2="98"/>'+dimV(30,90,45,'30',[[30,58,38],[90,58,38]])+
+  '<line class="thin" x1="190" y1="85" x2="268" y2="72"/><text class="dt" x="270" y="70">Ø30</text><text class="dt" x="270" y="85">dalam 5</text>'+
+  '<text class="lb" x="60" y="119">PANDANGAN ATAS</text><rect class="vis" x="60" y="125" width="200" height="100"/><circle class="vis" cx="160" cy="175" r="25"/><circle class="hid" cx="160" cy="175" r="30"/>'+
+  '<line class="cen" x1="50" y1="175" x2="270" y2="175"/><line class="cen" x1="160" y1="117" x2="160" y2="233"/>'+
+  dimH(60,260,243,'100',[[60,228,248],[260,228,248]])+dimV(125,225,45,'50',[[125,58,38],[225,58,38]])+
+  '<line class="thin" x1="178" y1="157" x2="268" y2="140"/><text class="dt" x="270" y="138">Ø25</text><text class="dt" x="270" y="153">tembus</text>');}
+function drawJS2(A,B,C,hl){const H=k=>hl===k?' style="fill:#ff7a00"':'';return svgWrap('0 0 330 300',
+  '<text class="lb" x="60" y="14">PANDANGAN DEPAN (tidak berskala)</text><polyline class="vis" points="60,150 60,30 80,30 80,130 260,130 260,150 60,150"/>'+
+  '<g class="hid"><line x1="200" y1="130" x2="200" y2="150"/><line x1="220" y1="130" x2="220" y2="150"/></g><line class="cen" x1="210" y1="122" x2="210" y2="158"/>'+
+  dimH(60,260,172,'A = '+A,[[60,154,178],[260,154,178]]).replace('<text class="dt"','<text class="dt"'+H('A'))+dimV(30,150,42,'B = '+B,[[30,56,36],[150,56,36]])+
+  dimH(210,260,112,'25',[[260,126,106],[210,120,106]])+'<text class="dt" x="92" y="60">tebal 10</text><text class="dt" x="130" y="126">tebal 10</text>'+
+  '<text class="lb" x="60" y="196">PANDANGAN ATAS</text><rect class="vis" x="60" y="202" width="200" height="80"/><line class="vis" x1="80" y1="202" x2="80" y2="282"/>'+
+  '<circle class="vis" cx="210" cy="222" r="10"/><circle class="vis" cx="210" cy="262" r="10"/><line class="cen" x1="210" y1="206" x2="210" y2="278"/><line class="cen" x1="194" y1="222" x2="226" y2="222"/><line class="cen" x1="194" y1="262" x2="226" y2="262"/>'+
+  dimV(202,282,42,'C = '+C,[[202,56,36],[282,56,36]])+'<text class="dt" x="228" y="240">2 × Ø10</text><text class="lb" x="92" y="246">pusat lubang 10 dari</text><text class="lb" x="92" y="258">tiap sisi</text>');}
+function drawJS3(L1){return svgWrap('0 0 330 170',
+  '<text class="lb" x="60" y="14">PANDANGAN DEPAN (tidak berskala)</text><rect class="vis" x="60" y="30" width="80" height="80"/><rect class="vis" x="140" y="45" width="120" height="50"/>'+
+  '<g class="hid"><line x1="60" y1="60" x2="260" y2="60"/><line x1="60" y1="80" x2="260" y2="80"/></g><line class="cen" x1="50" y1="70" x2="272" y2="70"/>'+
+  dimH(60,140,132,'L1 = '+L1,[[60,114,138],[140,114,138]])+dimH(140,260,132,'50',[[260,99,138]])+dimV(30,110,42,'Ø40',[[30,56,36],[110,56,36]])+dimV(45,95,290,'Ø25',[[45,264,296],[95,264,296]])+
+  '<text class="dt" x="150" y="160">Lubang tengah Ø10 tembus</text>');}
+function drawJS4(){return svgWrap('0 0 335 240',
+  '<rect class="vis" x="50" y="40" width="240" height="160"/><circle class="vis" cx="170" cy="120" r="40"/>'+[[80,70],[260,70],[80,170],[260,170]].map(([x,y])=>`<circle class="vis" cx="${x}" cy="${y}" r="12"/><line class="cen" x1="${x-18}" y1="${y}" x2="${x+18}" y2="${y}"/><line class="cen" x1="${x}" y1="${y-18}" x2="${x}" y2="${y+18}"/>`).join('')+
+  '<line class="cen" x1="40" y1="120" x2="300" y2="120"/><line class="cen" x1="170" y1="32" x2="170" y2="208"/>'+
+  dimH(80,260,24,'90',[[80,52,18],[260,52,18]])+dimH(50,290,222,'120',[[50,204,228],[290,204,228]])+dimV(40,200,34,'80',[[40,46,28],[200,46,28]])+dimV(70,170,312,'50',[[70,278,318],[170,278,318]])+
+  '<text class="dt" x="150" y="100">Ø40</text><text class="dt" x="100" y="60">4 × Ø12</text><text class="dt" x="120" y="190">tebal 12</text>');}
+
+/* sketsa berwarna status: biru under, hitam fully, merah over */
+function sk(inner,col){return svgWrap('0 0 300 150',`<g style="stroke:${col};fill:none;stroke-width:2.4;stroke-linecap:round">${inner}</g><circle cx="60" cy="120" r="4" fill="#e53935"/><text class="lb" x="42" y="140">origin</text>`);}
+const BLUE='#1f6fe0',BLK='#111',RED='#e53935';
+
+function stage(model,scale){const tb=workbench(2.2,1.0);tb.position.set(0,0,-3.5);mg.add(tb);const tt=turntable();tt.position.set(0,.93,-3.5);mg.add(tt);
+  let cur_=null;const set=m=>{if(cur_){tt.userData.spin.remove(cur_);disposeObj(cur_);}cur_=m;if(m){m.position.y+=.022;tt.userData.spin.add(m);m.scale.setScalar(.01);anim(.5,k=>m.scale.setScalar(Math.max(.01,ease(k)*(scale||1))));}};
+  missionUpd.add(dt=>{tt.userData.spin.rotation.y+=dt*.35;});view({t:[0,1.2,-3.5],r:2.8,theta:.3,phi:1.02,minR:1.4,maxR:7},1.2);if(model)set(model);return set;}
+
+/* ---------- PRE-TEST / POST-TEST ---------- */
+const PRE=[
+ ['Garis untuk tepi benda yang <b>terlihat</b> adalah…',['Garis tebal kontinu','Garis gores (putus-putus)','Garis titik-garis','Garis tipis kontinu'],'Tepi terlihat digambar dengan garis gambar: tebal dan kontinu.'],
+ ['Garis gores (putus-putus) dipakai untuk…',['Tepi yang tersembunyi','Garis sumbu','Garis ukur','Arsiran'],'Garis gores menunjukkan tepi yang tersembunyi di balik benda.'],
+ ['Ukuran kertas A4 adalah…',['297 × 210 mm','420 × 297 mm','594 × 420 mm','330 × 215 mm'],'A4 = 297 × 210 mm; A3 = 420 × 297 mm.'],
+ ['Benda sepanjang 220 mm digambar dengan skala 1 : 2. Panjang garis di kertas adalah…',['110 mm','440 mm','220 mm','22 mm'],'Skala 1 : 2 berarti gambar setengah ukuran asli: 220 ÷ 2 = 110 mm.'],
+ ['Pada proyeksi Eropa, pandangan atas diletakkan…',['Di bawah pandangan depan','Di atas pandangan depan','Di kiri pandangan depan','Di kanan pandangan depan'],'Proyeksi Eropa (sudut pertama): pandangan atas di bawah pandangan depan.'],
+ ['Pada proyeksi Eropa, pandangan dari kiri diletakkan…',['Di kanan pandangan depan','Di kiri pandangan depan','Di atas pandangan depan','Di bawah pandangan depan'],'Pandangan dari kiri diproyeksikan ke bidang di kanan.'],
+ ['Sumbu isometrik miring berapa derajat terhadap garis horizontal?',['30°','15°','45°','60°'],'Dua sumbu isometrik miring 30° terhadap horizontal.'],
+ ['Ukuran total 220 sudah ada, lalu ditulis lagi 90 dan 130 secara berantai. Kesalahannya adalah…',['Ukuran ganda','Kurang ukuran','Salah skala','Salah proyeksi'],'90 + 130 = 220, sehingga salah satu ukuran berlebih (ganda).'],
+ ['Simbol yang ditulis di depan angka diameter adalah…',['Ø','R','□','M'],'Diameter diberi simbol Ø, jari-jari diberi R.'],
+ ['Pada gambar potongan, bagian yang diarsir adalah…',['Material yang terkena bidang potong','Seluruh benda','Rongga lubang','Garis sumbu'],'Hanya material padat yang terpotong yang diarsir.']];
+function startPre(post){closeModal();$('#hub').classList.add('hide');$('#top').classList.add('show');clearMission();rig.auto=false;
+  cur={id:'pre',ok:0,total:0,m:{no:0,title:post?'Post-test':'Pre-test',sw:''}};setTop(post?'Post-test Gambar Teknik Dasar':'Pre-test Gambar Teknik Dasar','');setScore();
+  stage(voxelGroup(mkObj([[3,3,1],[3,1,1],[1,1,1]]),.13,'#ff8a1f'));
+  const Q=PRE.map((p,i)=>({kick:`Soal ${i+1}/10`,title:p[0],exam:true,opts:p[1].map((t,j)=>({ic:'▫️',label:t,ok:j===0})),why:p[2]}));
+  modal(`<div class="stars">🚪</div><div class="kick">${post?'Akhir pembelajaran':'Gerbang masuk'}</div><h2 class="disp">${post?'Post-test':'Pre-test Diagnostik'}</h2><p>10 soal gambar teknik dasar. <b>Setiap soal hanya bisa dijawab satu kali</b>, jadi baca dengan teliti. ${post?'Hasilnya dibandingkan dengan pre-test untuk melihat kemajuanmu.':'Hasilnya menentukan jalur belajarmu: langsung ke CAD, atau pemantapan dulu.'}</p>`,
+    [{label:'Mulai tes →',cls:'pri',fn:()=>chain(Q,()=>{const s=cur.ok,d=new Date().toLocaleDateString('id-ID');if(post)save.post={s,d};else save.pre={s,d};persist();hideSheet();if(s>=8){confetti();sfx('win');}
+      const gain=post&&save.pre?`<p style="text-align:center">Pre-test <b>${save.pre.s}/10</b> → Post-test <b>${s}/10</b> (${s-save.pre.s>=0?'+':''}${s-save.pre.s})</p>`:'';
+      modal(`<div class="stars">${s>=8?'🏅':'📘'}</div><h2 class="disp" style="text-align:center">Skor ${s}/10</h2>${gain}
+        <div class="fb ${s>=8?'ok':'info'}"><b>${s>=8?'Kategori: MENGUASAI dasar gambar teknik.':'Kategori: WAJIB PEMANTAPAN.'}</b> ${s>=8?'Kamu boleh langsung ke Tahap 2 dan membantu teman sebagai tutor sebaya. Misi Tahap 1 tetap bisa dimainkan untuk menambah bintang.':'Tuntaskan Misi 1 sampai 6 di Tahap 1 dengan minimal 2 bintang sebelum masuk ke Tahap 2.'}</div>`,[{label:'🗺️ Ke peta misi',cls:'pri',fn:goHub}]);})}]);}
+
+/* ---------- LEVEL 7: CAD FUNDAMENTALS ---------- */
+function buildCad(){
+  const root=new THREE.Group();root.position.set(0,1.75,-3.3);mg.add(root);const un=.22;
+  const glow=new THREE.Mesh(new THREE.CircleGeometry(1.1,40),new THREE.MeshBasicMaterial({color:0x3d8bfd,transparent:true,opacity:.16}));glow.rotation.x=-Math.PI/2;at(glow,0,.01,-3.3);mg.add(glow);
+  const P={};const mk=(key,col,rot,lab,lp)=>{const g=new THREE.Group();const m=new THREE.Mesh(new THREE.PlaneGeometry(1.7,1.7),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.1,side:THREE.DoubleSide,depthWrite:false}));g.add(m);
+    g.add(lines([-.85,-.85,0,.85,-.85,0,.85,-.85,0,.85,.85,0,.85,.85,0,-.85,.85,0,-.85,.85,0,-.85,-.85,0],col));g.rotation.set(...rot);root.add(g);const s=textSprite(lab,{h:.11,border:'#'+col.toString(16).padStart(6,'0')});s.position.set(...lp);root.add(s);P[key]=m;};
+  mk('front',0x3d8bfd,[0,0,0],'Front Plane',[-.75,.98,0]);mk('top',0x2fd27a,[-Math.PI/2,0,0],'Top Plane',[.9,.06,.95]);mk('right',0xff5a5a,[0,Math.PI/2,0],'Right Plane',[0,.98,-.95]);
+  root.add(at(mesh(new THREE.SphereGeometry(.035,16,12),mat('#e53935',{emissive:0x661111})),0,0,0));
+  let ob=null;const show=H=>{if(ob){root.remove(ob);disposeObj(ob);}const o=mkObj(H);ob=voxelGroup(o,un,'#ff8a1f');ob.position.y=-o.ny*un/2;root.add(ob);Object.values(P).forEach(m=>m.material.opacity=.1);};
+  const hi=k=>{anim(.5,t=>{P[k].material.opacity=.1+.35*t;});};
+  view({t:[0,1.7,-3.3],r:4.2,theta:.6,phi:1.05,minR:2,maxR:8},1.2);
+  const po=k=>[{ic:'🟦',label:'<b>Front Plane</b> (tampak depan)',ok:k==='front'},{ic:'🟩',label:'<b>Top Plane</b> (tampak atas)',ok:k==='top'},{ic:'🟥',label:'<b>Right Plane</b> (tampak samping)',ok:k==='right'}];
+  const pq=(H,k,why)=>({kick:'Bidang sketsa',title:'Sketsa profilnya di plane mana?',text:'Benda ini dibuat dengan <b>satu kali Extrude</b>. Putar model, lalu pilih plane tempat profilnya paling tepat digambar.',keep:true,opts:po(k),why,onShow:()=>show(H),onOk:()=>hi(k),hint:'Cari arah pandang yang memperlihatkan bentuk profilnya paling jelas 🔍'});
+  const Q=[
+    pq([[3,1,1],[3,1,1]],'front','Profil L terlihat dari depan, jadi digambar di <b>Front Plane</b> lalu di-extrude ke arah belakang.'),
+    pq([[2,2,2],[2,0,0],[2,2,2]],'top','Bentuk C terlihat dari atas dan tebalnya seragam, jadi profil digambar di <b>Top Plane</b> lalu di-extrude ke atas.'),
+    pq([[3,3,3],[2,2,2],[1,1,1]],'right','Profil tangga terlihat dari samping, jadi digambar di <b>Right Plane</b> lalu di-extrude ke arah lebar benda.'),
+    {kick:'Satuan',title:'Arti MMGS',text:'Semua tugas memakai sistem satuan <b>MMGS</b>. Artinya…',opts:[{ic:'📏',label:'Milimeter, gram, sekon',ok:1},{ic:'📏',label:'Meter, kilogram, sekon'},{ic:'📏',label:'Inci, pon, sekon'}],why:'MMGS = milimeter, gram, sekon. Atur di Options → Document Properties → Units sebelum mulai menggambar.'},
+    {kick:'Jenis berkas',title:'Ekstensi berkas part',text:'Model satu komponen disimpan sebagai berkas…',opts:[{ic:'🧱',label:'<b>.SLDPRT</b>',ok:1},{ic:'📄',label:'<b>.SLDDRW</b>'},{ic:'🔩',label:'<b>.SLDASM</b>'}],why:'.SLDPRT = part, .SLDDRW = drawing (gambar kerja), .SLDASM = assembly (rakitan).'},
+    {kick:'Titik acuan',title:'Mulai sketsa dari mana?',text:'Agar sketch mudah menjadi fully defined, titik awal sketsa pertama sebaiknya diikat ke…',opts:[{ic:'🔴',label:'Titik <b>origin</b> (titik merah di tengah layar)',ok:1},{ic:'↗️',label:'Sembarang tempat di layar'},{ic:'⬜',label:'Sudut layar monitor'}],why:'Origin adalah titik (0,0,0). Sketch yang terikat ke origin tidak bisa bergeser, sehingga lebih cepat fully defined.'},
+    {kick:'Design intent',title:'Lubang harus selalu di tengah',text:'Lubang pada pelat harus <b>selalu di tengah</b> walaupun panjang pelat nanti diubah. Cara terbaik adalah…',opts:[{ic:'🎯',label:'Mengikat pusat lubang dengan relasi ke tengah pelat (origin atau midpoint)',ok:1},{ic:'📐',label:'Memberi ukuran jarak 50 mm dari tepi kiri'},{ic:'🖱️',label:'Menggeser lubang kira-kira ke tengah'}],why:'Inilah <b>design intent</b>: model dibuat supaya berubah sesuai maksud perancang. Ukuran 50 mm tidak lagi di tengah begitu panjang pelat diubah.'},
+    {kick:'Tertib berkas',title:'Nama berkas yang baik',text:'Nama berkas mana yang paling mudah dicari guru dan dirimu sendiri?',opts:[{ic:'✅',label:'<b>JS1_07_Budi.SLDPRT</b>',ok:1},{ic:'❓',label:'Part1.SLDPRT'},{ic:'❓',label:'baru fix final banget.SLDPRT'}],why:'Nama baku memuat kode tugas, nomor absen, dan nama. Di industri, penamaan berkas adalah bagian dari pengelolaan data desain.'}];
+  intro('🖥️','Level 7 · TP-4','CAD Fundamentals','<p>Sebelum menekan tombol apa pun di SolidWorks, drafter memutuskan dulu: <b>profil benda digambar di plane mana?</b> Salah memilih plane membuat model sulit diubah.</p><p>Di layar ada tiga plane standar dan titik <b>origin</b> berwarna merah. Putar modelnya dengan jari. 🧭</p>',
+    ()=>chain(Q,()=>finish(['Front, Top, dan Right Plane dipilih sesuai arah pandang yang memperlihatkan profil benda.','Sketsa pertama diikat ke origin.','Satuan kerja MMGS; berkas part .SLDPRT, drawing .SLDDRW, assembly .SLDASM.','Design intent: model dibuat agar berubah sesuai maksud perancang.'],'Ambil satu benda di mejamu. Di plane mana kamu akan menggambar profilnya, dan mengapa?')));}
+
+/* ---------- LEVEL 8: SKETCH FULLY DEFINED ---------- */
+function buildSketch(){
+  const d=cadDesk();d.position.set(0,0,-3.6);mg.add(d);view({t:[0,1.3,-3.6],r:2.6,theta:.25,phi:1.2,minR:1.4,maxR:7},1.2);
+  const rect='<rect x="60" y="40" width="180" height="80"/>',dW='<g style="stroke-width:1"><line x1="60" y1="28" x2="240" y2="28"/></g>';
+  const tx=(x,y,t,c)=>`<text x="${x}" y="${y}" style="font:700 13px sans-serif;fill:${c};stroke:none" text-anchor="middle">${t}</text>`;
+  const Q=[
+   {kick:'Status sketch',title:'Arti warna biru',text:'Di SolidWorks, garis sketch yang masih berwarna <b>biru</b> berarti…',html:sk(rect+dW+tx(150,24,'100',BLUE),BLUE),
+    opts:[{ic:'🟦',label:'<b>Under Defined</b>: masih bisa bergeser, ukuran atau relasinya kurang',ok:1},{ic:'⬛',label:'<b>Fully Defined</b>: sudah terkunci'},{ic:'🟥',label:'<b>Over Defined</b>: ukurannya berlebih'}],why:'Biru = under defined. Hitam = fully defined. Merah atau kuning = over defined.'},
+   {kick:'Lengkapi sketch',title:'Apa yang kurang?',text:'Persegi panjang ini sudah terikat ke origin dan lebarnya 100. Tambahkan apa agar <b>fully defined</b>?',html:sk(rect+dW+tx(150,24,'100',BLUE),BLUE),
+    opts:[{ic:'📏',label:'Ukuran <b>tinggi</b> 50',ok:1},{ic:'📏',label:'Ukuran lebar 100 sekali lagi di sisi bawah',hint:'Itu ukuran ganda: sketch jadi over defined 🟥'},{ic:'✨',label:'Fillet di keempat sudut'}],why:'Dengan lebar dan tinggi, keempat sisi terkunci dan garis berubah hitam.',know:sk(rect+dW+tx(150,24,'100',BLK)+'<g style="stroke-width:1"><line x1="252" y1="40" x2="252" y2="120"/></g>'+tx(268,85,'50',BLK),BLK)},
+   {kick:'Relasi',title:'Garis yang hampir mendatar',text:'Sisi atas digambar miring sedikit tanpa sengaja. Cara yang benar memperbaikinya adalah…',html:sk('<polyline points="60,120 60,40 240,46 240,120 60,120"/>',BLUE),
+    opts:[{ic:'➖',label:'Menambah relasi <b>Horizontal</b> pada garis itu',ok:1},{ic:'📐',label:'Memberi ukuran sudut 1,9°'},{ic:'✂️',label:'Memotongnya dengan Trim'}],why:'Relasi (Horizontal, Vertical, Parallel, Perpendicular) mengunci bentuk tanpa menambah ukuran. Ukuran hanya untuk besaran.'},
+   {kick:'Lengkapi sketch',title:'Lingkaran yang masih biru',text:'Persegi panjang sudah hitam. Lingkaran Ø25 masih biru karena <b>posisinya</b> belum ditentukan. Tambahkan…',html:sk(rect.replace('<rect','<rect style="stroke:#111"')+'<circle cx="165" cy="76" r="20"/>'+tx(165,81,'Ø25',BLUE),BLUE),
+    opts:[{ic:'🎯',label:'Relasi atau ukuran posisi <b>pusat</b> lingkaran',ok:1},{ic:'⭕',label:'Ukuran diameter sekali lagi'},{ic:'🧱',label:'Langsung Extrude saja'}],why:'Lingkaran butuh dua hal: besar (diameter) dan letak pusat. Setelah pusatnya terikat, lingkaran menjadi hitam.'},
+   {kick:'Relasi',title:'Dua lubang yang selalu sama besar',text:'Dua lubang harus selalu berdiameter sama walaupun nanti diubah. Yang paling tepat…',html:sk(rect.replace('<rect','<rect style="stroke:#111"')+'<circle cx="105" cy="80" r="16"/><circle cx="195" cy="80" r="16"/>',BLUE),
+    opts:[{ic:'🟰',label:'Relasi <b>Equal</b> pada kedua lingkaran, lalu satu ukuran diameter',ok:1},{ic:'📏',label:'Dua ukuran diameter terpisah'},{ic:'📍',label:'Relasi Coincident pada kedua lingkaran'}],why:'Dengan Equal, cukup satu ukuran. Mengubah satu angka otomatis mengubah keduanya.'},
+   {kick:'Status sketch',title:'Ukuran berlebih',text:'Pada satu sketch diberi ukuran 90, 130, <b>dan</b> total 220 sekaligus. SolidWorks akan menandainya sebagai…',html:sk('<polyline points="60,120 60,50 135,50 135,80 240,80 240,120 60,120"/>',RED),
+    opts:[{ic:'🟥',label:'<b>Over Defined</b>',ok:1},{ic:'⬛',label:'Fully Defined'},{ic:'🟦',label:'Under Defined'}],why:'90 + 130 sudah menghasilkan 220. Ukuran ketiga berlebih, sehingga sketch over defined. Hapus satu atau jadikan <i>driven</i>.'},
+   {kick:'Sketch tools',title:'Profil yang simetris',text:'Profil simetris kiri dan kanan. Cara menggambar yang paling hemat adalah…',opts:[{ic:'🪞',label:'Gambar setengahnya, beri <b>centerline</b>, lalu <b>Mirror</b>',ok:1},{ic:'✍️',label:'Gambar kedua sisi satu per satu dan beri ukuran semuanya'},{ic:'📋',label:'Salin lalu tempel dan geser kira-kira'}],why:'Mirror terhadap centerline membuat kedua sisi selalu sama dan jumlah ukuran berkurang separuh.'},
+   {kick:'Sebelum Extrude',title:'Syarat profil',text:'Sebelum dijadikan fitur dengan Extruded Boss, sketch profil harus…',opts:[{ic:'✅',label:'Tertutup rapat dan fully defined',ok:1},{ic:'❓',label:'Boleh terbuka sedikit di sudut'},{ic:'❓',label:'Berwarna apa saja, asal bentuknya mirip'}],why:'Profil terbuka tidak bisa menjadi benda pejal, dan sketch biru masih bisa bergeser sehingga ukurannya tidak terjamin.'}];
+  intro('📐','Level 8 · TP-5','Sketch Fully Defined','<p>Semua part berawal dari <b>sketch 2D</b>. Sketch yang baik tidak bisa bergeser sedikit pun: setiap garis terkunci oleh <b>relasi</b> dan <b>ukuran</b>.</p><p>SolidWorks memberi tahu lewat warna: <b style="color:#6fa8ff">biru</b> masih kurang, <b>hitam</b> sudah pas, <b style="color:#ff5a5a">merah</b> berlebih. Tugasmu: menghitamkan sketch. ✏️</p>',
+    ()=>chain(Q,()=>finish(['Biru = under defined, hitam = fully defined, merah = over defined.','Relasi mengunci bentuk; ukuran mengunci besaran.','Lingkaran butuh diameter dan letak pusat.','Equal, Mirror, dan centerline menghemat ukuran.','Profil harus tertutup dan fully defined sebelum di-extrude.'],'Sketch terakhir yang kamu buat di SolidWorks: bagian mana yang masih biru, dan relasi apa yang kurang?')));}
+
+/* ---------- LEVEL 9: PART DASAR ---------- */
+function buildPart1(){const {A,B,C}=save.v;const set=stage(modelJS1(),1.15);
+  const Q=[
+   {kick:'Jobsheet 1 · urutan fitur',title:'Fitur pertama',text:'Perhatikan gambar kerja balok berlubang. Fitur apa yang dibuat <b>pertama</b>?',html:drawJS1(),opts:[{ic:'🧱',label:'<b>Extruded Boss/Base</b>: persegi panjang 100 × 50 setebal 30',ok:1},{ic:'🕳️',label:'Extruded Cut lubang Ø25'},{ic:'✨',label:'Fillet semua tepi'}],why:'Selalu mulai dari bentuk dasar terbesar (base feature), baru fitur potong.'},
+   {kick:'Jobsheet 1 · end condition',title:'Lubang Ø25 tembus',text:'Untuk lubang Ø25 yang <b>tembus</b>, end condition Extruded Cut yang tepat adalah…',opts:[{ic:'⬇️',label:'<b>Through All</b>',ok:1},{ic:'⬇️',label:'Blind 5 mm'},{ic:'⬇️',label:'Mid Plane 10 mm'}],why:'Through All selalu menembus seluruh benda walaupun tebal balok nanti diubah. Itu juga design intent.'},
+   {kick:'Jobsheet 1 · end condition',title:'Step Ø30 dalam 5',text:'Step Ø30 sedalam 5 mm dibuat dengan Extruded Cut…',opts:[{ic:'⬇️',label:'<b>Blind</b> 5 mm, sketsa di permukaan <b>bawah</b>',ok:1},{ic:'⬇️',label:'Through All dari permukaan atas'},{ic:'⬇️',label:'Blind 30 mm dari permukaan atas'}],why:'Blind = sedalam angka tertentu. Karena step ada di sisi bawah, sketsa lingkaran Ø30 dibuat di permukaan bawah balok.'}];
+  const N1={id:'js1',kick:'Tantangan Massa 1 · format CSWA',title:'Berapa massa balok ini?',text:'Modelkan <b>Jobsheet 1</b> di SolidWorks, tetapkan materialnya, lalu buka <b>Evaluate → Mass Properties</b>. Masukkan massanya.',html:drawJS1(),key:MASS.js1(),
+    hintHi:'Periksa lubang Ø25 (harus tembus) dan step Ø30 sedalam 5.',hintLo:'Periksa ukuran balok 100 × 50 × 30 dan diameter lubang.',why:'Model yang benar dibuktikan dengan angka, bukan dengan tampilan.'};
+  const N2={id:'js2',kick:'Tantangan Massa 2 · format CSWA',title:'Braket L milikmu',text:`Nilai variabelmu: <b>A = ${A}</b>, <b>B = ${B}</b>, <b>C = ${C}</b>. Nilai ini berbeda untuk tiap murid. Modelkan braket L, lalu masukkan massanya.`,html:drawJS2(A,B,C),key:MASS.js2(A,B,C),onShow:()=>set(modelJS2(A,B,C)),
+    hintHi:'Periksa tebal alas dan dinding (10 mm) serta dua lubang Ø10.',hintLo:'Periksa nilai A, B, C milikmu. B adalah tinggi total, termasuk tebal alas.',why:'Simpan berkas ini, karena akan diubah lagi di Tantangan Modifikasi.'};
+  const Q5={kick:'Menelusuri kesalahan',title:'Massa terlalu berat 4%',text:'Massa modelmu 4% lebih berat daripada kunci. Yang <b>pertama</b> kamu periksa adalah…',opts:[{ic:'🔎',label:'Fitur potong di FeatureManager: adakah yang terlewat atau kurang dalam, dan apakah materialnya benar',ok:1},{ic:'🎨',label:'Warna tampilan model'},{ic:'🔁',label:'Menebak angka lain sampai lolos'}],why:'Terlalu berat berarti materialnya kelebihan: biasanya ada potongan yang belum dibuat. Telusuri fitur satu per satu, jangan menebak.'};
+  intro('🧱','Level 9 · TP-6','Part Dasar + Tantangan Massa','<p>Mulai level ini kamu bekerja dengan <b>dua layar</b>: HP untuk gambar kerja, komputer untuk SolidWorks.</p><p>Seperti ujian sertifikasi <b>CSWA</b>, modelmu dinilai dari <b>massa</b>. Selisih lebih dari 1% berarti ada yang salah di model. Bintang dihitung dari jawaban yang lolos pada percobaan pertama. ⚖️</p>',
+    ()=>chain(Q,()=>{setProg('Tantangan Massa 1');askNum(N1,()=>{setProg('Tantangan Massa 2');askNum(N2,()=>{setProg('Soal penutup');askQ(Q5,()=>finish(['Base feature dulu, baru fitur potong.','Through All untuk lubang tembus, Blind untuk kedalaman tertentu.','Tetapkan material sebelum membaca Mass Properties.','Selisih massa lebih dari 1% = telusuri fitur, jangan menebak.'],'Di fitur mana kamu paling sering keliru saat memodelkan, dan bagaimana kamu menemukannya?'));});});}));}
+
+/* ---------- LEVEL 10: PART MENENGAH ---------- */
+function buildPart2(){const {L1}=save.v;const set=stage(modelJS3(L1),1.25);
+  const Q=[
+   {kick:'Jobsheet 3 · memilih fitur',title:'Poros bertingkat',text:'Fitur yang paling efisien untuk membuat poros bertingkat ini adalah…',html:drawJS3(L1),opts:[{ic:'🌀',label:'<b>Revolved Boss/Base</b>: satu profil diputar 360°',ok:1},{ic:'🧱',label:'Dua kali Extruded Boss dari lingkaran'},{ic:'✂️',label:'Balok besar lalu dipotong berkali-kali'}],why:'Benda putar paling ringkas dibuat dengan Revolve. Dua kali Extrude juga bisa, tetapi Revolve mengikuti cara benda ini dibubut.'},
+   {kick:'Jobsheet 3 · sketsa revolve',title:'Syarat sketsa Revolve',text:'Sketsa untuk Revolved Boss harus berisi…',opts:[{ic:'📐',label:'<b>Setengah</b> profil yang tertutup dan satu <b>centerline</b> sebagai sumbu putar',ok:1},{ic:'📐',label:'Profil penuh atas dan bawah sumbu'},{ic:'⭕',label:'Hanya sebuah lingkaran'}],why:'Setengah profil diputar mengelilingi sumbu. Profil penuh yang melewati sumbu akan menimbulkan galat.'},
+   {kick:'Jobsheet 4 · pola lubang',title:'Empat lubang di sudut pelat',text:'Empat lubang Ø12 berjarak 90 × 50. Cara tercepat dan paling mudah diubah adalah…',html:drawJS4(),opts:[{ic:'▦',label:'Satu lubang, lalu <b>Linear Pattern</b> dua arah (90 dan 50)',ok:1},{ic:'⭕',label:'Circular Pattern mengelilingi pusat'},{ic:'✍️',label:'Empat sketsa lingkaran dengan ukuran masing-masing'}],why:'Linear Pattern menggandakan fitur pada arah lurus. Mengubah jarak cukup di satu tempat.',onShow:()=>set(modelJS4())},
+   {kick:'Fillet dan Chamfer',title:'Tepi yang dibulatkan',text:'Tepi tajam ingin <b>dibulatkan</b> dengan jari-jari 3 mm. Fiturnya adalah…',opts:[{ic:'◜',label:'<b>Fillet</b> R3',ok:1},{ic:'◿',label:'Chamfer 3 × 45°'},{ic:'✂️',label:'Extruded Cut'}],why:'Fillet membulatkan tepi, Chamfer memotong miring. Keduanya dibuat paling akhir supaya tidak mengganggu fitur lain.'}];
+  const N3={id:'js3',kick:'Tantangan Massa 3 · format CSWA',title:'Poros bertingkat milikmu',text:`Nilai variabelmu: <b>L1 = ${L1}</b>. Modelkan poros dengan Revolve, lalu masukkan massanya.`,html:drawJS3(L1),key:MASS.js3(L1),onShow:()=>set(modelJS3(L1)),
+    hintHi:'Periksa lubang tengah Ø10: harus tembus sepanjang poros.',hintLo:'Periksa L1 milikmu dan diameter Ø40 serta Ø25 (bukan jari-jari).'};
+  const N4={id:'js4',kick:'Tantangan Massa 4 · format CSWA',title:'Pelat flens',text:'Modelkan pelat 120 × 80 × 12 dengan lubang tengah Ø40 dan empat lubang Ø12, lalu masukkan massanya.',html:drawJS4(),key:MASS.js4(),onShow:()=>set(modelJS4()),
+    hintHi:'Periksa jumlah lubang hasil pattern: harus empat, ditambah lubang tengah Ø40.',hintLo:'Periksa tebal pelat (12) dan diameter lubang.'};
+  const Q7={kick:'Pattern',title:'Enam lubang mengelilingi pusat',text:'Enam lubang baut tersusun <b>melingkar</b> mengelilingi pusat flens. Fitur yang tepat adalah…',opts:[{ic:'⭕',label:'<b>Circular Pattern</b> dengan 6 instance, 360°',ok:1},{ic:'▦',label:'Linear Pattern dua arah'},{ic:'🪞',label:'Mirror'}],why:'Circular Pattern menggandakan fitur mengelilingi satu sumbu. Fitur ini termasuk materi ujian CSWA tingkat menengah.'};
+  intro('⚙️','Level 10 · TP-7','Part Menengah + Tantangan Massa','<p>Tidak semua benda cocok dibuat dengan Extrude. Poros dibuat dengan <b>Revolve</b>, lubang berulang dibuat dengan <b>Pattern</b>.</p><p>Pilih fitur yang tepat, lalu buktikan dua modelmu dengan massa. ⚙️</p>',
+    ()=>chain(Q,()=>{setProg('Tantangan Massa 3');askNum(N3,()=>{setProg('Tantangan Massa 4');askNum(N4,()=>{setProg('Soal penutup');askQ(Q7,()=>finish(['Benda putar dibuat dengan Revolve: setengah profil dan centerline.','Linear Pattern untuk susunan lurus, Circular Pattern untuk susunan melingkar.','Fillet membulatkan, Chamfer memotong miring; keduanya dibuat paling akhir.','Diameter ditulis Ø: jangan tertukar dengan jari-jari.'],'Benda apa di bengkel yang paling cocok dibuat dengan Revolve, dan benda apa yang butuh Pattern?'));});});}));}
+
+/* ---------- LEVEL 11: TANTANGAN MODIFIKASI ---------- */
+function buildModif(){const {A,B,C,L1}=save.v;const set=stage(modelJS2(A,B,C),1.15);
+  const Q1={kick:'Mengubah desain',title:'Pelanggan minta alas lebih panjang',text:`Alas braket L harus diperpanjang dari A = ${A} menjadi <b>A = ${A+10}</b>. Cara yang benar adalah…`,html:drawJS2(A+10,B,C,'A'),opts:[{ic:'✏️',label:'Membuka sketch profil, mengubah angka ukuran A, lalu <b>Rebuild</b>',ok:1},{ic:'🗑️',label:'Menghapus part dan menggambar ulang dari awal'},{ic:'🧱',label:'Menambah balok 10 mm dengan Extrude baru di ujung alas'}],why:'Model parametrik cukup diubah di ukurannya. Jika sketch-mu fully defined, lubang ikut bergeser dengan benar.',onOk:()=>set(modelJS2(A+10,B,C))};
+  const N1={id:'mod2',kick:'Tantangan Modifikasi 1',title:'Massa braket setelah diubah',text:`Ubah berkas braket L milikmu menjadi <b>A = ${A+10}</b> (B = ${B} dan C = ${C} tetap). Masukkan massa barunya.`,html:drawJS2(A+10,B,C,'A'),key:MASS.js2(A+10,B,C),
+    hintHi:'Pastikan hanya A yang berubah menjadi '+(A+10)+'.',hintLo:'Apakah A sudah diubah? Massa harus bertambah dari sebelumnya.'};
+  const N2={id:'mod3',kick:'Tantangan Modifikasi 2',title:'Massa poros setelah diubah',text:`Ubah poros bertingkat milikmu menjadi <b>L1 = ${L1+10}</b>. Masukkan massa barunya.`,html:drawJS3(L1+10),key:MASS.js3(L1+10),onShow:()=>set(modelJS3(L1+10)),
+    hintHi:'Pastikan lubang Ø10 tetap tembus setelah poros diperpanjang.',hintLo:'Apakah L1 sudah menjadi '+(L1+10)+'?'};
+  const Q4={kick:'Galat rebuild',title:'Muncul tanda galat merah',text:'Setelah ukuran diubah, sebuah fitur di FeatureManager bertanda galat. Langkah yang tepat adalah…',opts:[{ic:'🔎',label:'Membuka fitur atau sketch itu dan memperbaiki referensi atau relasi yang hilang',ok:1},{ic:'🙈',label:'Mengabaikannya selama model masih terlihat'},{ic:'🗑️',label:'Menghapus semua fitur setelahnya'}],why:'Galat rebuild berarti sebuah fitur kehilangan acuannya. Model yang masih terlihat belum tentu benar; massanya bisa salah.'};
+  const Q5={kick:'Design intent',title:'Tinggi dinding selalu setengah alas',text:'Perancang ingin tinggi dinding <b>selalu setengah</b> panjang alas. Alat yang tepat adalah…',opts:[{ic:'🔗',label:'<b>Equations / Global Variables</b>: B = A ÷ 2',ok:1},{ic:'🧮',label:'Menghitung manual setiap kali A berubah'},{ic:'📝',label:'Menulis catatan di nama berkas'}],why:'Dengan Equations, cukup mengubah A dan B ikut berubah. Global Variables termasuk materi latihan ujian CSWA.'};
+  intro('🔧','Level 11 · TP-8','Tantangan Modifikasi','<p>Di industri, desain <b>selalu berubah</b>. Model yang baik bisa diubah dalam hitungan detik; model yang asal jadi akan rusak begitu satu angka diganti.</p><p>Buka kembali berkas braket L dan poros milikmu. Ujian CSWA juga meminta hal yang sama: ubah dimensi kunci, lalu laporkan massa baru. 🔧</p>',
+    ()=>{setProg('Soal 1/5');askQ(Q1,()=>{setProg('Soal 2/5');askNum(N1,()=>{setProg('Soal 3/5');askNum(N2,()=>{setProg('Soal 4/5');askQ(Q4,()=>{setProg('Soal 5/5');askQ(Q5,()=>finish(['Model parametrik diubah lewat ukurannya, bukan digambar ulang.','Sketch fully defined membuat perubahan aman.','Galat rebuild harus diperbaiki, bukan diabaikan.','Equations dan Global Variables menghubungkan ukuran satu dengan lainnya.'],'Jika panjang A diubah dua kali lipat, bagian mana dari modelmu yang paling berisiko rusak? Mengapa?'));});});});});});}
+
+const BUILD={cad:buildCad,sketch:buildSketch,part1:buildPart1,part2:buildPart2,modif:buildModif,garis:buildGaris,fitur:buildFitur,proyeksi:buildProyeksi,hilang:buildHilang,ukuran:buildUkuran,potongan:buildPotongan};
 
 /* ================= HUB ================= */
 function buildHubScene(){clearMission();
@@ -804,43 +1013,55 @@ function buildHubScene(){clearMission();
   const big=voxelGroup(mkObj([[3,3,3],[3,1,1],[1,1,1]]),.32,'#ff8a1f');big.position.y=.03;tt.userData.spin.add(big);
   missionUpd.add(d=>{tt.userData.spin.rotation.y+=d*.3;});
   view({t:[-.6,1.2,-2.8],r:11,theta:.45,phi:1.1,minR:3,maxR:16},0);rig.auto=true;}
-function renderHub(){const g=$('#grid');g.innerHTML='';let tot=0;
-  MIS.forEach(m=>{const r=save.res[m.id];tot+=r?r.stars:0;const c=el('button','card',`<span class="tp">${m.tp}</span><span class="no">MISI ${m.no}</span><span class="ic">${m.ic}</span><b>${m.title}</b><small>${m.sub}</small><span class="st">${r?'⭐'.repeat(r.stars)+'<span style="opacity:.2">'+'⭐'.repeat(3-r.stars)+'</span>':'<span style="color:#97a6b3;font-size:12px;letter-spacing:0;font-weight:700">BELUM DIMAINKAN →</span>'}</span>`);
-    c.onclick=()=>{initAudio();sfx('tap');startMission(m.id);};g.appendChild(c);});
-  $('#totalStars').textContent=`Total: ${tot}/18 ⭐`;}
+function mkCard(m){const r=save.res[m.id];const c=el('button','card',`<span class="tp">${m.tp}</span><span class="no">${m.th===2?'LEVEL':'MISI'} ${m.no}</span><span class="ic">${m.ic}</span><b>${m.title}</b><small>${m.sub}</small><span class="st">${r?'⭐'.repeat(r.stars)+'<span style="opacity:.2">'+'⭐'.repeat(3-r.stars)+'</span>':'<span style="color:#97a6b3;font-size:12px;letter-spacing:0;font-weight:700">BELUM DIMAINKAN →</span>'}</span>`);
+  c.onclick=()=>{initAudio();sfx('tap');const t1=MIS.filter(x=>x.th===1).every(x=>save.res[x.id]&&save.res[x.id].stars>=2);
+    if(m.th===2&&!t1&&!(save.pre&&save.pre.s>=8)){modal(`<h2 class="disp">Sudah siap ke Tahap 2?</h2><p>${save.pre?'Hasil pre-testmu masuk kategori <b>wajib pemantapan</b>.':'Kamu belum mengerjakan <b>pre-test</b>.'} Disarankan menuntaskan Misi 1 sampai 6 dengan minimal 2 bintang lebih dulu.</p>`,[{label:'Ke Tahap 1 dulu',cls:'pri'},{label:'Tetap lanjut',fn:()=>startMission(m.id)}]);return;}
+    startMission(m.id);};return c;}
+function renderHub(){const g=$('#grid');g.innerHTML='';let tot=0;MIS.forEach(m=>{const r=save.res[m.id];tot+=r?r.stars:0;});
+  const sec=(t,x)=>g.appendChild(el('div','sec',`<b>${t}</b><small>${x}</small>`));const p=save.pre,q=save.post;
+  sec('GERBANG MASUK','Pre-test menentukan jalur belajarmu');
+  const lab=p?`Skor ${p.s}/10 · ${p.s>=8?'<span style="color:#2fd27a">MENGUASAI</span>':'<span style="color:#ffc727">WAJIB PEMANTAPAN</span>'}${q?` · Post-test ${q.s}/10`:''}`:'<span style="color:#97a6b3;font-size:12px">MULAI DI SINI →</span>';
+  const pc=el('button','card',`<span class="tp">TP-1</span><span class="no">${p?'PRE-TEST / POST-TEST':'PRE-TEST'}</span><span class="ic">🚪</span><b>Tes Diagnostik</b><small>10 soal gambar teknik dasar. Setiap soal hanya bisa dijawab satu kali.</small><span class="st" style="letter-spacing:0;font-size:13px;font-weight:800">${lab}</span>`);
+  pc.onclick=()=>{initAudio();sfx('tap');if(!save.pre)return startPre(false);modal('<h2 class="disp">Tes sudah pernah dikerjakan</h2><p>Kerjakan lagi sebagai <b>post-test</b> setelah semua level selesai, untuk melihat kemajuanmu. Skor pre-test tidak berubah.</p>',[{label:'Batal'},{label:'Kerjakan post-test',cls:'pri',fn:()=>startPre(true)}]);};g.appendChild(pc);
+  sec('TAHAP 1 · MEMBACA GAMBAR',p&&p.s>=8?'Kamu sudah menguasai dasarnya. Misi ini opsional untuk menambah bintang.':'Misi pemantapan gambar teknik dasar');
+  MIS.filter(m=>m.th===1).forEach(m=>g.appendChild(mkCard(m)));
+  sec('TAHAP 2 · MEMODELKAN PART','Kerjakan sambil membuka SolidWorks di komputer');
+  MIS.filter(m=>m.th===2).forEach(m=>g.appendChild(mkCard(m)));
+  sec('TAHAP 3 DAN 4 · MENGGAMBAR DETAIL DAN MERAKIT','Dibuka pada semester genap');
+  g.appendChild(el('div','card soon','<span class="tp">TP-9 s.d. TP-13</span><span class="no">SEGERA HADIR</span><span class="ic">🔒</span><b>Drawing, Assembly, dan Ujian Lisensi</b><small>Sheet format, gambar detail, mate, gambar rakitan, dan simulasi ujian format CSWA.</small>'));
+  $('#totalStars').textContent=`Total: ${tot}/${MIS.length*3} ⭐`;}
 function goHub(){closeModal();$('#top').classList.remove('show');$('#hub').classList.remove('hide');buildHubScene();renderHub();cur=null;}
 $('#backBtn').onclick=()=>{modal('<h2 class="disp">Kembali ke peta misi?</h2><p>Progres misi ini tidak akan disimpan.</p>',[{label:'Batal'},{label:'Ya, kembali',cls:'pri',fn:goHub}]);};
 $('#inName').value=save.name||'';$('#inKelas').value=save.kelas||'';
 $('#inName').oninput=e=>{save.name=e.target.value;persist();};$('#inKelas').oninput=e=>{save.kelas=e.target.value;persist();};
-$('#resetBtn').onclick=()=>modal('<h2 class="disp">Reset semua progres?</h2><p>Semua bintang yang sudah diraih di perangkat ini akan dihapus.</p>',[{label:'Batal'},{label:'Reset',cls:'pri',fn:()=>{save.res={};persist();renderHub();}}]);
+$('#resetBtn').onclick=()=>modal('<h2 class="disp">Reset semua progres?</h2><p>Semua bintang yang sudah diraih di perangkat ini akan dihapus.</p>',[{label:'Batal'},{label:'Reset',cls:'pri',fn:()=>{save.res={};save.m={};delete save.pre;delete save.post;persist();renderHub();}}]);
 $('#certBtn').onclick=()=>{const done=MIS.filter(m=>save.res[m.id]);const tot=done.reduce((a,m)=>a+save.res[m.id].stars,0);
-  const full=done.length===6&&MIS.every(m=>save.res[m.id].stars>=2);const nm=(save.name||'').trim()||'(isi nama di halaman utama)';
+  const full=done.length===MIS.length&&MIS.every(m=>save.res[m.id].stars>=2);const nm=(save.name||'').trim()||'(isi nama di halaman utama)';
   const d=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-  const rows=MIS.map(m=>{const r=save.res[m.id];return`<tr><td>${m.ic} ${m.title}</td><td>${m.tp}</td><td style="text-align:right">${r?'⭐'.repeat(r.stars)+` (${r.ok}/${r.total})`:'—'}</td></tr>`;}).join('');
-  const txt=`LISENSI DRAFTER MUDA — STUDIO GAMTEK\nNama: ${nm}\nKelas: ${save.kelas||'-'}\nTanggal: ${d}\nStatus: ${full?'LISENSI PENUH':'LISENSI SEMENTARA'}\nTotal bintang: ${tot}/18\n`+MIS.map(m=>{const r=save.res[m.id];return`- Misi ${m.no} ${m.title}: ${r?r.stars+' bintang, benar '+r.ok+'/'+r.total:'belum'}`;}).join('\n');
+  const rows=MIS.map(m=>{const r=save.res[m.id];return`<tr><td>${m.ic} ${m.title}</td><td style="white-space:nowrap">${m.tp}</td><td style="text-align:right;white-space:nowrap">${r?'⭐'.repeat(r.stars)+` (${r.ok}/${r.total})`:'—'}</td></tr>`;}).join('');
+  const txt=`LISENSI DRAFTER MUDA — STUDIO GAMTEK\nNama: ${nm}\nKelas: ${save.kelas||'-'}\nTanggal: ${d}\nStatus: ${full?'LISENSI PENUH':'LISENSI SEMENTARA'}\nTotal bintang: ${tot}/${MIS.length*3}\nPre-test: ${save.pre?save.pre.s+'/10':'belum'} | Post-test: ${save.post?save.post.s+'/10':'belum'}\nVariabel: A=${save.v.A} B=${save.v.B} C=${save.v.C} L1=${save.v.L1}\n`+MIS.map(m=>{const r=save.res[m.id];return`- ${m.tp} ${m.title}: ${r?r.stars+' bintang, benar '+r.ok+'/'+r.total:'belum'}`;}).join('\n')+'\nTantangan massa:\n'+[['js1','Balok'],['js2','Braket L'],['js3','Poros'],['js4','Pelat flens'],['mod2','Modifikasi braket'],['mod3','Modifikasi poros']].map(([k,n])=>{const x=save.m[k];return`- ${n}: ${x?(x.v==null?'dilewati':fmt(x.v)+' g, selisih '+fmt(x.d)+'%, percobaan ke-'+x.t):'belum'}`;}).join('\n');
   modal(`<div class="cert"><div style="font-size:12px;font-weight:800;letter-spacing:.1em;color:#123a6b">SMKS 2 TRIPLE "J" · TEKNIK MESIN</div><h3>${full?'LISENSI DRAFTER MUDA':'LISENSI SEMENTARA'}</h3><div style="font-size:13px">diberikan kepada</div><div class="nm">${esc(nm)}</div><div style="font-size:13px">${esc(save.kelas||'')} · ${d}</div>
-    <div style="font-size:30px;margin:6px 0">${full?'🏅':'🔰'} <b style="font-size:20px">${tot}/18 ⭐</b></div><table>${rows}</table>
-    <div style="font-size:11.5px;color:#2c4a6b;margin-top:8px">${full?'Telah menuntaskan seluruh misi pemantapan gambar teknik dasar dengan minimal 2 bintang dan siap melanjutkan ke CAD SolidWorks.':'Selesaikan semua misi dengan minimal 2 bintang untuk mendapat Lisensi Penuh.'}</div></div>
+    <div style="font-size:30px;margin:6px 0">${full?'🏅':'🔰'} <b style="font-size:20px">${tot}/${MIS.length*3} ⭐</b></div><div style="font-size:12.5px">Pre-test ${save.pre?save.pre.s+'/10':'—'} · Post-test ${save.post?save.post.s+'/10':'—'}</div><table>${rows}</table>
+    <div style="font-size:11.5px;color:#2c4a6b;margin-top:8px">${full?'Telah menuntaskan Tahap 1 (Membaca Gambar) dan Tahap 2 (Memodelkan Part) dengan minimal 2 bintang.':'Selesaikan semua misi dan level dengan minimal 2 bintang untuk mendapat Lisensi Penuh.'}</div></div>
     <p style="font-size:13px">Salin hasil ini lalu kirim ke Google Classroom sebagai bukti penyelesaian, atau tangkap layar sertifikat.</p>`,
     [{label:'📋 Salin hasil',cls:'pri',keep:true,fn:()=>{const ok=()=>toast('Hasil tersalin ✓','ok');
       function fallback(){const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();try{document.execCommand('copy');ok();}catch(e){toast('Gagal menyalin, tangkap layar saja','bad');}t.remove();}
       try{navigator.clipboard.writeText(txt).then(ok,fallback);}catch(e){fallback();}}},{label:'Tutup'}]);};
 $('#guruBtn').onclick=()=>modal(`<div class="kick">Untuk guru</div><h2 class="disp">Panduan Penggunaan</h2>
-  <p>Simulasi ini untuk <b>pemantapan gambar teknik dasar</b> murid kelas XI Teknik Mesin sebelum masuk CAD SolidWorks. Setiap misi mewakili satu pertemuan pemantapan dan ditutup dengan jembatan ke fitur SolidWorks yang setara.</p>
-  <table class="tbl"><tr><th>Misi</th><th>Materi</th><th>Kegunaan di kelas</th></tr>
-  <tr><td>1 · Garis</td><td>Jenis garis, kertas, skala</td><td>Pemantik sebelum latihan garis di kertas</td></tr>
-  <tr><td>2 · Fitur</td><td>Sketsa isometrik, berpikir fitur</td><td>Pendamping latihan sketsa isometrik dari benda nyata</td></tr>
-  <tr><td>3 · Kotak kaca</td><td>Proyeksi Eropa</td><td>Demonstrasi konsep sebelum menggambar 3 pandangan</td></tr>
-  <tr><td>4 · Pandangan hilang</td><td>Visualisasi</td><td>Latihan inti; cocok juga sebagai kuis awal atau akhir</td></tr>
-  <tr><td>5 · Ukuran</td><td>Aturan pemberian ukuran</td><td>Sebelum memberi ukuran pada gambar kerja</td></tr>
-  <tr><td>6 · Potongan</td><td>Potongan & arsiran</td><td>Pengantar tugas gambar kerja akhir</td></tr></table>
-  <ul><li>Satu misi berdurasi 5–10 menit; cocok dikerjakan berpasangan pada satu HP.</li><li>Bintang dihitung dari jawaban benar <b>pada percobaan pertama</b>, sehingga dapat menjadi data asesmen formatif.</li><li>Gabungkan dengan benda nyata (blok kayu atau hasil 3D print) agar murid bisa memegang bendanya.</li><li>Setiap misi ditutup dengan pertanyaan <b>refleksi</b> untuk diskusi kelas.</li><li>Murid menekan <b>"Lisensi Saya → Salin hasil"</b> lalu menempelkannya di Google Classroom.</li><li>Progres tersimpan di browser perangkat masing-masing.</li></ul>`,[{label:'Tutup',cls:'pri'}]);
+  <p>Studio Gamtek mengikuti <b>Buku Administrasi Gambar Teknik Manufaktur (CAD) Fase F</b>. Setiap misi atau level mewakili satu Tujuan Pembelajaran, dengan alur pre-test → pemantapan → pemodelan part → post-test.</p>
+  <table class="tbl"><tr><th>Bagian</th><th>TP</th><th>Kegunaan di kelas</th></tr>
+  <tr><td>Pre-test</td><td>TP-1</td><td>Penempatan: skor 8–10 menguasai, 0–7 wajib pemantapan. Dikerjakan ulang sebagai post-test.</td></tr>
+  <tr><td>Misi 1–6</td><td>TP-1 s.d. TP-3</td><td>Pemantapan gambar teknik dasar: garis, proyeksi, ukuran, potongan.</td></tr>
+  <tr><td>Level 7–8</td><td>TP-4, TP-5</td><td>Bidang sketsa, design intent, sketch fully defined.</td></tr>
+  <tr><td>Level 9–10</td><td>TP-6, TP-7</td><td>Jobsheet 1–4: murid memodelkan di SolidWorks lalu memasukkan massa.</td></tr>
+  <tr><td>Level 11</td><td>TP-8</td><td>Mengubah dimensi kunci dan melaporkan massa baru.</td></tr></table>
+  <ul><li><b>Tantangan massa</b> berformat ujian CSWA: MMGS, 2 desimal, AISI 1020, 0,0079 g/mm³. Jawaban lolos bila selisihnya maksimal 1%.</li><li>Nilai <b>A, B, C, dan L1 diacak per perangkat</b>, jadi jawaban antarmurid berbeda. Kunci untuk nilai contoh ada di Buku Administrasi bagian 13.</li><li>Bintang dihitung dari jawaban benar <b>pada percobaan pertama</b>, sehingga dapat menjadi data asesmen formatif.</li><li>Murid menekan <b>"Lisensi Saya → Salin hasil"</b> lalu menempelkannya di Google Classroom. Salinan memuat skor tes, bintang, variabel, dan massa tiap tantangan.</li><li>Progres tersimpan di browser perangkat masing-masing.</li><li>Tahap 3 dan 4 (Drawing, Assembly, Ujian Lisensi) menyusul untuk semester genap.</li></ul>`,[{label:'Tutup',cls:'pri'}]);
 
 /* ================= START ================= */
 function boot(){buildHubScene();renderHub();loop();setTimeout(()=>$('#loading').classList.add('hide'),300);}
 const fontsReady=(document.fonts&&document.fonts.ready)?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1800))]):Promise.resolve();
 fontsReady.then(boot);
-window.__sim={startMission,goHub,get cur(){return cur;},viewOf,mkObj,buildOptions,rig};
+window.__sim={startPre,MASS,get save(){return save;},startMission,goHub,get cur(){return cur;},viewOf,mkObj,buildOptions,rig};
 })();
 </script>
 </body>
