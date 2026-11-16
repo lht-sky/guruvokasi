@@ -101,6 +101,7 @@ function fit(x,y,z,dir){const g=grp(at(cyl(.022,.022,.03,'#c9d1d8',{metalness:.8
 function ballValve(vertical){const g=grp(at(cyl(.035,.035,.1,'#b89458',{metalness:.8,roughness:.35},16),0,0,0),at(cyl(.042,.042,.03,'#b89458',{metalness:.8,roughness:.35},6),0,.05,0),at(cyl(.042,.042,.03,'#b89458',{metalness:.8,roughness:.35},6),0,-.05,0),at(cyl(.012,.012,.04,'#888',{metalness:.8},8).rotateX(Math.PI/2),0,0,.045));
   const lev=at(box(.03,.14,.014,'#d62828'),0,.04,.07);g.add(lev);g.userData.lever=lev;if(!vertical)g.rotation.z=Math.PI/2;return g;}
 
+W.fit=fit;W.ballValve=ballValve;
 /* ====================================================================== */
 /* RUANG KOMPRESOR (x -13..-6, z -8..-1,5)                                */
 /* ====================================================================== */

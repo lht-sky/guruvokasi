@@ -43,7 +43,7 @@ G.notebook=(id,done)=>{const N=G.NOTES[id],no=id.slice(1);let ok=false;modal(b=>
   b.appendChild(el('p','','Buka <b>buku tulismu</b>. Tulis tangan dengan rapi: bagian <b>A</b> dibaca lalu diringkas, bagian <b>B</b> digambar, bagian <b>C</b> disalin, bagian <b>D</b> dijawab dengan kalimatmu sendiri. Setelah selesai, minta <b>paraf guru</b>.'));
   b.appendChild(el('div','nb',`<h3>Level ${no} — ${N.j}</h3><div class="dt">Hari/tanggal: ……………  Nama: ${G.esc(G.save.name||'……………')}</div>
    <h3>A. Bacaan — baca, lalu tulis ringkasannya (3–4 kalimat)</h3><div>${N.baca}</div>
-   <h3>B. Gambar — sketsa rangkaian jalur pneumatik</h3>${N.gambar.map(x=>`<div>${x}</div>`).join('')}
+   <h3>B. ${N.gt||'Gambar — sketsa rangkaian jalur pneumatik'}</h3>${N.gambar.map(x=>`<div>${x}</div>`).join('')}
    <h3>C. Istilah penting — salin</h3>${N.ist.map(x=>`<div>• <b>${x[0]}</b>: ${x[1]}</div>`).join('')}
    <h3>D. Tulis dengan kalimatmu sendiri (minimal 3 kalimat tiap nomor)</h3>${N.tulis.map((x,i)=>`<div>${i+1}. ${x}</div>`).join('')}
    <div class="dt" style="text-align:right">Paraf guru: …………</div>`));
