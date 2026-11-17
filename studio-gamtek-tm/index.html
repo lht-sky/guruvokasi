@@ -388,17 +388,21 @@ function viewOf(o,name){const V=VIEWS[name];const [nu,nv,nw]=V.dims(o);
 function segsSVG(vw,ox,oy,s){let a='',b='';vw.segs.forEach(([u0,v0,u1,v1,st])=>{const l=`<line x1="${ox+u0*s}" y1="${oy+(vw.nv-v0)*s}" x2="${ox+u1*s}" y2="${oy+(vw.nv-v1)*s}"/>`;if(st===2)b+=l;else a+=l;});return `<g class="hid">${a}</g><g class="vis">${b}</g>`;}
 function viewSVG(vw,o){o=Object.assign({s:30,bu:vw.nu,bv:vw.nv,pad:10},o||{});const W=o.bu*o.s+2*o.pad,Hh=o.bv*o.s+2*o.pad;
   return svgWrap(`0 0 ${W} ${Hh}`,segsSVG(vw,o.pad+(o.bu-vw.nu)*o.s/2,o.pad+(o.bv-vw.nv)*o.s/2,o.s));}
-/* susunan proyeksi Eropa: depan kiri-atas, atas di bawahnya, samping kiri di kanannya */
-function layoutSVG(o,ask){const s=24,g=1.7,pad=16;const W=(o.nx+g+o.nz)*s+2*pad,Hh=(o.ny+g+o.nz)*s+2*pad;
-  const P={front:[pad,pad,o.nx,o.ny,'DEPAN'],left:[pad+(o.nx+g)*s,pad,o.nz,o.ny,'SAMPING KIRI'],top:[pad,pad+(o.ny+g)*s,o.nx,o.nz,'ATAS']};
-  let out='';
-  const fx=P.front[0],fy=P.front[1];
-  out+=`<line class="ali" x1="${fx+o.nx*s}" y1="${fy}" x2="${P.left[0]}" y2="${fy}"/><line class="ali" x1="${fx+o.nx*s}" y1="${fy+o.ny*s}" x2="${P.left[0]}" y2="${fy+o.ny*s}"/>`;
-  out+=`<line class="ali" x1="${fx}" y1="${fy+o.ny*s}" x2="${fx}" y2="${P.top[1]}"/><line class="ali" x1="${fx+o.nx*s}" y1="${fy+o.ny*s}" x2="${fx+o.nx*s}" y2="${P.top[1]}"/>`;
-  ['front','left','top'].forEach(n=>{const [x,y,w,h,lab]=P[n];out+=`<text class="lb" x="${x}" y="${y-5}">${lab}</text>`;
+/* susunan proyeksi Amerika (sudut ketiga): atas di atas depan, samping kanan di kanan depan */
+function layoutSVG(o,ask){const s=24,g=1.7,pad=16;const W=(o.nx+g+o.nz)*s+2*pad,Hh=(o.ny+g+o.nz)*s+2*pad;const fy=pad+(o.nz+g)*s,rx=pad+(o.nx+g)*s;
+  const P={top:[pad,pad,o.nx,o.nz,'ATAS'],front:[pad,fy,o.nx,o.ny,'DEPAN'],right:[rx,fy,o.nz,o.ny,'SAMPING KANAN']};
+  let out=`<line class="ali" x1="${pad+o.nx*s}" y1="${fy}" x2="${rx}" y2="${fy}"/><line class="ali" x1="${pad+o.nx*s}" y1="${fy+o.ny*s}" x2="${rx}" y2="${fy+o.ny*s}"/>`;
+  out+=`<line class="ali" x1="${pad}" y1="${pad+o.nz*s}" x2="${pad}" y2="${fy}"/><line class="ali" x1="${pad+o.nx*s}" y1="${pad+o.nz*s}" x2="${pad+o.nx*s}" y2="${fy}"/>`;
+  ['top','front','right'].forEach(n=>{const [x,y,w,h,lab]=P[n];out+=`<text class="lb" x="${x}" y="${y-5}">${lab}</text>`;
     if(n===ask){out+=`<rect x="${x}" y="${y}" width="${w*s}" height="${h*s}" fill="#fff3e0" stroke="#ff7a00" stroke-width="1.5" stroke-dasharray="5 4" rx="4"/><text class="qm" x="${x+w*s/2}" y="${y+h*s/2+9}" text-anchor="middle">?</text>`;}
     else out+=segsSVG(viewOf(o,n),x,y,s);});
   return svgWrap(`0 0 ${W} ${Hh}`,out);}
+/* lembar gambar mini dengan tiga pandangan: mode third | first | wrong */
+function sheetSVG(o,mode){const s=16,g=1.3,ox=20,oy=22;const L={third:[['top',0,0,'ATAS'],['front',0,o.nz+g,'DEPAN'],['right',o.nx+g,o.nz+g,'KANAN']],
+  first:[['front',0,0,'DEPAN'],['left',o.nx+g,0,'KIRI'],['top',0,o.ny+g,'ATAS']],wrong:[['front',0,0,'DEPAN'],['top',o.nx+g,0,'ATAS'],['right',0,o.ny+g,'KANAN']]}[mode];
+  let out='<rect x="4" y="4" width="192" height="142" fill="#fff" stroke="#111" stroke-width="1.2"/><rect x="146" y="126" width="50" height="20" class="thin"/><text class="lb" x="150" y="139" style="font-size:7px">ETIKET</text>';
+  L.forEach(([n,u,v,lab])=>{const x=ox+u*s,y=oy+v*s;out+=`<text class="lb" x="${x}" y="${y-3}" style="font-size:7px">${lab}</text>`+segsSVG(viewOf(o,n),x,y,s);});
+  return svgWrap('0 0 200 150',out);}
 function voxelGroup(o,un,col,ghost){const pos=[];const ox=-o.nx*un/2,oz=-o.nz*un/2;const oc=(x,y,z)=>occW(o,x,y,z)?1:0;
   const DIRS=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
   for(let z=0;z<o.nz;z++)for(let x=0;x<o.nx;x++)for(let y=0;y<o.H[z][x];y++){
@@ -415,7 +419,7 @@ function voxelGroup(o,un,col,ghost){const pos=[];const ox=-o.nx*un/2,oz=-o.nz*un
   for(let z=0;z<o.nz;z++)for(let x=0;x<=o.nx;x++)for(let y=0;y<=o.ny;y++)if(isE(oc(x-1,y-1,z),oc(x,y-1,z),oc(x-1,y,z),oc(x,y,z)))E([x,y,z],[x,y,z+1]);
   const g=new THREE.Group();g.add(ms);g.add(lines(ep,ghost?0x7fb6ff:0x1a1a1a));g.userData.mesh=ms;return g;}
 function viewCanvas(o,name,w,h,un,label){const ppu=256,c=cnv(Math.round(w*ppu),Math.round(h*ppu)),x=c.getContext('2d');
-  x.fillStyle='rgba(255,255,255,.9)';x.fillRect(0,0,c.width,c.height);x.strokeStyle='#3d8bfd';x.lineWidth=6;x.strokeRect(3,3,c.width-6,c.height-6);
+  x.fillStyle='rgba(255,255,255,.55)';x.fillRect(0,0,c.width,c.height);x.strokeStyle='#3d8bfd';x.lineWidth=6;x.strokeRect(3,3,c.width-6,c.height-6);
   const vw=viewOf(o,name),hu=vw.nu*un/2,hv=vw.nv*un/2;const px=u=>(w/2+(u*un-hu))*ppu,py=v=>(h/2-(v*un-hv))*ppu;
   [1,2].forEach(st=>{x.strokeStyle='#111';x.lineCap='round';x.lineWidth=st===2?7:3.5;x.setLineDash(st===2?[]:[16,10]);
     vw.segs.filter(s=>s[4]===st).forEach(([u0,v0,u1,v1])=>{x.beginPath();x.moveTo(px(u0),py(v0));x.lineTo(px(u1),py(v1));x.stroke();});});
@@ -434,11 +438,11 @@ function boardTex(){const c=cnv(1024,512),x=c.getContext('2d');x.fillStyle='#fdf
   return tex(c);}
 function posterTex(){const c=cnv(512,640),x=c.getContext('2d');x.fillStyle='#123a6b';x.fillRect(0,0,512,640);
   x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=2;for(let i=0;i<512;i+=32){x.beginPath();x.moveTo(i,0);x.lineTo(i,640);x.stroke();}for(let j=0;j<640;j+=32){x.beginPath();x.moveTo(0,j);x.lineTo(512,j);x.stroke();}
-  x.fillStyle='#ffc727';x.font='800 50px '+FONT;x.textAlign='center';x.fillText('PROYEKSI',256,90);x.fillText('EROPA',256,148);
-  x.strokeStyle='#fff';x.lineWidth=7;x.beginPath();x.moveTo(90,300);x.lineTo(250,250);x.lineTo(250,410);x.lineTo(90,360);x.closePath();x.stroke();
-  x.beginPath();x.arc(380,330,80,0,7);x.stroke();x.beginPath();x.arc(380,330,30,0,7);x.stroke();
-  x.lineWidth=2;x.setLineDash([24,8,4,8]);x.beginPath();x.moveTo(60,330);x.lineTo(480,330);x.stroke();x.beginPath();x.moveTo(380,230);x.lineTo(380,430);x.stroke();x.setLineDash([]);
-  x.fillStyle='#e9eef2';x.font='700 30px '+FONT;x.fillText('ISO-E · First angle',256,510);x.font='600 24px '+FONT;x.fillStyle='#9fc0e8';x.fillText('Atas → bawah · Kiri → kanan',256,560);
+  x.fillStyle='#ffc727';x.font='800 50px '+FONT;x.textAlign='center';x.fillText('PROYEKSI',256,90);x.fillText('AMERIKA',256,148);
+  x.strokeStyle='#fff';x.lineWidth=7;x.beginPath();x.moveTo(270,300);x.lineTo(430,250);x.lineTo(430,410);x.lineTo(270,360);x.closePath();x.stroke();
+  x.beginPath();x.arc(140,330,80,0,7);x.stroke();x.beginPath();x.arc(140,330,30,0,7);x.stroke();
+  x.lineWidth=2;x.setLineDash([24,8,4,8]);x.beginPath();x.moveTo(60,330);x.lineTo(480,330);x.stroke();x.beginPath();x.moveTo(140,230);x.lineTo(140,430);x.stroke();x.setLineDash([]);
+  x.fillStyle='#e9eef2';x.font='700 30px '+FONT;x.fillText('ISO-A · Third angle',256,510);x.font='600 24px '+FONT;x.fillStyle='#9fc0e8';x.fillText('Atas di atas · Kanan di kanan',256,560);
   return tex(c);}
 function buildRoom(){const g=new THREE.Group();
   const fl=new THREE.Mesh(new THREE.PlaneGeometry(16,12),new THREE.MeshStandardMaterial({map:floorTex(),roughness:.85}));fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;g.add(fl);
@@ -516,8 +520,8 @@ const MIS=[
   sw:'Jenis garis ini diatur di <b>Document Properties → Line Font</b>. Ukuran kertas dan skala dipilih lewat <b>Sheet Properties</b> saat membuat Drawing.'},
  {id:'fitur',no:2,ic:'🧊',title:'Berpikir Fitur',sub:'Bangun benda dari balok dasar: potong tangga, alur, dan coakan.',tp:'TP-2',th:1,
   sw:'Urutan yang sama dipakai di Part: <b>Extruded Boss/Base</b> untuk balok dasar, lalu <b>Extruded Cut</b> untuk tangga, alur, dan coakan.'},
- {id:'proyeksi',no:3,ic:'📦',title:'Kotak Kaca Proyeksi',sub:'Buka kotak kaca dan susun pandangan proyeksi Eropa.',tp:'TP-2',th:1,
-  sw:'Di Drawing, <b>Standard 3 View</b> menyusun pandangan otomatis. Pastikan <b>Sheet Properties → Type of projection: First angle</b>.'},
+ {id:'proyeksi',no:3,ic:'📦',title:'Kotak Kaca Proyeksi',sub:'Buka kotak kaca dan susun pandangan proyeksi Amerika.',tp:'TP-2',th:1,
+  sw:'Di Drawing, <b>Standard 3 View</b> menyusun pandangan otomatis. Pastikan <b>Sheet Properties → Type of projection: Third angle</b>.'},
  {id:'hilang',no:4,ic:'🧩',title:'Pandangan yang Hilang',sub:'Dua pandangan diketahui, temukan pandangan ketiga.',tp:'TP-2',th:1,
   sw:'Kemampuan ini dipakai saat memilih <b>bidang sketsa</b> (Front, Top, Right Plane) dan membaca gambar kerja sebelum mulai memodelkan.'},
  {id:'ukuran',no:5,ic:'📏',title:'Detektif Ukuran',sub:'Temukan kesalahan pemberian ukuran pada gambar kerja.',tp:'TP-3',th:1,
@@ -532,23 +536,27 @@ const MIS=[
   sw:'Fitur ada di tab <b>Features</b>; material lewat klik kanan <b>Material → Edit Material</b>; massa di <b>Evaluate → Mass Properties</b>.'},
  {id:'part2',no:10,ic:'⚙️',title:'Part Menengah + Tantangan Massa',sub:'Revolve, Pattern, Fillet; poros dan pelat flens.',tp:'TP-7',th:2,
   sw:'<b>Revolved Boss/Base</b>, <b>Linear Pattern</b>, <b>Circular Pattern</b>, <b>Fillet</b>, dan <b>Chamfer</b> ada di tab Features.'},
- {id:'modif',no:11,ic:'🔧',title:'Tantangan Modifikasi',sub:'Ubah dimensi kunci tanpa merusak model, lalu laporkan massa baru.',tp:'TP-8',th:2,
-  sw:'Klik dua kali fitur untuk menampilkan ukurannya, ubah angkanya, lalu tekan <b>Rebuild</b> (Ctrl+B). Hubungan antarukuran dibuat di <b>Tools → Equations</b>.'}];
+ {id:'modif',no:11,ic:'🔧',title:'Tantangan Modifikasi',sub:'Ubah dimensi kunci tanpa merusak model, lalu laporkan massa baru.',tp:'TP-8',th:3,
+  sw:'Klik dua kali fitur untuk menampilkan ukurannya, ubah angkanya, lalu tekan <b>Rebuild</b> (Ctrl+B). Hubungan antarukuran dibuat di <b>Tools → Equations</b>.'},
+ {id:'draw1',no:12,ic:'📄',title:'Lembar Gambar & Tiga Pandangan',sub:'Kertas, skala, etiket, Third angle, dan Standard 3 View.',tp:'TP-9',th:3,
+  sw:'Buat <b>New → Drawing</b>, pilih ukuran kertas, lalu atur <b>Sheet Properties</b>. Pandangan ditempatkan dengan <b>Standard 3 View</b> atau <b>Model View</b>.'},
+ {id:'draw2',no:13,ic:'🗒️',title:'Gambar Detail',sub:'Section, Detail View, ukuran, toleransi, dan tanda pengerjaan.',tp:'TP-10',th:3,
+  sw:'Di tab <b>View Layout</b>: Section View, Detail View, Auxiliary View. Di tab <b>Annotation</b>: Model Items, Smart Dimension, Center Mark, Surface Finish.'}];
 let cur=null;
 function disposeObj(o){o.traverse(m=>{if(m.geometry)m.geometry.dispose();if(m.material)[].concat(m.material).forEach(x=>{if(x.map)x.map.dispose();x.dispose();});});}
 function clearMission(){runId++;while(mg.children.length){const c=mg.children[0];mg.remove(c);disposeObj(c);}missionUpd.clear();pulsers.length=0;anims=anims.filter(a=>a.keep);hideSheet();}
 function startMission(id){closeModal();$('#hub').classList.add('hide');$('#top').classList.add('show');clearMission();rig.auto=false;
-  const m=MIS.find(x=>x.id===id);cur={id,ok:0,total:0,m};setTop(`${m.th===2?'Level':'Misi'} ${m.no} · ${m.title}`,'');setScore();BUILD[id]();}
+  const m=MIS.find(x=>x.id===id);cur={id,ok:0,total:0,m};setTop(`${m.th>=2?'Level':'Misi'} ${m.no} · ${m.title}`,'');setScore();BUILD[id]();}
 function intro(ic,kick,title,html,start){modal(`<div class="stars">${ic}</div><div class="kick">${kick}</div><h2 class="disp">${title}</h2>${html}`,[{label:'Mulai misi →',cls:'pri',fn:start}]);}
 function finish(points,refl){const r={ok:cur.ok,total:cur.total};const q=r.total?r.ok/r.total:0;r.stars=q>=.85?3:q>=.6?2:1;
   const prev=save.res[cur.id];if(!prev||r.stars>prev.stars||(r.stars===prev.stars&&r.ok>=prev.ok))save.res[cur.id]=r;persist();
   confetti();sfx('win');hideSheet();const id=cur.id,idx=MIS.findIndex(m=>m.id===id),nx=MIS[idx+1];
-  modal(`<div class="stars">${'⭐'.repeat(r.stars)}<span style="opacity:.2">${'⭐'.repeat(3-r.stars)}</span></div><h2 class="disp" style="text-align:center">${cur.m.th===2?'Level':'Misi'} ${cur.m.no} selesai!</h2>
+  modal(`<div class="stars">${'⭐'.repeat(r.stars)}<span style="opacity:.2">${'⭐'.repeat(3-r.stars)}</span></div><h2 class="disp" style="text-align:center">${cur.m.th>=2?'Level':'Misi'} ${cur.m.no} selesai!</h2>
     <p style="text-align:center">Benar pada percobaan pertama: <b>${r.ok}/${r.total}</b></p>
     <div class="know"><b>Rangkuman</b><ul>${points.map(p=>`<li>${p}</li>`).join('')}</ul></div>
     <div class="sw">🖥️ <b>Jembatan ke SolidWorks:</b> ${cur.m.sw}</div>
     <div class="fb info"><b>💭 Refleksi:</b> ${refl}</div>`,
-    [{label:'↺ Ulangi',fn:()=>startMission(id)},{label:'🗺️ Peta misi',fn:goHub}].concat(nx?[{label:`${nx.th===2?'Level':'Misi'} ${nx.no} →`,cls:'pri',fn:()=>startMission(nx.id)}]:[]));}
+    [{label:'↺ Ulangi',fn:()=>startMission(id)},{label:'🗺️ Peta misi',fn:goHub}].concat(nx?[{label:`${nx.th>=2?'Level':'Misi'} ${nx.no} →`,cls:'pri',fn:()=>startMission(nx.id)}]:[]));}
 
 /* ---------- MISI 1: GARIS, KERTAS & SKALA ---------- */
 const M1BODY='<g id="m1o" class="vis"><polyline points="40,160 40,40 120,40 120,110 260,110 260,160 40,160"/></g>'+
@@ -619,65 +627,66 @@ function buildFitur(){
     ()=>chain(Q,()=>finish(['Benda rumit = balok dasar + beberapa fitur potong atau tambah.','Mulai dari bentuk dasar terbesar, baru detail.','Sumbu isometrik miring 30°; garis sejajar tetap sejajar.'],'Lihat benda di sekitarmu. Dari balok dasar apa benda itu bisa dibuat, dan potongan apa saja yang perlu?'),'Langkah'));}
 
 /* ---------- MISI 3: KOTAK KACA PROYEKSI ---------- */
-function projSymbol(first){const tr=first?'M20,45 L60,30 L60,90 L20,75 Z':'M110,30 L150,45 L150,75 L110,90 Z';const cx=first?110:45;
+function projSymbol(first){const tr=first?'M20,45 L60,30 L60,90 L20,75 Z':'M110,45 L150,30 L150,90 L110,75 Z';const cx=first?110:45;
   return svgWrap('0 0 170 120',`<path class="vis" d="${tr}"/><circle class="vis" cx="${cx}" cy="60" r="30"/><circle class="vis" cx="${cx}" cy="60" r="15"/><line class="cen" x1="8" y1="60" x2="162" y2="60"/><line class="cen" x1="${cx}" y1="22" x2="${cx}" y2="98"/>`);}
 function buildProyeksi(){
   const o=mkObj([[3,3,3],[3,1,1],[1,1,1]]),un=.3,m=.3;const F=o.nx*un/2+m,E=o.ny*un/2+m,D=o.nz*un/2+m;
-  const root=new THREE.Group();root.position.set(-.55,2.45,-3.0);mg.add(root);
+  const root=new THREE.Group();root.position.set(-.3,1.2,-3.0);mg.add(root);
   const obj=voxelGroup(o,un,'#ff8a1f');obj.position.y=-o.ny*un/2;root.add(obj);
-  const glow=new THREE.Mesh(new THREE.CircleGeometry(1.1,40),new THREE.MeshBasicMaterial({color:0x3d8bfd,transparent:true,opacity:.18}));glow.rotation.x=-Math.PI/2;at(glow,-.55,.01,-3.0);mg.add(glow);
+  const glow=new THREE.Mesh(new THREE.CircleGeometry(1.1,40),new THREE.MeshBasicMaterial({color:0x3d8bfd,transparent:true,opacity:.18}));glow.rotation.x=-Math.PI/2;at(glow,-.3,.01,-3.0);mg.add(glow);
   function pl(w,h,name,label){const g=new THREE.Group();g.add(new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:0xbfe8ff,transparent:true,opacity:.14,side:THREE.DoubleSide,depthWrite:false})));
     const vm=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex(viewCanvas(o,name,w,h,un,label)),transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));vm.position.z=.003;g.add(vm);
     g.add(lines([-w/2,-h/2,0,w/2,-h/2,0, w/2,-h/2,0,w/2,h/2,0, w/2,h/2,0,-w/2,h/2,0, -w/2,h/2,0,-w/2,-h/2,0],0x7fb6ff));g.userData.vm=vm;return g;}
-  const pf=pl(2*F,2*E,'front','DEPAN');pf.position.set(0,0,-D);root.add(pf);
-  const pivT=new THREE.Group();pivT.position.set(0,-E,-D);root.add(pivT);const pt=pl(2*F,2*D,'top','ATAS');pt.rotation.x=-Math.PI/2;pt.position.set(0,0,D);pivT.add(pt);
-  const pivS=new THREE.Group();pivS.position.set(F,0,-D);root.add(pivS);const ps=pl(2*D,2*E,'left','SAMPING KIRI');ps.rotation.y=-Math.PI/2;ps.position.set(0,0,D);pivS.add(ps);
+  /* sudut ketiga: dinding kaca berada di antara pengamat dan benda */
+  const pf=pl(2*F,2*E,'front','DEPAN');pf.position.set(0,0,D);root.add(pf);
+  const pivT=new THREE.Group();pivT.position.set(0,E,D);root.add(pivT);const pt=pl(2*F,2*D,'top','ATAS');pt.rotation.x=-Math.PI/2;pt.position.set(0,0,-D);pivT.add(pt);
+  const pivS=new THREE.Group();pivS.position.set(F,0,D);root.add(pivS);const ps=pl(2*D,2*E,'right','SAMPING KANAN');ps.rotation.y=Math.PI/2;ps.position.set(0,0,-D);pivS.add(ps);
   const hx=o.nx*un/2,hy=o.ny*un/2,hz=o.nz*un/2;
   const prj=(arr)=>{const l=lines(arr,0x3d8bfd,{dash:.05,gap:.035,op:0});root.add(l);return l;};
-  const lF=prj([-hx,-hy,hz,-hx,-hy,-D, hx,-hy,hz,hx,-hy,-D, -hx,hy,hz,-hx,hy,-D, hx,hy,hz,hx,hy,-D]);
-  const lT=prj([-hx,hy,-hz,-hx,-E,-hz, hx,hy,-hz,hx,-E,-hz, -hx,hy,hz,-hx,-E,hz, hx,hy,hz,hx,-E,hz]);
-  const lS=prj([-hx,-hy,-hz,F,-hy,-hz, -hx,hy,-hz,F,hy,-hz, -hx,-hy,hz,F,-hy,hz, -hx,hy,hz,F,hy,hz]);
-  const mk=[];const marker=(txt,pos,rot)=>{const s=textSprite(txt,{h:.13});s.position.set(...pos);root.add(s);mk.push(s);const c=mesh(new THREE.ConeGeometry(.06,.16,16),mat('#ffc727',{emissive:0x553d00}));c.position.set(pos[0]*.82,pos[1]*.82,pos[2]*.82);c.rotation.set(...rot);root.add(c);mk.push(c);};
-  marker('D · DEPAN',[0,0,hz+.55],[-Math.PI/2,0,0]);marker('A · ATAS',[0,hy+.5,0],[Math.PI,0,0]);marker('K · KIRI',[-hx-.6,0,0],[0,0,-Math.PI/2]);
+  const lF=prj([-hx,-hy,hz,-hx,-hy,D, hx,-hy,hz,hx,-hy,D, -hx,hy,hz,-hx,hy,D, hx,hy,hz,hx,hy,D]);
+  const lT=prj([-hx,hy,-hz,-hx,E,-hz, hx,hy,-hz,hx,E,-hz, -hx,hy,hz,-hx,E,hz, hx,hy,hz,hx,E,hz]);
+  const lS=prj([hx,-hy,-hz,F,-hy,-hz, hx,hy,-hz,F,hy,-hz, hx,-hy,hz,F,-hy,hz, hx,hy,hz,F,hy,hz]);
+  const mk=[];const marker=(txt,pos,rot)=>{const s=textSprite(txt,{h:.13});s.position.set(...pos);root.add(s);mk.push(s);const c=mesh(new THREE.ConeGeometry(.06,.16,16),mat('#ffc727',{emissive:0x553d00}));c.position.set(pos[0]*.86,pos[1]*.86,pos[2]*.86);c.rotation.set(...rot);root.add(c);mk.push(c);};
+  marker('D · DEPAN',[0,0,D+.45],[-Math.PI/2,0,0]);marker('A · ATAS',[0,E+.4,0],[Math.PI,0,0]);marker('K · KANAN',[F+.5,0,0],[0,0,Math.PI/2]);
   const showMk=v=>mk.forEach(x=>x.visible=v);
-  view({t:[-.1,2.35,-3.0],r:5.6,theta:-.55,phi:1.12,minR:2.5,maxR:10},1.3);
+  view({t:[-.2,1.3,-3.0],r:5.8,theta:.6,phi:1.08,minR:2.5,maxR:10},1.3);
   const fade=(l,to,d)=>{const a=l.material.opacity;anim(d||.6,k=>{l.material.opacity=lerp(a,to,k);});};
   function project(next){showMk(false);sfx('whoosh');
     [[lF,pf],[lT,pt],[lS,ps]].forEach(([l,p],i)=>{later(()=>{fade(l,.95,.5);later(()=>{fade(p.userData.vm,1,.7);sfx('tap');},450);},i*1300);});
     later(next,4200);}
-  function unfold(next){[lF,lT,lS].forEach(l=>fade(l,0,.5));sfx('whoosh');const y0=obj.position.y;anim(.8,k=>{obj.position.y=y0+k*1.6;obj.scale.setScalar(Math.max(.01,1-k));},()=>{obj.visible=false;});
-    later(()=>{anim(2,k=>{const e=ease(k);pivT.rotation.x=e*Math.PI/2;pivS.rotation.y=e*Math.PI/2;});view({t:[.25,1.55,-3.0],r:6.6,theta:0,phi:1.5},2.2);},400);later(next,2700);}
-  const tv=viewOf(o,'top'),sv=viewOf(o,'left');
+  function unfold(next){[lF,lT,lS].forEach(l=>fade(l,0,.5));sfx('whoosh');[pf,pt,ps].forEach(p=>{const gm=p.children[0].material;later(()=>{gm.color.set(0xffffff);anim(1.2,k=>{gm.opacity=.14+.8*k;});},1600);});anim(.8,k=>{obj.scale.setScalar(Math.max(.01,1-k));},()=>{obj.visible=false;});
+    later(()=>{anim(2,k=>{const e=ease(k);pivT.rotation.x=e*Math.PI/2;pivS.rotation.y=-e*Math.PI/2;});view({t:[-.3+D,1.2+D,-3.0+D],r:6.6,theta:0,phi:1.5},2.2);},400);later(next,2700);}
+  const tv=viewOf(o,'top'),sv=viewOf(o,'right');
   const Q1={kick:'Arah pandang',title:'Pandangan dari arah mana?',text:'Gambar ini adalah benda di dalam kotak kaca yang dilihat dari satu arah. Putar model 3D bila perlu.',html:viewSVG(tv,{s:34}),
-    opts:[{ic:'⬇️',label:'Dari <b>atas</b> (A)',ok:1},{ic:'➡️',label:'Dari <b>depan</b> (D)'},{ic:'⬅️',label:'Dari <b>samping kiri</b> (K)'}],
+    opts:[{ic:'⬇️',label:'Dari <b>atas</b> (A)',ok:1},{ic:'➡️',label:'Dari <b>depan</b> (D)'},{ic:'⬅️',label:'Dari <b>samping kanan</b> (K)'}],
     why:'Ini pandangan atas: tiga tingkat ketinggian terlihat sebagai bidang-bidang. Pada pandangan atas, sisi <b>depan</b> benda berada di bagian bawah gambar.'};
   const Q2={kick:'Arah pandang',title:'Kalau yang ini?',text:'Perhatikan bagian yang tinggi dan rendah. Dari arah mana benda dilihat?',html:viewSVG(sv,{s:34}),
-    opts:[{ic:'⬅️',label:'Dari <b>samping kiri</b> (K)',ok:1},{ic:'↪️',label:'Dari <b>samping kanan</b>'},{ic:'➡️',label:'Dari <b>depan</b> (D)'}],
-    why:'Dilihat dari kiri, bagian <b>belakang</b> yang tinggi tampak di kiri gambar dan bagian <b>depan</b> yang rendah di kanan.'};
-  const Q3={kick:'Proyeksi Eropa',title:'Letak pandangan atas',text:'Lihat hasil bukaan kotak kaca. Pada proyeksi Eropa, pandangan atas diletakkan…',
-    opts:[{ic:'⬇️',label:'Di <b>bawah</b> pandangan depan',ok:1},{ic:'⬆️',label:'Di <b>atas</b> pandangan depan'},{ic:'⬅️',label:'Di <b>kiri</b> pandangan depan'}],
-    why:'Pada proyeksi Eropa (ISO-E, sudut pertama), benda berada di antara pengamat dan bidang proyeksi, sehingga bayangan pandangan atas jatuh di <b>bawah</b> pandangan depan.'};
-  const Q4={kick:'Proyeksi Eropa',title:'Letak pandangan samping kiri',text:'Pandangan dari kiri diletakkan…',
-    opts:[{ic:'➡️',label:'Di <b>kanan</b> pandangan depan',ok:1},{ic:'⬅️',label:'Di <b>kiri</b> pandangan depan'},{ic:'⬇️',label:'Di <b>bawah</b> pandangan atas'}],
-    why:'Pandangan dari kiri diproyeksikan ke bidang di sebelah kanan, jadi digambar di <b>kanan</b> pandangan depan. Pada proyeksi Amerika (ISO-A) letaknya kebalikannya.'};
-  const Q5={kick:'Simbol proyeksi',title:'Simbol proyeksi Eropa',text:'Simbol mana yang ditulis di kepala gambar untuk proyeksi Eropa?',grid:true,
-    opts:[{svg:projSymbol(true),ok:1},{svg:projSymbol(false),hint:'Itu simbol proyeksi Amerika'}],
-    why:'Pada simbol proyeksi Eropa, lingkaran berada di kanan dan ujung kecil kerucut terpotong <b>menjauhi</b> lingkaran. Pada simbol proyeksi Amerika, ujung kecilnya menghadap lingkaran.'};
-  const Q6={kick:'Ke SolidWorks',title:'Pengaturan di SolidWorks',text:'Agar SolidWorks menyusun pandangan seperti proyeksi Eropa, pengaturan yang benar adalah…',
-    opts:[{ic:'⚙️',label:'Sheet Properties → Type of projection: <b>First angle</b>',ok:1},{ic:'⚙️',label:'Sheet Properties → Type of projection: <b>Third angle</b>'},{ic:'⚙️',label:'Mengubah skala gambar menjadi 1 : 1'}],
-    why:'First angle = proyeksi Eropa. Template ISO biasanya sudah First angle, tetapi selalu periksa sebelum mencetak gambar kerja.'};
+    opts:[{ic:'⬅️',label:'Dari <b>samping kanan</b> (K)',ok:1},{ic:'↪️',label:'Dari <b>samping kiri</b>'},{ic:'➡️',label:'Dari <b>depan</b> (D)'}],
+    why:'Dilihat dari kanan, bagian <b>depan</b> yang rendah tampak di kiri gambar dan bagian <b>belakang</b> yang tinggi di kanan.'};
+  const Q3={kick:'Proyeksi Amerika',title:'Letak pandangan atas',text:'Lihat hasil bukaan kotak kaca. Pada proyeksi Amerika, pandangan atas diletakkan…',
+    opts:[{ic:'⬆️',label:'Di <b>atas</b> pandangan depan',ok:1},{ic:'⬇️',label:'Di <b>bawah</b> pandangan depan'},{ic:'⬅️',label:'Di <b>kiri</b> pandangan depan'}],
+    why:'Pada proyeksi Amerika (ISO-A, sudut ketiga), dinding kaca berada di antara pengamat dan benda. Yang terlihat dari atas digambar di dinding atas, sehingga pandangan atas berada di <b>atas</b> pandangan depan.'};
+  const Q4={kick:'Proyeksi Amerika',title:'Letak pandangan samping kanan',text:'Pandangan dari kanan diletakkan…',
+    opts:[{ic:'➡️',label:'Di <b>kanan</b> pandangan depan',ok:1},{ic:'⬅️',label:'Di <b>kiri</b> pandangan depan'},{ic:'⬇️',label:'Di <b>bawah</b> pandangan depan'}],
+    why:'Aturannya mudah diingat: <b>yang dilihat dari kanan digambar di kanan, yang dilihat dari atas digambar di atas</b>. Pada proyeksi Eropa (ISO-E, sudut pertama) letaknya kebalikannya.'};
+  const Q5={kick:'Simbol proyeksi',title:'Simbol proyeksi Amerika',text:'Simbol mana yang ditulis di etiket gambar untuk proyeksi Amerika?',grid:true,
+    opts:[{svg:projSymbol(false),ok:1},{svg:projSymbol(true),hint:'Itu simbol proyeksi Eropa'}],
+    why:'Pada simbol proyeksi Amerika, lingkaran berada di kiri dan ujung kecil kerucut terpotong <b>menghadap</b> lingkaran. Pada simbol proyeksi Eropa, lingkaran di kanan dan ujung kecilnya menjauhi lingkaran.'};
+  const Q6={kick:'Ke SolidWorks',title:'Pengaturan di SolidWorks',text:'Agar SolidWorks menyusun pandangan seperti proyeksi Amerika, pengaturan yang benar adalah…',
+    opts:[{ic:'⚙️',label:'Sheet Properties → Type of projection: <b>Third angle</b>',ok:1},{ic:'⚙️',label:'Sheet Properties → Type of projection: <b>First angle</b>'},{ic:'⚙️',label:'Mengubah skala gambar menjadi 1 : 1'}],
+    why:'Third angle = proyeksi Amerika. Selalu periksa pengaturan ini dan simbol di etiket sebelum mencetak, karena gambar dari pihak lain bisa saja memakai First angle.'};
   function step(title,text,btn,fn){sheet(b=>{head(b,'Kotak kaca',title,text);actions(b,[{label:btn,cls:'pri',fn:()=>{hideSheet();fn();}}]);});}
   const total=6;let n=0;const ask=(q,nx)=>{n++;setProg(`Soal ${n}/${total}`);askQ(q,nx);};
-  intro('📦','Misi 3 · Pertemuan 3','Kotak Kaca Proyeksi','<p>Bayangkan benda dimasukkan ke dalam <b>kotak kaca</b>. Bayangan benda dari depan, atas, dan samping jatuh ke dinding kaca. Saat kotak dibuka, terbentuklah susunan pandangan pada gambar kerja.</p><p>Indonesia memakai <b>proyeksi Eropa</b>. Amati baik-baik ke mana setiap bayangan jatuh! 🔦</p>',
+  intro('📦','Misi 3 · TP-2','Kotak Kaca Proyeksi','<p>Bayangkan benda dimasukkan ke dalam <b>kotak kaca</b>. Kamu melihat benda <b>menembus kaca</b> dari depan, atas, dan kanan, lalu menggambar apa yang terlihat pada kaca itu. Saat kotak dibuka, terbentuklah susunan pandangan pada gambar kerja.</p><p>Di kelas ini kita memakai <b>proyeksi Amerika</b> (sudut ketiga). Amati baik-baik di dinding mana setiap pandangan digambar! 🔦</p>',
     ()=>ask(Q1,()=>ask(Q2,s2)));
-  function s2(){step('Proyeksikan!','Sekarang sorotkan bayangan benda ke tiga dinding kaca: belakang, bawah, dan kanan.','Proyeksikan ✨',()=>project(s3));}
-  function s3(){step('Buka kotak kaca','Ketiga bayangan sudah jatuh ke dinding kaca. Benda diangkat keluar, lalu dinding bawah dan kanan dibuka agar sejajar dengan dinding belakang.','Buka kotak 📂',()=>unfold(s4));}
-  function s4(){ask(Q3,()=>ask(Q4,()=>ask(Q5,()=>ask(Q6,()=>finish(['Proyeksi Eropa: benda berada di antara pengamat dan bidang proyeksi.','Pandangan atas di bawah pandangan depan; pandangan kiri di kanan pandangan depan.','Simbol Eropa: lingkaran di kanan, ujung kecil kerucut menjauhi lingkaran.','Di SolidWorks: Type of projection = First angle.'],'Mengapa gambar kerja dari Eropa dan Amerika bisa terbaca terbalik bila simbol proyeksinya tidak diperhatikan?')))));}}
+  function s2(){step('Gambar pada kaca','Sekarang gambarlah apa yang terlihat pada tiga dinding kaca di antara kamu dan benda: dinding depan, atas, dan kanan.','Proyeksikan ✨',()=>project(s3));}
+  function s3(){step('Buka kotak kaca','Ketiga pandangan sudah tergambar di kaca. Benda dikeluarkan, lalu dinding atas dan dinding kanan dibuka sampai sejajar dengan dinding depan.','Buka kotak 📂',()=>unfold(s4));}
+  function s4(){ask(Q3,()=>ask(Q4,()=>ask(Q5,()=>ask(Q6,()=>finish(['Proyeksi Amerika: bidang proyeksi berada di antara pengamat dan benda.','Pandangan atas di atas pandangan depan; pandangan kanan di kanan pandangan depan.','Simbol Amerika: lingkaran di kiri, ujung kecil kerucut menghadap lingkaran.','Di SolidWorks: Type of projection = Third angle.','Proyeksi Eropa (First angle) susunannya kebalikan; selalu cek simbol di etiket.'],'Mengapa gambar kerja bisa salah dibaca bila simbol proyeksi di etiket tidak diperhatikan?')))));}}
 
 /* ---------- MISI 4: PANDANGAN YANG HILANG ---------- */
-const VNAME={front:'pandangan depan',top:'pandangan atas',left:'pandangan samping kiri'};
-const MIRROR={left:'right',top:'topflip',front:'back'};
-function buildOptions(o,ask){const ck=viewOf(o,ask).key;const given=['front','top','left'].filter(n=>n!==ask);const gk=given.map(n=>viewOf(o,n).key);
+const VNAME={front:'pandangan depan',top:'pandangan atas',left:'pandangan samping kiri',right:'pandangan samping kanan'};
+const MIRROR={left:'right',right:'left',top:'topflip',front:'back'};
+function buildOptions(o,ask){const ck=viewOf(o,ask).key;const given=['front','top','right'].filter(n=>n!==ask);const gk=given.map(n=>viewOf(o,n).key);
   const out=[{vw:viewOf(o,ask),ok:1}];const keys=new Set([ck]);
   const mv=viewOf(o,MIRROR[ask]);if(!keys.has(mv.key)){out.push({vw:mv,hint:'Itu bayangan cermin. Periksa lagi arah pandangnya! 🪞'});keys.add(mv.key);}
   const vars=[];for(let z=0;z<o.nz;z++)for(let x=0;x<o.nx;x++)for(const d of [-1,1]){const h=o.H[z][x]+d;if(h<0||h>o.ny)continue;const H2=o.H.map(r=>r.slice());H2[z][x]=h;const o2=mkObj(H2);if(o2.ny!==o.ny)continue;vars.push(o2);}
@@ -688,16 +697,16 @@ function buildHilang(){
   let box_=crate();box_.position.y=.26;tt.userData.spin.add(box_);let objG=null;
   missionUpd.add(dt=>{tt.userData.spin.rotation.y+=dt*.4;});
   view({t:[0,1.2,-3.5],r:2.8,theta:.3,phi:1.08,minR:1.4,maxR:7},1.2);
-  const R=[{H:[[2,2,2],[1,1,1]],ask:'left',why:'Dari kiri, bagian belakang yang tinggi tampak di kiri gambar dan bagian depan yang rendah di kanan.'},
-    {H:[[1,2,3],[1,2,3]],ask:'left',why:'Dari kiri, semua anak tangga terlihat sehingga garisnya <b>kontinu</b>. Jika dilihat dari kanan, anak tangga tersembunyi di balik bagian tertinggi dan digambar dengan <b>garis gores</b>.'},
-    {H:[[3,3,1],[3,1,1],[1,1,1]],ask:'left',why:'Tinggi pandangan samping = tinggi pandangan depan, dan lebar pandangan samping = kedalaman pada pandangan atas.'},
+  const R=[{H:[[2,2,2],[1,1,1]],ask:'right',why:'Dari kanan, bagian depan yang rendah tampak di kiri gambar dan bagian belakang yang tinggi di kanan.'},
+    {H:[[3,2,1],[3,2,1]],ask:'right',why:'Dari kanan, semua anak tangga terlihat sehingga garisnya <b>kontinu</b>. Jika dilihat dari kiri, anak tangga tersembunyi di balik bagian tertinggi dan digambar dengan <b>garis gores</b>.'},
+    {H:[[3,3,1],[3,1,1],[1,1,1]],ask:'right',why:'Tinggi pandangan samping = tinggi pandangan depan, dan lebar pandangan samping = kedalaman pada pandangan atas.'},
     {H:[[3,3,3],[3,1,3],[1,1,1]],ask:'top',why:'Lebar pandangan atas = lebar pandangan depan, kedalamannya = lebar pandangan samping. Alur di tengah tampak sebagai kotak.'},
     {H:[[3,1,1],[3,3,1],[1,1,1]],ask:'front',why:'Lebar pandangan depan = lebar pandangan atas, tingginya = tinggi pandangan samping. Bagian yang tertutup digambar dengan garis gores.'}];
   function reveal(o){const old=box_;anim(.4,k=>old.scale.setScalar(1-k),()=>{tt.userData.spin.remove(old);});
     if(objG){tt.userData.spin.remove(objG);disposeObj(objG);}const g=voxelGroup(o,.15,'#ff8a1f');objG=g;g.position.y=.01;g.scale.setScalar(.01);tt.userData.spin.add(g);anim(.6,k=>g.scale.setScalar(Math.max(.01,ease(k))));}
   function reset(){if(objG){const g=objG;anim(.3,k=>g.scale.setScalar(Math.max(.01,1-k)),()=>{tt.userData.spin.remove(g);disposeObj(g);});objG=null;}box_=crate();box_.position.y=.26;box_.scale.setScalar(.01);tt.userData.spin.add(box_);const b=box_;anim(.4,k=>b.scale.setScalar(Math.max(.01,k)));}
   const Q=R.map((r,i)=>{const o=mkObj(r.H);const opts=buildOptions(o,r.ask);const bu=Math.max(...opts.map(x=>x.vw.nu)),bv=Math.max(...opts.map(x=>x.vw.nv));
-    return{kick:`Teka-teki ${i+1}/5`,title:`Temukan ${VNAME[r.ask]}`,text:`Dua pandangan sudah diketahui (proyeksi Eropa). Pilih ${VNAME[r.ask]} yang benar. Benda aslinya tersembunyi di dalam peti.`,html:layoutSVG(o,r.ask),grid:true,
+    return{kick:`Teka-teki ${i+1}/5`,title:`Temukan ${VNAME[r.ask]}`,text:`Dua pandangan sudah diketahui (proyeksi Amerika). Pilih ${VNAME[r.ask]} yang benar. Benda aslinya tersembunyi di dalam peti.`,html:layoutSVG(o,r.ask),grid:true,
       opts:opts.map(x=>({svg:viewSVG(x.vw,{s:30,bu,bv}),ok:x.ok,hint:x.hint})),why:r.why,onShow:()=>{if(i>0)reset();},onOk:()=>{reveal(o);toast('Benda asli terungkap! Putar untuk mengecek 🔄','ok');}};});
   intro('🧩','Misi 4 · Pertemuan 4','Pandangan yang Hilang','<p>Di bengkel, kamu sering hanya diberi gambar kerja tanpa benda aslinya. Drafter yang baik bisa <b>membayangkan bentuk 3D</b> dan melengkapi pandangan yang hilang.</p><p>Gunakan aturan emas: <b>tinggi sama tinggi, lebar sama lebar, dalam sama dalam</b>. Garis bantu biru tipis menolongmu menyamakan ukuran. 🧠</p>',
     ()=>chain(Q,()=>finish(['Tinggi pandangan depan = tinggi pandangan samping.','Lebar pandangan depan = lebar pandangan atas.','Kedalaman pada pandangan atas = lebar pandangan samping.','Tepi tersembunyi digambar dengan garis gores.'],'Strategi apa yang paling membantumu menemukan pandangan yang hilang? Bandingkan dengan strategi temanmu.'),'Teka-teki'));}
@@ -852,23 +861,23 @@ function modelJS3(L1){const g=new THREE.Group(),k=.008;const mk=(r,l,x)=>{const 
 function modelJS4(){return prism(120,80,12,[[0,0,20],[-45,-25,6],[45,-25,6],[-45,25,6],[45,25,6]]);}
 
 /* gambar kerja jobsheet */
-function drawJS1(){return svgWrap('0 0 370 255',
-  '<text class="lb" x="60" y="14">PANDANGAN DEPAN</text><rect class="vis" x="60" y="30" width="200" height="60"/>'+
-  '<g class="hid"><line x1="135" y1="30" x2="135" y2="80"/><line x1="185" y1="30" x2="185" y2="80"/><line x1="130" y1="80" x2="130" y2="90"/><line x1="190" y1="80" x2="190" y2="90"/><line x1="130" y1="80" x2="190" y2="80"/></g>'+
-  '<line class="cen" x1="160" y1="22" x2="160" y2="98"/>'+dimV(30,90,45,'30',[[30,58,38],[90,58,38]])+
-  '<line class="thin" x1="190" y1="85" x2="268" y2="72"/><text class="dt" x="270" y="70">Ø30</text><text class="dt" x="270" y="85">dalam 5</text>'+
+function drawJS1(miss){return svgWrap('0 0 370 255','<g transform="translate(0,-105)">'+
   '<text class="lb" x="60" y="119">PANDANGAN ATAS</text><rect class="vis" x="60" y="125" width="200" height="100"/><circle class="vis" cx="160" cy="175" r="25"/><circle class="hid" cx="160" cy="175" r="30"/>'+
   '<line class="cen" x1="50" y1="175" x2="270" y2="175"/><line class="cen" x1="160" y1="117" x2="160" y2="233"/>'+
   dimH(60,260,243,'100',[[60,228,248],[260,228,248]])+dimV(125,225,45,'50',[[125,58,38],[225,58,38]])+
-  '<line class="thin" x1="178" y1="157" x2="268" y2="140"/><text class="dt" x="270" y="138">Ø25</text><text class="dt" x="270" y="153">tembus</text>');}
-function drawJS2(A,B,C,hl){const H=k=>hl===k?' style="fill:#ff7a00"':'';return svgWrap('0 0 330 300',
-  '<text class="lb" x="60" y="14">PANDANGAN DEPAN (tidak berskala)</text><polyline class="vis" points="60,150 60,30 80,30 80,130 260,130 260,150 60,150"/>'+
+  '<line class="thin" x1="178" y1="157" x2="268" y2="140"/><text class="dt" x="270" y="138">Ø25</text><text class="dt" x="270" y="153">tembus</text></g><g transform="translate(0,150)">'+
+  '<text class="lb" x="60" y="14">PANDANGAN DEPAN</text><rect class="vis" x="60" y="30" width="200" height="60"/>'+
+  '<g class="hid"><line x1="135" y1="30" x2="135" y2="80"/><line x1="185" y1="30" x2="185" y2="80"/><line x1="130" y1="80" x2="130" y2="90"/><line x1="190" y1="80" x2="190" y2="90"/><line x1="130" y1="80" x2="190" y2="80"/></g>'+
+  '<line class="cen" x1="160" y1="22" x2="160" y2="98"/>'+dimV(30,90,45,'30',[[30,58,38],[90,58,38]])+
+  '<line class="thin" x1="190" y1="85" x2="268" y2="72"/><text class="dt" x="270" y="70">Ø30</text>'+(miss?'':'<text class="dt" x="270" y="85">dalam 5</text>')+'</g>');}
+function drawJS2(A,B,C,hl){const H=k=>hl===k?' style="fill:#ff7a00"':'';return svgWrap('0 0 330 300','<g transform="translate(0,-184)">'+
+  '<text class="lb" x="60" y="196">PANDANGAN ATAS (tidak berskala)</text><rect class="vis" x="60" y="202" width="200" height="80"/><line class="vis" x1="80" y1="202" x2="80" y2="282"/>'+
+  '<circle class="vis" cx="210" cy="222" r="10"/><circle class="vis" cx="210" cy="262" r="10"/><line class="cen" x1="210" y1="206" x2="210" y2="278"/><line class="cen" x1="194" y1="222" x2="226" y2="222"/><line class="cen" x1="194" y1="262" x2="226" y2="262"/>'+
+  dimV(202,282,42,'C = '+C,[[202,56,36],[282,56,36]])+'<text class="dt" x="228" y="240">2 × Ø10</text><text class="lb" x="92" y="246">pusat lubang 10 dari</text><text class="lb" x="92" y="258">tiap sisi</text></g><g transform="translate(0,100)">'+
+  '<text class="lb" x="60" y="14">PANDANGAN DEPAN</text><polyline class="vis" points="60,150 60,30 80,30 80,130 260,130 260,150 60,150"/>'+
   '<g class="hid"><line x1="200" y1="130" x2="200" y2="150"/><line x1="220" y1="130" x2="220" y2="150"/></g><line class="cen" x1="210" y1="122" x2="210" y2="158"/>'+
   dimH(60,260,172,'A = '+A,[[60,154,178],[260,154,178]]).replace('<text class="dt"','<text class="dt"'+H('A'))+dimV(30,150,42,'B = '+B,[[30,56,36],[150,56,36]])+
-  dimH(210,260,112,'25',[[260,126,106],[210,120,106]])+'<text class="dt" x="92" y="60">tebal 10</text><text class="dt" x="130" y="126">tebal 10</text>'+
-  '<text class="lb" x="60" y="196">PANDANGAN ATAS</text><rect class="vis" x="60" y="202" width="200" height="80"/><line class="vis" x1="80" y1="202" x2="80" y2="282"/>'+
-  '<circle class="vis" cx="210" cy="222" r="10"/><circle class="vis" cx="210" cy="262" r="10"/><line class="cen" x1="210" y1="206" x2="210" y2="278"/><line class="cen" x1="194" y1="222" x2="226" y2="222"/><line class="cen" x1="194" y1="262" x2="226" y2="262"/>'+
-  dimV(202,282,42,'C = '+C,[[202,56,36],[282,56,36]])+'<text class="dt" x="228" y="240">2 × Ø10</text><text class="lb" x="92" y="246">pusat lubang 10 dari</text><text class="lb" x="92" y="258">tiap sisi</text>');}
+  dimH(210,260,112,'25',[[260,126,106],[210,120,106]])+'<text class="dt" x="92" y="60">tebal 10</text><text class="dt" x="130" y="126">tebal 10</text></g>');}
 function drawJS3(L1){return svgWrap('0 0 330 170',
   '<text class="lb" x="60" y="14">PANDANGAN DEPAN (tidak berskala)</text><rect class="vis" x="60" y="30" width="80" height="80"/><rect class="vis" x="140" y="45" width="120" height="50"/>'+
   '<g class="hid"><line x1="60" y1="60" x2="260" y2="60"/><line x1="60" y1="80" x2="260" y2="80"/></g><line class="cen" x1="50" y1="70" x2="272" y2="70"/>'+
@@ -894,8 +903,8 @@ const PRE=[
  ['Garis gores (putus-putus) dipakai untuk…',['Tepi yang tersembunyi','Garis sumbu','Garis ukur','Arsiran'],'Garis gores menunjukkan tepi yang tersembunyi di balik benda.'],
  ['Ukuran kertas A4 adalah…',['297 × 210 mm','420 × 297 mm','594 × 420 mm','330 × 215 mm'],'A4 = 297 × 210 mm; A3 = 420 × 297 mm.'],
  ['Benda sepanjang 220 mm digambar dengan skala 1 : 2. Panjang garis di kertas adalah…',['110 mm','440 mm','220 mm','22 mm'],'Skala 1 : 2 berarti gambar setengah ukuran asli: 220 ÷ 2 = 110 mm.'],
- ['Pada proyeksi Eropa, pandangan atas diletakkan…',['Di bawah pandangan depan','Di atas pandangan depan','Di kiri pandangan depan','Di kanan pandangan depan'],'Proyeksi Eropa (sudut pertama): pandangan atas di bawah pandangan depan.'],
- ['Pada proyeksi Eropa, pandangan dari kiri diletakkan…',['Di kanan pandangan depan','Di kiri pandangan depan','Di atas pandangan depan','Di bawah pandangan depan'],'Pandangan dari kiri diproyeksikan ke bidang di kanan.'],
+ ['Pada proyeksi Amerika, pandangan atas diletakkan…',['Di atas pandangan depan','Di bawah pandangan depan','Di kiri pandangan depan','Di kanan pandangan depan'],'Proyeksi Amerika (sudut ketiga): pandangan atas di atas pandangan depan.'],
+ ['Pada proyeksi Amerika, pandangan dari kanan diletakkan…',['Di kanan pandangan depan','Di kiri pandangan depan','Di atas pandangan depan','Di bawah pandangan depan'],'Proyeksi Amerika: yang dilihat dari kanan digambar di kanan.'],
  ['Sumbu isometrik miring berapa derajat terhadap garis horizontal?',['30°','15°','45°','60°'],'Dua sumbu isometrik miring 30° terhadap horizontal.'],
  ['Ukuran total 220 sudah ada, lalu ditulis lagi 90 dan 130 secara berantai. Kesalahannya adalah…',['Ukuran ganda','Kurang ukuran','Salah skala','Salah proyeksi'],'90 + 130 = 220, sehingga salah satu ukuran berlebih (ganda).'],
  ['Simbol yang ditulis di depan angka diameter adalah…',['Ø','R','□','M'],'Diameter diberi simbol Ø, jari-jari diberi R.'],
@@ -999,7 +1008,37 @@ function buildModif(){const {A,B,C,L1}=save.v;const set=stage(modelJS2(A,B,C),1.
   intro('🔧','Level 11 · TP-8','Tantangan Modifikasi','<p>Di industri, desain <b>selalu berubah</b>. Model yang baik bisa diubah dalam hitungan detik; model yang asal jadi akan rusak begitu satu angka diganti.</p><p>Buka kembali berkas braket L dan poros milikmu. Ujian CSWA juga meminta hal yang sama: ubah dimensi kunci, lalu laporkan massa baru. 🔧</p>',
     ()=>{setProg('Soal 1/5');askQ(Q1,()=>{setProg('Soal 2/5');askNum(N1,()=>{setProg('Soal 3/5');askNum(N2,()=>{setProg('Soal 4/5');askQ(Q4,()=>{setProg('Soal 5/5');askQ(Q5,()=>finish(['Model parametrik diubah lewat ukurannya, bukan digambar ulang.','Sketch fully defined membuat perubahan aman.','Galat rebuild harus diperbaiki, bukan diabaikan.','Equations dan Global Variables menghubungkan ukuran satu dengan lainnya.'],'Jika panjang A diubah dua kali lipat, bagian mana dari modelmu yang paling berisiko rusak? Mengapa?'));});});});});});}
 
-const BUILD={cad:buildCad,sketch:buildSketch,part1:buildPart1,part2:buildPart2,modif:buildModif,garis:buildGaris,fitur:buildFitur,proyeksi:buildProyeksi,hilang:buildHilang,ukuran:buildUkuran,potongan:buildPotongan};
+/* ================= TAHAP 3: MENGGAMBAR DETAIL ================= */
+function buildDraw1(){stage(modelJS2(80,60,40),1.15);const o=mkObj([[3,3,1],[3,1,1]]);
+  const Q=[
+   {kick:'Standard 3 View',title:'Susunan tiga pandangan',text:'Kelas kita memakai <b>proyeksi Amerika (Third angle)</b>. Lembar gambar mana yang susunannya benar?',grid:true,
+    opts:[{svg:sheetSVG(o,'third'),ok:1},{svg:sheetSVG(o,'first'),hint:'Itu susunan proyeksi Eropa: pandangan atas di bawah'},{svg:sheetSVG(o,'wrong'),hint:'Pandangan atas harus tepat di atas pandangan depan'}],
+    why:'Pandangan atas tepat di atas pandangan depan, dan pandangan kanan tepat di kanannya. Ketiganya harus <b>segaris</b> supaya ukuran bisa dicocokkan.'},
+   {kick:'Sheet Properties',title:'Mengatur jenis proyeksi',text:'SolidWorks menyusun pandangan terbalik dari yang kita pakai. Yang harus diperiksa adalah…',opts:[{ic:'⚙️',label:'Sheet Properties → Type of projection: <b>Third angle</b>',ok:1},{ic:'⚙️',label:'Sheet Properties → Scale'},{ic:'⚙️',label:'Document Properties → Units'}],why:'Klik kanan lembar → Properties → Type of projection. Pastikan juga simbol proyeksi di etiket sesuai.'},
+   {kick:'Ukuran kertas',title:'A4 atau A3?',text:'Braket 220 × 100 × 80 mm digambar <b>tiga pandangan skala 1 : 1</b>. Kertas yang cukup adalah…',opts:[{ic:'📄',label:'<b>A3</b> (420 × 297 mm)',ok:1},{ic:'📄',label:'A4 (297 × 210 mm)',hint:'Lebar depan 220 + samping 80 + jarak sudah lebih dari 297 mm'},{ic:'📄',label:'A5 (210 × 148 mm)'}],why:'Lebar yang dibutuhkan: 220 (depan) + 80 (samping) + jarak dan ruang ukuran, lebih dari 297 mm. Jadi perlu A3, atau A4 dengan skala 1 : 2.'},
+   {kick:'Skala',title:'Poros yang panjang',text:'Poros sepanjang <b>600 mm</b> harus muat di kertas A3 (lebar 420 mm). Skala yang tepat adalah…',opts:[{ic:'🔍',label:'<b>1 : 2</b> (pengecilan)',ok:1},{ic:'🔍',label:'1 : 1'},{ic:'🔍',label:'2 : 1 (pembesaran)'}],why:'Skala 1 : 2 membuat poros tergambar 300 mm. Angka ukuran tetap ditulis 600, yaitu ukuran sebenarnya.'},
+   {kick:'Etiket',title:'Isi etiket gambar',text:'Skala, simbol proyeksi, nama penggambar, tanggal, dan material dicantumkan di…',opts:[{ic:'🏷️',label:'<b>Etiket</b> (kepala gambar) di sudut kanan bawah',ok:1},{ic:'📝',label:'Catatan bebas di tengah gambar'},{ic:'💾',label:'Nama berkas saja'}],why:'Etiket adalah identitas gambar. Tanpa skala, satuan, dan simbol proyeksi, gambar bisa salah dibaca di bengkel.'},
+   {kick:'Sheet Format',title:'Etiket sekolah dipakai ulang',text:'Etiket sekolah sudah kamu buat. Agar bisa dipakai di semua gambar berikutnya…',opts:[{ic:'💾',label:'Simpan sebagai <b>Sheet Format</b> (File → Save Sheet Format)',ok:1},{ic:'✍️',label:'Gambar ulang etiket di setiap berkas'},{ic:'📸',label:'Tempel tangkapan layar etiket'}],why:'Sheet Format (.slddrt) menyimpan garis tepi dan etiket. Sekali dibuat, seluruh kelas bisa memakai etiket yang sama.'},
+   {kick:'Menempatkan pandangan',title:'Tiga pandangan sekaligus',text:'Perintah untuk menempatkan pandangan depan, atas, dan samping sekaligus dari sebuah part adalah…',opts:[{ic:'🧩',label:'<b>Standard 3 View</b>',ok:1},{ic:'✂️',label:'Section View'},{ic:'🔎',label:'Detail View'}],why:'Standard 3 View menempatkan tiga pandangan yang sudah segaris. Pandangan isometrik ditambahkan dengan <b>Model View</b>.'},
+   {kick:'Part dan drawing',title:'Part diubah setelah digambar',text:'Setelah drawing selesai, panjang part diubah dari 100 menjadi 120. Apa yang terjadi pada drawing?',opts:[{ic:'🔗',label:'Pandangan dan ukurannya <b>ikut berubah</b>, karena drawing terhubung dengan part',ok:1},{ic:'🧊',label:'Tidak berubah; drawing harus digambar ulang'},{ic:'❌',label:'Drawing langsung rusak dan tidak bisa dibuka'}],why:'Berkas .SLDDRW mengambil data dari .SLDPRT. Karena itu berkas part <b>jangan dipindah atau diganti nama sembarangan</b>, supaya drawing tidak kehilangan acuannya.'}];
+  intro('📄','Level 12 · TP-9','Lembar Gambar & Tiga Pandangan','<p>Model 3D belum bisa dikerjakan di bengkel. Operator mesin membutuhkan <b>gambar kerja</b> di atas kertas: ukuran kertas dan skalanya tepat, etiketnya lengkap, dan susunan pandangannya benar.</p><p>Di level ini kamu menyiapkan lembar gambar dengan <b>proyeksi Amerika</b>. 📄</p>',
+    ()=>chain(Q,()=>finish(['Proyeksi Amerika: atas di atas, kanan di kanan, semua segaris.','Type of projection diatur di Sheet Properties: Third angle.','Pilih kertas dan skala supaya semua pandangan dan ukuran muat.','Etiket memuat skala, simbol proyeksi, nama, tanggal, dan material.','Drawing terhubung dengan part: jaga nama dan lokasi berkas.'],'Lihat etiket pada satu gambar kerja di bengkel. Informasi apa yang ada di sana tetapi belum ada di etiketmu?')));}
+
+function buildDraw2(){stage(modelJS1(),1.15);const uid=()=>Math.random().toString(36).slice(2,7);
+  const Q=[
+   {kick:'Memilih pandangan',title:'Bagian dalam yang tersembunyi',text:'Lubang bertingkat di dalam balok penuh garis gores dan sulit diberi ukuran. Pandangan yang tepat ditambahkan adalah…',html:drawJS1(),opts:[{ic:'✂️',label:'<b>Section View</b> (gambar potongan)',ok:1},{ic:'🔎',label:'Detail View'},{ic:'📐',label:'Auxiliary View'}],why:'Section View membelah benda sehingga bagian dalam terlihat dengan garis tebal dan arsiran. Ukuran tidak boleh diberikan pada garis gores.',know:secSVG('ok',uid())},
+   {kick:'Memilih pandangan',title:'Alur yang sangat kecil',text:'Pada poros ada alur selebar 2 mm yang terlalu kecil untuk diberi ukuran dengan jelas. Tambahkan…',opts:[{ic:'🔎',label:'<b>Detail View</b>: bagian itu diperbesar, misalnya skala 4 : 1',ok:1},{ic:'✂️',label:'Section View'},{ic:'🧩',label:'Standard 3 View sekali lagi'}],why:'Detail View melingkari bagian kecil lalu menampilkannya lebih besar dengan huruf dan skalanya sendiri.'},
+   {kick:'Memilih pandangan',title:'Permukaan miring',text:'Lubang pada permukaan <b>miring</b> tampak lonjong di pandangan biasa. Agar terlihat bentuk sebenarnya, pakai…',opts:[{ic:'📐',label:'<b>Auxiliary View</b> (pandangan bantu tegak lurus bidang miring)',ok:1},{ic:'🔎',label:'Detail View'},{ic:'➡️',label:'Projected View'}],why:'Auxiliary View memandang tegak lurus ke bidang miring, sehingga lubang terlihat bulat dan ukurannya benar.'},
+   {kick:'Memilih pandangan',title:'Pandangan tambahan dari samping kiri',text:'Dari pandangan depan, kamu menarik kursor ke kiri untuk membuat pandangan baru yang selalu segaris. Perintahnya adalah…',opts:[{ic:'➡️',label:'<b>Projected View</b>',ok:1},{ic:'✂️',label:'Section View'},{ic:'🖼️',label:'Crop View'}],why:'Projected View membuat pandangan baru dari pandangan induk dan tetap segaris dengannya. Jenis-jenis view ini termasuk materi soal drafting ujian CSWA.'},
+   {kick:'Memberi ukuran',title:'Mengambil ukuran dari model',text:'Cara tercepat menampilkan ukuran yang sudah dibuat di sketch dan fitur part adalah…',opts:[{ic:'📥',label:'<b>Model Items</b>',ok:1},{ic:'⌨️',label:'Mengetik angka dengan Note'},{ic:'📏',label:'Mengukur layar dengan penggaris'}],why:'Model Items memindahkan ukuran dari part ke drawing. Ukurannya tetap terhubung: mengubah angkanya ikut mengubah model.'},
+   {kick:'Uji operator',title:'Ukuran apa yang hilang?',text:'Kamu operator mesin dan menerima gambar ini. Satu ukuran <b>belum ada</b> sehingga benda tidak bisa dibuat. Ukuran apa?',html:drawJS1(1),opts:[{ic:'❓',label:'<b>Kedalaman</b> step Ø30',ok:1},{ic:'❓',label:'Panjang balok'},{ic:'❓',label:'Diameter lubang tembus'}],why:'Ø30 sudah ada, tetapi dalamnya belum. Gambar detail yang baik bisa dikerjakan operator <b>tanpa bertanya</b>.'},
+   {kick:'Toleransi',title:'Membaca toleransi',text:'Pada gambar tertulis <b>25 ± 0,1</b>. Hasil ukur mana yang masih diterima?',opts:[{ic:'✅',label:'24,95 mm',ok:1},{ic:'❌',label:'25,20 mm'},{ic:'❌',label:'24,80 mm'}],why:'25 ± 0,1 berarti ukuran boleh antara 24,9 dan 25,1 mm. Di luar itu benda ditolak QC.'},
+   {kick:'Tanda pengerjaan',title:'Kekasaran permukaan',text:'Dua permukaan diberi tanda <b>Ra 1,6</b> dan <b>Ra 6,3</b>. Permukaan mana yang lebih halus?',opts:[{ic:'✨',label:'<b>Ra 1,6</b>',ok:1},{ic:'🪨',label:'Ra 6,3'},{ic:'🟰',label:'Sama saja'}],why:'Makin kecil nilai Ra, makin halus permukaannya. Permukaan yang lebih halus butuh proses lebih lama, jadi hanya diminta di tempat yang perlu.'},
+   {kick:'Anotasi',title:'Menandai pusat lubang',text:'Pusat lubang pada pandangan atas ditandai dengan…',opts:[{ic:'➕',label:'<b>Center Mark</b>',ok:1},{ic:'▧',label:'Area Hatch'},{ic:'🎈',label:'Balloon'}],why:'Center Mark memberi tanda silang garis sumbu di pusat lubang; Centerline dipakai untuk sumbu pada pandangan samping.'}];
+  intro('🗒️','Level 13 · TP-10','Gambar Detail','<p>Gambar detail adalah <b>perintah kerja</b> untuk operator mesin. Semua yang ia butuhkan harus ada: pandangan yang jelas, ukuran lengkap, toleransi, dan tanda pengerjaan.</p><p>Ukurannya sederhana: <b>bisakah benda dibuat tanpa bertanya kepadamu?</b> 🗒️</p>',
+    ()=>chain(Q,()=>finish(['Section View untuk bagian dalam, Detail View untuk bagian kecil, Auxiliary View untuk bidang miring.','Model Items mengambil ukuran dari part.','Toleransi menentukan batas ukuran yang diterima.','Ra kecil = permukaan halus; minta hanya di tempat yang perlu.','Gambar detail yang baik bisa dikerjakan tanpa bertanya.'],'Tukar gambar detailmu dengan teman. Ukuran apa yang ia cari tetapi tidak ia temukan?')));}
+
+const BUILD={draw1:buildDraw1,draw2:buildDraw2,cad:buildCad,sketch:buildSketch,part1:buildPart1,part2:buildPart2,modif:buildModif,garis:buildGaris,fitur:buildFitur,proyeksi:buildProyeksi,hilang:buildHilang,ukuran:buildUkuran,potongan:buildPotongan};
 
 /* ================= HUB ================= */
 function buildHubScene(){clearMission();
@@ -1013,9 +1052,9 @@ function buildHubScene(){clearMission();
   const big=voxelGroup(mkObj([[3,3,3],[3,1,1],[1,1,1]]),.32,'#ff8a1f');big.position.y=.03;tt.userData.spin.add(big);
   missionUpd.add(d=>{tt.userData.spin.rotation.y+=d*.3;});
   view({t:[-.6,1.2,-2.8],r:11,theta:.45,phi:1.1,minR:3,maxR:16},0);rig.auto=true;}
-function mkCard(m){const r=save.res[m.id];const c=el('button','card',`<span class="tp">${m.tp}</span><span class="no">${m.th===2?'LEVEL':'MISI'} ${m.no}</span><span class="ic">${m.ic}</span><b>${m.title}</b><small>${m.sub}</small><span class="st">${r?'⭐'.repeat(r.stars)+'<span style="opacity:.2">'+'⭐'.repeat(3-r.stars)+'</span>':'<span style="color:#97a6b3;font-size:12px;letter-spacing:0;font-weight:700">BELUM DIMAINKAN →</span>'}</span>`);
+function mkCard(m){const r=save.res[m.id];const c=el('button','card',`<span class="tp">${m.tp}</span><span class="no">${m.th>=2?'LEVEL':'MISI'} ${m.no}</span><span class="ic">${m.ic}</span><b>${m.title}</b><small>${m.sub}</small><span class="st">${r?'⭐'.repeat(r.stars)+'<span style="opacity:.2">'+'⭐'.repeat(3-r.stars)+'</span>':'<span style="color:#97a6b3;font-size:12px;letter-spacing:0;font-weight:700">BELUM DIMAINKAN →</span>'}</span>`);
   c.onclick=()=>{initAudio();sfx('tap');const t1=MIS.filter(x=>x.th===1).every(x=>save.res[x.id]&&save.res[x.id].stars>=2);
-    if(m.th===2&&!t1&&!(save.pre&&save.pre.s>=8)){modal(`<h2 class="disp">Sudah siap ke Tahap 2?</h2><p>${save.pre?'Hasil pre-testmu masuk kategori <b>wajib pemantapan</b>.':'Kamu belum mengerjakan <b>pre-test</b>.'} Disarankan menuntaskan Misi 1 sampai 6 dengan minimal 2 bintang lebih dulu.</p>`,[{label:'Ke Tahap 1 dulu',cls:'pri'},{label:'Tetap lanjut',fn:()=>startMission(m.id)}]);return;}
+    if(m.th>=2&&!t1&&!(save.pre&&save.pre.s>=8)){modal(`<h2 class="disp">Sudah siap ke Tahap 2?</h2><p>${save.pre?'Hasil pre-testmu masuk kategori <b>wajib pemantapan</b>.':'Kamu belum mengerjakan <b>pre-test</b>.'} Disarankan menuntaskan Misi 1 sampai 6 dengan minimal 2 bintang lebih dulu.</p>`,[{label:'Ke Tahap 1 dulu',cls:'pri'},{label:'Tetap lanjut',fn:()=>startMission(m.id)}]);return;}
     startMission(m.id);};return c;}
 function renderHub(){const g=$('#grid');g.innerHTML='';let tot=0;MIS.forEach(m=>{const r=save.res[m.id];tot+=r?r.stars:0;});
   const sec=(t,x)=>g.appendChild(el('div','sec',`<b>${t}</b><small>${x}</small>`));const p=save.pre,q=save.post;
@@ -1027,8 +1066,10 @@ function renderHub(){const g=$('#grid');g.innerHTML='';let tot=0;MIS.forEach(m=>
   MIS.filter(m=>m.th===1).forEach(m=>g.appendChild(mkCard(m)));
   sec('TAHAP 2 · MEMODELKAN PART','Kerjakan sambil membuka SolidWorks di komputer');
   MIS.filter(m=>m.th===2).forEach(m=>g.appendChild(mkCard(m)));
-  sec('TAHAP 3 DAN 4 · MENGGAMBAR DETAIL DAN MERAKIT','Dibuka pada semester genap');
-  g.appendChild(el('div','card soon','<span class="tp">TP-9 s.d. TP-13</span><span class="no">SEGERA HADIR</span><span class="ic">🔒</span><b>Drawing, Assembly, dan Ujian Lisensi</b><small>Sheet format, gambar detail, mate, gambar rakitan, dan simulasi ujian format CSWA.</small>'));
+  sec('TAHAP 3 · MENGGAMBAR DETAIL','Dari model menjadi gambar kerja');
+  MIS.filter(m=>m.th===3).forEach(m=>g.appendChild(mkCard(m)));
+  sec('TAHAP 4 · MERAKIT','Segera hadir');
+  g.appendChild(el('div','card soon','<span class="tp">TP-11 s.d. TP-13</span><span class="no">SEGERA HADIR</span><span class="ic">🔒</span><b>Assembly, Gambar Rakitan, dan Ujian Lisensi</b><small>Mate, balloon, BOM, gambar urai, dan simulasi ujian format CSWA.</small>'));
   $('#totalStars').textContent=`Total: ${tot}/${MIS.length*3} ⭐`;}
 function goHub(){closeModal();$('#top').classList.remove('show');$('#hub').classList.remove('hide');buildHubScene();renderHub();cur=null;}
 $('#backBtn').onclick=()=>{modal('<h2 class="disp">Kembali ke peta misi?</h2><p>Progres misi ini tidak akan disimpan.</p>',[{label:'Batal'},{label:'Ya, kembali',cls:'pri',fn:goHub}]);};
@@ -1042,7 +1083,7 @@ $('#certBtn').onclick=()=>{const done=MIS.filter(m=>save.res[m.id]);const tot=do
   const txt=`LISENSI DRAFTER MUDA — STUDIO GAMTEK\nNama: ${nm}\nKelas: ${save.kelas||'-'}\nTanggal: ${d}\nStatus: ${full?'LISENSI PENUH':'LISENSI SEMENTARA'}\nTotal bintang: ${tot}/${MIS.length*3}\nPre-test: ${save.pre?save.pre.s+'/10':'belum'} | Post-test: ${save.post?save.post.s+'/10':'belum'}\nVariabel: A=${save.v.A} B=${save.v.B} C=${save.v.C} L1=${save.v.L1}\n`+MIS.map(m=>{const r=save.res[m.id];return`- ${m.tp} ${m.title}: ${r?r.stars+' bintang, benar '+r.ok+'/'+r.total:'belum'}`;}).join('\n')+'\nTantangan massa:\n'+[['js1','Balok'],['js2','Braket L'],['js3','Poros'],['js4','Pelat flens'],['mod2','Modifikasi braket'],['mod3','Modifikasi poros']].map(([k,n])=>{const x=save.m[k];return`- ${n}: ${x?(x.v==null?'dilewati':fmt(x.v)+' g, selisih '+fmt(x.d)+'%, percobaan ke-'+x.t):'belum'}`;}).join('\n');
   modal(`<div class="cert"><div style="font-size:12px;font-weight:800;letter-spacing:.1em;color:#123a6b">SMKS 2 TRIPLE "J" · TEKNIK MESIN</div><h3>${full?'LISENSI DRAFTER MUDA':'LISENSI SEMENTARA'}</h3><div style="font-size:13px">diberikan kepada</div><div class="nm">${esc(nm)}</div><div style="font-size:13px">${esc(save.kelas||'')} · ${d}</div>
     <div style="font-size:30px;margin:6px 0">${full?'🏅':'🔰'} <b style="font-size:20px">${tot}/${MIS.length*3} ⭐</b></div><div style="font-size:12.5px">Pre-test ${save.pre?save.pre.s+'/10':'—'} · Post-test ${save.post?save.post.s+'/10':'—'}</div><table>${rows}</table>
-    <div style="font-size:11.5px;color:#2c4a6b;margin-top:8px">${full?'Telah menuntaskan Tahap 1 (Membaca Gambar) dan Tahap 2 (Memodelkan Part) dengan minimal 2 bintang.':'Selesaikan semua misi dan level dengan minimal 2 bintang untuk mendapat Lisensi Penuh.'}</div></div>
+    <div style="font-size:11.5px;color:#2c4a6b;margin-top:8px">${full?'Telah menuntaskan Tahap 1 (Membaca Gambar), Tahap 2 (Memodelkan Part), dan Tahap 3 (Menggambar Detail) dengan minimal 2 bintang.':'Selesaikan semua misi dan level dengan minimal 2 bintang untuk mendapat Lisensi Penuh.'}</div></div>
     <p style="font-size:13px">Salin hasil ini lalu kirim ke Google Classroom sebagai bukti penyelesaian, atau tangkap layar sertifikat.</p>`,
     [{label:'📋 Salin hasil',cls:'pri',keep:true,fn:()=>{const ok=()=>toast('Hasil tersalin ✓','ok');
       function fallback(){const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();try{document.execCommand('copy');ok();}catch(e){toast('Gagal menyalin, tangkap layar saja','bad');}t.remove();}
@@ -1054,8 +1095,9 @@ $('#guruBtn').onclick=()=>modal(`<div class="kick">Untuk guru</div><h2 class="di
   <tr><td>Misi 1–6</td><td>TP-1 s.d. TP-3</td><td>Pemantapan gambar teknik dasar: garis, proyeksi, ukuran, potongan.</td></tr>
   <tr><td>Level 7–8</td><td>TP-4, TP-5</td><td>Bidang sketsa, design intent, sketch fully defined.</td></tr>
   <tr><td>Level 9–10</td><td>TP-6, TP-7</td><td>Jobsheet 1–4: murid memodelkan di SolidWorks lalu memasukkan massa.</td></tr>
-  <tr><td>Level 11</td><td>TP-8</td><td>Mengubah dimensi kunci dan melaporkan massa baru.</td></tr></table>
-  <ul><li><b>Tantangan massa</b> berformat ujian CSWA: MMGS, 2 desimal, AISI 1020, 0,0079 g/mm³. Jawaban lolos bila selisihnya maksimal 1%.</li><li>Nilai <b>A, B, C, dan L1 diacak per perangkat</b>, jadi jawaban antarmurid berbeda. Kunci untuk nilai contoh ada di Buku Administrasi bagian 13.</li><li>Bintang dihitung dari jawaban benar <b>pada percobaan pertama</b>, sehingga dapat menjadi data asesmen formatif.</li><li>Murid menekan <b>"Lisensi Saya → Salin hasil"</b> lalu menempelkannya di Google Classroom. Salinan memuat skor tes, bintang, variabel, dan massa tiap tantangan.</li><li>Progres tersimpan di browser perangkat masing-masing.</li><li>Tahap 3 dan 4 (Drawing, Assembly, Ujian Lisensi) menyusul untuk semester genap.</li></ul>`,[{label:'Tutup',cls:'pri'}]);
+  <tr><td>Level 11</td><td>TP-8</td><td>Mengubah dimensi kunci dan melaporkan massa baru.</td></tr>
+  <tr><td>Level 12–13</td><td>TP-9, TP-10</td><td>Lembar gambar, etiket, tiga pandangan, potongan, toleransi, tanda pengerjaan.</td></tr></table>
+  <ul><li><b>Tantangan massa</b> berformat ujian CSWA: MMGS, 2 desimal, AISI 1020, 0,0079 g/mm³. Jawaban lolos bila selisihnya maksimal 1%.</li><li>Nilai <b>A, B, C, dan L1 diacak per perangkat</b>, jadi jawaban antarmurid berbeda. Kunci untuk nilai contoh ada di Buku Administrasi bagian 13.</li><li>Bintang dihitung dari jawaban benar <b>pada percobaan pertama</b>, sehingga dapat menjadi data asesmen formatif.</li><li>Murid menekan <b>"Lisensi Saya → Salin hasil"</b> lalu menempelkannya di Google Classroom. Salinan memuat skor tes, bintang, variabel, dan massa tiap tantangan.</li><li>Progres tersimpan di browser perangkat masing-masing.</li><li>Seluruh misi memakai <b>proyeksi Amerika (Third angle)</b>; proyeksi Eropa hanya disebut sebagai pembanding.</li><li>Tahap 4 (Assembly, gambar rakitan, Ujian Lisensi) menyusul.</li></ul>`,[{label:'Tutup',cls:'pri'}]);
 
 /* ================= START ================= */
 function boot(){buildHubScene();renderHub();loop();setTimeout(()=>$('#loading').classList.add('hide'),300);}
