@@ -15,19 +15,20 @@ Simulasi dapat dibuka langsung di browser (laptop maupun HP) tanpa instalasi.
 | 4 | Multimeter Digital | Dasar Kelistrikan & Elektronika | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3D-multimeter-digital/) |
 | 5 | Hukum Ohm & Rangkaian Seri–Paralel | Dasar Kelistrikan & Elektronika | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-hukum-ohm/) |
 | 6 | Power Supply 24 VDC | Dasar Kelistrikan & Elektronika | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-power-supply-24vdc/) |
-| 7 | Elektromagnet: dari Klakson ke Kontaktor — klakson, bel listrik, relay, penampang kontaktor (dengan tes awal & tes akhir) | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-elektromagnet/) |
-| 8 | Panel DOL | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_DOL/) |
-| 9 | Panel Forward–Reverse | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Forward-Reverse/) |
-| 10 | Panel Star–Delta | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Star-Delta/) |
-| 11 | Power Supply Industri (SMPS) 24 VDC — terminal, cara kerja switching, pemasangan & wiring standar Lab TOI, cari gangguan (dengan tes awal & tes akhir) | Sensor & Power Supply Industri | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-power-supply-smps/) |
-| 12 | Sensor: dari Keseharian ke Pabrik — sensor di rumah, digital vs analog, PNP/NPN, konveyor pemilah dengan panel PLC (dengan tes awal & tes akhir) | Sensor & Power Supply Industri | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-sensor/) |
-| 13 | Bengkel Aman TOI — K3LH & Budaya Kerja 5R | K3LH & Budaya Kerja | [Buka](https://lht-sky.github.io/guruvokasi/bengkel-aman-toi/) |
-| 14 | Pabrik Elektronik Tycoon — DK1 Fase E | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pabrik-tycoon/) |
-| 15 | Pneumatik Tycoon — SKEH Fase F | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pneumatik-tycoon/) |
-| 16 | Studio Gamtek 3D — Pemantapan Gambar Teknik (Teknik Mesin kelas XI) | Gambar Teknik Mesin | [Buka](https://lht-sky.github.io/guruvokasi/studio-gamtek-tm/) |
-| 17 | PKL Bengkel Las Maju Jaya — Fabrikasi Dasar, Pengukuran, Bor & Tap (Teknik Mesin, tahap 1) | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pkl-bengkel-maju-jaya/) |
-| 18 | Buku Saku Anak TOI — pegangan cepat K3LH, listrik, panel, pneumatik, PLC, PKL + kalkulator | Buku Saku & Referensi | [Buka](https://lht-sky.github.io/guruvokasi/buku-saku-toi/) |
-| 19 | Alat Ukur Presisi: Jangka Sorong & Mikrometer — lup skala, ukur benda kerja, kuis baca skala (Teknik Mesin, Dasar Kejuruan Fase E) | Dasar-Dasar Teknik Mesin | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-alat-ukur-presisi/) |
+| 7 | Gerbang Logika: dari Saklar ke PLC — saklar ↔ AND/OR/NOT, 7 gerbang, ladder PLC, misi rangkai & refleksi (dengan tes awal & tes akhir) | Dasar Kelistrikan & Elektronika | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-gerbang-logika/) |
+| 8 | Elektromagnet: dari Klakson ke Kontaktor — klakson, bel listrik, relay, penampang kontaktor (dengan tes awal & tes akhir) | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-elektromagnet/) |
+| 9 | Panel DOL | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_DOL/) |
+| 10 | Panel Forward–Reverse | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Forward-Reverse/) |
+| 11 | Panel Star–Delta | Kendali Elektromagnetik | [Buka](https://lht-sky.github.io/guruvokasi/Simulasi_3D_Panel_Star-Delta/) |
+| 12 | Power Supply Industri (SMPS) 24 VDC — terminal, cara kerja switching, pemasangan & wiring standar Lab TOI, cari gangguan (dengan tes awal & tes akhir) | Sensor & Power Supply Industri | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-power-supply-smps/) |
+| 13 | Sensor: dari Keseharian ke Pabrik — sensor di rumah, digital vs analog, PNP/NPN, konveyor pemilah dengan panel PLC (dengan tes awal & tes akhir) | Sensor & Power Supply Industri | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-sensor/) |
+| 14 | Bengkel Aman TOI — K3LH & Budaya Kerja 5R | K3LH & Budaya Kerja | [Buka](https://lht-sky.github.io/guruvokasi/bengkel-aman-toi/) |
+| 15 | Pabrik Elektronik Tycoon — DK1 Fase E | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pabrik-tycoon/) |
+| 16 | Pneumatik Tycoon — SKEH Fase F | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pneumatik-tycoon/) |
+| 17 | Studio Gamtek 3D — Pemantapan Gambar Teknik (Teknik Mesin kelas XI) | Gambar Teknik Mesin | [Buka](https://lht-sky.github.io/guruvokasi/studio-gamtek-tm/) |
+| 18 | PKL Bengkel Las Maju Jaya — Fabrikasi Dasar, Pengukuran, Bor & Tap (Teknik Mesin, tahap 1) | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pkl-bengkel-maju-jaya/) |
+| 19 | Buku Saku Anak TOI — pegangan cepat K3LH, listrik, panel, pneumatik, PLC, PKL + kalkulator | Buku Saku & Referensi | [Buka](https://lht-sky.github.io/guruvokasi/buku-saku-toi/) |
+| 20 | Alat Ukur Presisi: Jangka Sorong & Mikrometer — lup skala, ukur benda kerja, kuis baca skala (Teknik Mesin, Dasar Kejuruan Fase E) | Dasar-Dasar Teknik Mesin | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-alat-ukur-presisi/) |
 
 Segera hadir: Forward–Reverse Berbasis PLC (JS-PLC-01), Elektropneumatik 1 Silinder.
 
