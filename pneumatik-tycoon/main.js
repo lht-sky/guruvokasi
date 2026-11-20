@@ -17,28 +17,30 @@ const LV=[{id:'l1',no:1,j:0,k:'F.4.1.1',ic:'🦺',t:'Hari Pertama di Ruang Kompr
  {id:'l12',no:12,j:2,k:'F.4.3.4',ic:'🔍',t:'Commissioning',s:'Urutan pengujian, 3 gangguan acak dengan biaya waktu henti, laporan perbaikan.',ready:true},
  {id:'l13',no:13,j:3,k:'F.4.4.1',ic:'🏆',t:'Proyek Lini Otomasi',s:'Satu order penuh: rancang, pasang, commissioning, produksi.'}];
 const KEY=G.KEY||'pneumatikTOI_v1';
-G.mode=null;
-function startLV(id){G.mode=id;G['start'+id.toUpperCase()]();}
-G.go=id=>{try{sessionStorage.setItem('pneuGo',id);}catch(e){}try{window.name='pneuGo:'+id;}catch(e){}location.reload();};
+G.mode=null;G.BUILD='2026-11-19';
+function startLV(id){const f=G['start'+id.toUpperCase()];if(typeof f!=='function'){if(window.PT_UPDATE)window.PT_UPDATE(true);else toast('Level ini belum terunduh lengkap. Muat ulang halaman.','bad');return;}G.mode=id;f();}
+G.go=id=>{try{sessionStorage.setItem('pneuGo',id);}catch(e){}try{window.name='pneuGo:'+id;}catch(e){}try{localStorage.setItem('pneuGo',JSON.stringify({id,t:Date.now()}));}catch(e){}location.reload();};
 G.openMenu=()=>{modal(b=>{b.appendChild(el('div','kick','Peta level · SKEH Fase F · 13 level = 13 tujuan pembelajaran'));b.appendChild(el('h2','',`Halo, ${G.esc(G.save.name||'Helper')} 👋`));
   b.appendChild(el('p','',`Saldo: <b>${G.fmt(G.save.coins)} ¢</b> · pendapatan fasilitas <b>+${G.income()} ¢ per level</b>. Belanjakan koinmu di 🛒 Toko Bengkel.`));
   let g,cj=-1;LV.forEach(t=>{if(t.j!==cj){cj=t.j;b.appendChild(el('div','mat',`<span>${JEN[cj].t}</span><span style="color:#9fb0bf;font-weight:500">${JEN[cj].s}</span>`));g=el('div','tpgrid');b.appendChild(g);}
     const r=G.save.tp[t.id];const stars=r?'⭐'.repeat(r.stars)+'<span style="opacity:.25">'+'⭐'.repeat(3-r.stars)+'</span> ':'';
     const c=el('button','tpc'+(t.ready?'':' lock'),`<span class="no">LEVEL ${t.no} · ${t.k}</span><span style="font-size:24px">${t.ic}</span><span>${t.t}</span><small>${t.s}</small><span class="s">${t.ready?stars+(t.id===G.mode?'· sedang dimainkan':'▶ Mainkan'):'🔒 Segera hadir'}</span>`);
     c.onclick=()=>{if(!t.ready){toast('Level ini sedang disiapkan 🔧');return;}if(!G.mode){closeModal();startLV(t.id);}else if(t.id===G.mode)closeModal();else G.go(t.id);};g.appendChild(c);});
-  b.appendChild(el('div','keys','<span><kbd>W A S D</kbd> / joystick = berjalan (menggeser pandangan)</span><span><kbd>Shift</kbd> lari</span><span><kbd>Spasi</kbd> lompat</span><span><kbd>E</kbd> / ketuk tombol = interaksi</span><span>Seret layar = putar kamera</span><span>Scroll / cubit = zoom</span>'));
+  b.appendChild(el('div','keys','<span><kbd>W A S D</kbd> / joystick = berjalan (menggeser pandangan)</span><span><kbd>Shift</kbd> lari</span><span><kbd>Spasi</kbd> lompat</span><span><kbd>E</kbd> / ketuk tombol = interaksi</span><span>Seret layar = putar kamera</span><span>Scroll / cubit = zoom</span>'));b.appendChild(el('div','keys',`<span style="opacity:.7">Versi ${G.BUILD} · ${LV.filter(t=>t.ready).length} level aktif</span>`));
   const bs=[btn('🛒 Toko Bengkel','g',G.openShop),btn('📓 Catatan Buku','gr',catatan),btn('📘 Panduan Guru','gr',guru),btn('✏️ Ganti nama','gr',()=>askName(true)),btn('↺ Reset progres','gr',()=>{modal(c=>{c.appendChild(el('h2','','Reset semua progres?'));c.appendChild(el('p','','Koin dan bintang di perangkat ini akan dihapus.'));c.appendChild(row(btn('Batal','gr',G.openMenu),btn('Reset','r',()=>{try{localStorage.removeItem(KEY);}catch(e){}location.reload();})));});})];
   if(G.mode)bs.unshift(btn('Kembali main','y',closeModal));b.appendChild(row(...bs));});};
-const GURU={l1:{tp:'F.4.1.1 — pengenalan sistem pneumatik: prinsip udara bertekanan, komponen penyedia udara, dan K3 bekerja dengan udara bertekanan (10 JP).',
-  rows:[['Lemari APD','Memilih APD sesuai bahaya ruang kompresor; larangan sarung tangan di dekat bagian berputar; UU No. 1/1970','Memahami · Mengaplikasi'],
+const GURU={l1:{tp:'F.4.1.1 — murid menjelaskan konsep dasar udara bertekanan dan aplikasinya di industri, menerapkan prosedur K3 pada sistem bertekanan, dan membandingkan kompresor piston dengan screw (10 JP, pertemuan 1–5).',
+  rows:[['Papan UDARA BERTEKANAN','Tabung suntik tertutup: sifat dapat dimampatkan, disimpan, disalurkan; hukum Boyle P₁·V₁ = P₂·V₂ (tangki 200 L, 8 bar manometer = 9 bar absolut → 1.800 L); mengelompokkan aplikasi pneumatik ke otomotif, makanan, manufaktur, perkantoran','Memahami · Mengaplikasi'],
+   ['Lemari APD','Memilih APD sesuai bahaya ruang kompresor; larangan sarung tangan di dekat bagian berputar; UU No. 1/1970','Memahami · Mengaplikasi'],
    ['Inspeksi 5 titik bahaya (radar)','Kondensat & drain, pelindung sabuk, kabel terkelupas & LOTO, kebocoran sambungan, penataan selang','Mengaplikasi · Menganalisis'],
-   ['Susun jalur udara','Kompresor → tangki → pipa utama → Filter → Regulator → Lubricator → katup 5/2 → silinder','Memahami'],
+   ['Bagian dalam kompresor piston','Gambar potongan (arsiran 45°, ring dihitamkan): piston, ring, silinder, katup isap–buang, batang penghubung, poros engkol; langkah isap–kompresi–buang; fungsi tangki','Memahami'],
+   ['Papan jenis kompresor','Piston vs screw: bengkel sekolah (sebentar-sebentar) dan pabrik minuman 24 jam (terus-menerus)','Menganalisis'],
+   ['Checklist K3 + jalur udara','Mengelompokkan 9 butir K3 ke sebelum–selama–sesudah; kompresor → tangki → pipa → F.R.L → katup → silinder','Mengaplikasi'],
    ['Setel regulator','Tekanan pipa utama 8 bar, tekanan kerja praktik 5 bar; cara mengunci kenop','Mengaplikasi'],
-   ['Papan jenis kompresor','Piston vs screw: memilih dari pola pemakaian','Menganalisis'],
-   ['Uji mesin press','Pemanfaatan pneumatik; F = p × A (Ø50, 5 bar ≈ 982 N); tombol dua tangan','Mengaplikasi · Menganalisis'],
-   ['Kuis + Catatan Buku Tulis','Sketsa rangkaian jalur pneumatik; akibat kondensat tidak dibuang dan F.R.L terbalik','Merefleksi']],
-  alur:'• Pertemuan 1 (2 JP) — Awal: “mengapa pintu bus bisa membuka sendiri?” · Inti: murid bermain berpasangan sampai lima titik bahaya aman · Penutup: bahas bahaya serupa di bengkel sekolah.<br>• Pertemuan 2 (2 JP) — Inti: jalur udara, regulator, jenis kompresor, mesin press, kuis · Penutup: Catatan Buku Tulis dan paraf.<br>• Pertemuan 3–5 — kunjungan ke kompresor dan unit F.R.L bengkel: drain kondensat, membaca manometer, menyetel 5 bar (LKM).',
-  ases:'pilihan APD, 5 tindakan bahaya, urutan jalur udara, setelan regulator, jenis kompresor, hitungan gaya, dan 3 soal analisis'},
+   ['Mesin press + lini pengepakan','Pneumatik vs motor listrik: gerak lurus, pengaturan kecepatan, kebersihan, area lembap, posisi, biaya; memilih penggerak untuk 6 tugas','Menganalisis · Mengevaluasi'],
+   ['Kuis + Catatan Buku Tulis','5 soal analisis (selang, F.R.L, hierarki, tekanan turun, 8 bar = 800 kPa); sketsa jalur pneumatik + mind map aplikasi; hitungan Boyle dan checklist K3','Merefleksi']],
+  alur:'• Pertemuan 1 (2 JP) — Kegiatan 1: “mengapa pintu bus bisa membuka sendiri?” · papan UDARA BERTEKANAN berpasangan · diskusi mind map aplikasi.<br>• Pertemuan 2 (2 JP) — Kegiatan 2: APD, inspeksi 5 bahaya, bagian dalam kompresor piston, piston vs screw · lalu observasi kompresor sekolah.<br>• Pertemuan 3 (2 JP) — checklist K3, jalur udara, regulator · lintas disiplin: hitungan Boyle di buku tulis.<br>• Pertemuan 4 (2 JP) — Kegiatan 3: mesin press, pneumatik vs motor listrik, kuis · tabel perbandingan di jobsheet.<br>• Pertemuan 5 (2 JP) — praktik di kompresor dan F.R.L sekolah (drain, manometer, 5 bar) dengan LKM; Catatan Buku Tulis dan paraf.',
+  ases:'tabung suntik + hitungan Boyle, pengelompokan aplikasi, APD, 5 tindakan bahaya, langkah kompresor, jenis kompresor (2 kasus), checklist K3, jalur udara, setelan regulator, pilihan penggerak, dan 5 soal analisis'},
  l2:{tp:'F.4.1.2 — murid mampu menyebutkan komponen-komponen utama sistem penyedia udara bertekanan (kompresor, tangki udara/receiver, dan unit pengkondisian udara/FRL) beserta fungsinya secara tepat (10 JP, pertemuan 6–10). Simbol ISO 1219 diperkenalkan di sini sebagai bekal Unit 4 (F.4.1.4).',
   rows:[['12 meja peraga + kartu','Bentuk fisik, fungsi, dan simbol: motor, kompresor, katup satu arah, tangki, katup pengaman, pressure switch, manometer, keran, filter, regulator, lubricator, unit F.R.L','Memahami (LKM Kegiatan 1: tabel nama – simbol – fungsi)'],
    ['Papan rangkaian','Menyusun 8 simbol tanpa nama menjadi jalur penyedia udara; membaca gambar rangkaian lengkap dan jenis garis','Mengaplikasi'],
@@ -108,6 +110,7 @@ $('#shopBtn').onclick=()=>{G.initAudio();if(!G.ui.busy())G.openShop();};
 function boot(){G.teleport(0,10.5,Math.PI);G.cam.yaw=0;G.start();setTimeout(()=>$('#loading').classList.add('hide'),400);
   let go=null;try{go=sessionStorage.getItem('pneuGo');sessionStorage.removeItem('pneuGo');}catch(e){}
   try{if(!go&&/^pneuGo:/.test(window.name))go=window.name.slice(7);if(/^pneuGo:/.test(window.name))window.name='';}catch(e){}
+  try{const q=JSON.parse(localStorage.getItem('pneuGo')||'null');localStorage.removeItem('pneuGo');if(!go&&q&&Date.now()-q.t<60000)go=q.id;}catch(e){}
   if(!LV.some(t=>t.ready&&t.id===go))go=null;
   if(go&&G.save.name){G.makePlayer();startLV(go);}else askName(false,go);}
 const fr=(document.fonts&&document.fonts.ready)?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1800))]):Promise.resolve();
