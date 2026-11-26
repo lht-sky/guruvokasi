@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi 3D PLTS Off-Grid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e3e8ec; --ink:#14202b; --muted:#56636e; --line:#d2dae0; --soft:#eef2f5;
+  --accent:#0a62a8; --yellow:#f3b52f; --ok:#24834b; --okbg:#eef8f1; --bad:#bb3a2c; --badbg:#fdf0ee; --warn:#b8650f; --warnbg:#fff5e6;
+  --sun:#e8890c;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+header.top{background:#171f28;color:#e6ebf0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #2d3946}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand img{width:44px;height:44px;flex:none}
+.eyebrow2{font:600 12px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+h1{margin:2px 0 0;font:700 24px/1.1 var(--f-display);letter-spacing:.01em}
+.meta{display:grid;justify-items:end;gap:4px;text-align:right;flex:none}
+.dims{font:500 12px var(--f-mono);color:var(--yellow);border:1px solid #4a3d18;border-radius:4px;padding:3px 7px;white-space:nowrap}
+.guru{font-size:12.5px;color:#c3ccd5}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(380px,1fr);gap:16px;padding:16px;max-width:1440px;margin:0 auto;align-items:start}
+.stage{position:sticky;top:12px}
+.viewer{position:relative;height:min(74vh,660px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#a9cbe6}
+#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;font:600 12px/1.25 var(--f-body);background:rgba(20,32,43,.88);color:#fff;border-radius:7px;padding:3px 7px;white-space:nowrap;text-align:center}
+.lbl small{display:block;font:500 11px var(--f-mono);color:#f3d36a}
+.lbl.big{font-size:14px;padding:5px 10px;background:#0a62a8}
+.lbl.hot{background:#b8321f}.lbl.sun{background:#c0700a}
+.hud{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.tool{border:1px solid var(--line);background:rgba(251,252,253,.94);padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+#toast{position:absolute;right:10px;top:52px;z-index:5;width:min(calc(100% - 20px),380px);display:grid;gap:6px;pointer-events:none}
+.tst{background:var(--ink);color:#fff;padding:9px 13px;border-radius:8px;font-size:13.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.22);border-left:4px solid #4aa3e0;animation:tin .25s ease-out}
+.tst b{display:block}.tst.bad{border-left-color:#ff5a45}.tst.ok{border-left-color:#4cc47e}.tst.warn{border-left-color:#f3b52f}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+.vchip{position:absolute;left:10px;bottom:10px;background:rgba(20,32,43,.92);color:#e6ebf0;border-radius:8px;padding:7px 11px;font:600 13px var(--f-mono);display:flex;gap:14px;flex-wrap:wrap;max-width:calc(100% - 140px)}
+.vchip b{color:var(--yellow);font-size:15px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#dfe5ea;color:var(--muted);font-weight:600;text-align:center;padding:20px}
+.panel{min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#d6dde4;border-radius:10px;padding:4px;margin-bottom:12px}
+.tabs button{border:0;background:transparent;border-radius:7px;padding:7px 2px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.2}
+.tabs button .n{display:block;font:600 11px var(--f-mono);color:#8a97a2}
+.tabs button.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,32,43,.12)}
+.tabs button.done .n::after{content:" ✓";color:var(--ok)}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.card h2{font:700 21px/1.1 var(--f-display);letter-spacing:.02em;margin:0 0 6px}
+.card h3{font:700 15px/1.2 var(--f-display);letter-spacing:.04em;margin:12px 0 4px;color:var(--accent);text-transform:uppercase}
+.muted{color:var(--muted);font-size:13.5px;margin:4px 0 0;line-height:1.5}
+.goal{background:var(--soft);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;font-size:14px;margin:6px 0 4px}
+.seg{display:flex;flex-wrap:wrap;background:var(--soft);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:7px 8px;border-radius:6px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.seg button.dn::after{content:" ✓";color:#4cc47e}
+.lbl2{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.fb{border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5;background:var(--soft);margin-top:10px}
+.fb:empty{display:none}.fb.ok{background:var(--okbg)}.fb.bad{background:var(--badbg)}.fb.warn{background:var(--warnbg)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px;margin-top:10px}
+.kv div{background:var(--soft);border-radius:6px;padding:7px 9px}
+.kv dt{font-size:11.5px;color:var(--muted)}
+.kv dd{margin:0;font:600 15px var(--f-mono)}
+.kv dd.bad{color:var(--bad)}.kv dd.ok{color:var(--ok)}
+.map{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px;margin-top:6px}
+.map b{color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.slider{display:flex;align-items:center;gap:10px}
+.slider output{font:600 14px var(--f-mono);min-width:82px;text-align:right;color:var(--accent)}
+.qnav{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0 10px}
+.qnav span{width:26px;height:26px;border-radius:6px;background:var(--soft);display:grid;place-items:center;font:600 12px var(--f-mono);color:var(--muted)}
+.qnav span.cur{background:var(--ink);color:#fff}.qnav span.ans{background:#d6e6f5;color:var(--accent)}
+.qtext{font-weight:600;font-size:16px;line-height:1.45}
+.opts{display:grid;gap:7px;margin-top:10px}
+.opt{text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:10px 12px;font-size:14.5px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.opt .k{font:700 13px var(--f-mono);background:var(--soft);border-radius:5px;padding:1px 7px;flex:none}
+.opt.on{border-color:var(--accent);background:#eef5fc}
+.opt.on .k{background:var(--accent);color:#fff}
+.conf{display:flex;gap:6px;margin-top:10px}
+.conf button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:8px;font-weight:600;font-size:13.5px;cursor:pointer}
+.conf button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.field{display:grid;gap:4px;margin-top:8px}
+.field input{border:1.5px solid var(--line);border-radius:8px;padding:9px 12px}
+.prof{list-style:none;margin:8px 0 0;padding:0}
+.prof li{border-top:1px solid var(--line);padding:8px 0;font-size:14px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.prof li:first-child{border-top:0}
+.tag{font:600 11.5px var(--f-mono);padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag.sp{background:var(--badbg);color:var(--bad)}.tag.bt{background:var(--warnbg);color:var(--warn)}.tag.ok{background:var(--okbg);color:var(--ok)}.tag.rg{background:#eef5fc;color:var(--accent)}
+.prof .go{font-size:12.5px;color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:0;padding:0}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:13.5px;margin-top:8px}
+.bars i{display:block;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.bars i b{display:block;height:100%;background:var(--accent)}
+.bars i b.post{background:var(--ok)}
+textarea.rekap{width:100%;min-height:170px;border:1px solid var(--line);border-radius:8px;padding:9px;font:500 12.5px/1.5 var(--f-mono);background:#fbfcfd;margin-top:8px}
+/* materi */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:4px;margin-top:8px}
+.flow .nd{flex:1 1 72px;min-width:72px;background:var(--soft);border:1.5px solid var(--line);border-radius:9px;padding:7px 6px;text-align:center;font-size:12.5px;line-height:1.3}
+.flow .nd b{display:block;font-size:13px}
+.flow .nd .ic{font-size:22px;line-height:1.1;display:block}
+.flow .nd small{font:600 11px var(--f-mono);color:var(--muted)}
+.flow .ar{align-self:center;font:700 13px var(--f-mono);color:var(--sun)}
+.flow .ar.ac{color:#c79a00}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.tbl th,.tbl td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.tg{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.tg th,.tg td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}
+.tg th:first-child,.tg td:first-child{text-align:left}
+.tg th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.tg td{font-family:var(--f-mono);font-size:12.5px}
+.tg td:first-child{font-family:var(--f-body);font-size:13px}
+.tg input[type=range]{width:84px;vertical-align:middle}
+.tg tr.tot td{font-weight:700;background:var(--soft)}
+.note{border:1.5px dashed #c9a24a;background:#fffaf0;border-radius:9px;padding:9px 12px;margin-top:10px;font-size:13.5px;line-height:1.55}
+.note b.h{display:block;font:700 14px var(--f-display);letter-spacing:.05em;text-transform:uppercase;color:#8a5a00;margin-bottom:2px}
+.note ol{margin:4px 0 0;padding-left:20px}
+/* komponen */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;margin-top:8px}
+.cgrid button{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 8px;text-align:left;cursor:pointer;display:grid;gap:2px;font-size:12.5px;line-height:1.25}
+.cgrid button .ic{font-size:20px;line-height:1}
+.cgrid button.on{border-color:var(--accent);background:#eef5fc}
+.cgrid button.seen::after{content:"✓ dipelajari";font:600 10.5px var(--f-mono);color:var(--ok)}
+.spec{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px;background:#1c242c;color:#dfe6ec;border-radius:8px;padding:9px 12px;margin-top:8px;font-family:var(--f-mono)}
+.spec span:nth-child(odd){color:#9fb0bf}
+/* praktik */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{border:1.5px solid var(--line);background:#fff;border-radius:20px;padding:6px 12px;font-size:13.5px;cursor:pointer}
+.chips button.on{border-color:var(--accent);background:#eef5fc;color:var(--accent);font-weight:600}
+.chips button.good{border-color:#9fd0b2;background:var(--okbg);color:var(--ok)}
+.chips button.wrong{border-color:#e4a59c;background:var(--badbg);color:var(--bad)}
+.steps{list-style:none;padding:0;margin:8px 0 0;counter-reset:s}
+.steps li{position:relative;padding:5px 0 5px 30px;font-size:13.5px;border-top:1px solid var(--line);counter-increment:s;line-height:1.4}
+.steps li:first-child{border-top:0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:6px;width:21px;height:21px;border-radius:50%;background:var(--ok);color:#fff;font:600 11.5px/21px var(--f-mono);text-align:center}
+.steps li.cur::before{background:var(--accent)}
+.steps li.cur{font-weight:600}
+.meter{background:#2a2f24;border-radius:12px;padding:10px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:8px;color:#e9f0e0}
+.meter .lcd{background:#b9c7a5;color:#1d2618;font:400 30px/1 "Share Tech Mono",monospace;border-radius:6px;padding:8px 10px;text-align:right}
+.meter small{font:600 11.5px var(--f-mono);color:#c9d4bb;display:block}
+.ld{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-top:8px}
+.ld label{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:6px 8px;display:grid;grid-template-columns:auto 1fr;gap:0 6px;font-size:12.5px;line-height:1.3;cursor:pointer}
+.ld label input{grid-row:span 2;margin-top:2px;accent-color:var(--accent)}
+.ld label small{font:600 11px var(--f-mono);color:var(--muted)}
+.ld label.on{border-color:#e9a90b;background:#fff8e6}
+.ld label.req{border-style:dashed}
+#chart{display:block;width:100%;height:auto;aspect-ratio:16/8;background:#fbfcfd;border:1px solid var(--line);border-radius:8px;margin-top:10px}
+.lic{border:2px solid #0a62a8;border-radius:12px;padding:12px 14px;background:linear-gradient(135deg,#f3f8fd,#fff);margin-top:8px}
+.lic .big{font:700 40px/1 var(--f-display);color:var(--accent)}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:4px 0 8px}
+.stat b{display:block;font:700 24px/1.1 var(--f-display)}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 16px 22px;line-height:1.6}
+.pad{position:absolute;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:4px;z-index:4;user-select:none;-webkit-user-select:none}
+.pad button{border:1px solid var(--line);background:rgba(251,252,253,.92);border-radius:8px;font-size:14px;font-weight:700;color:#14202b;cursor:pointer;padding:0;touch-action:none;box-shadow:0 2px 6px rgba(20,32,43,.12)}
+.pad button:active{background:#14202b;color:#fff}
+.pad .c{font-size:11px}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:0;gap:0}
+  .stage{top:0;z-index:20}
+  .viewer{height:38vh;min-height:240px;border-radius:0;border:none;border-bottom:1px solid var(--line)}
+  .panel{padding:12px}
+  header.top{padding:8px 12px}
+  .brand img{width:36px;height:36px}
+  h1{font-size:18px}.eyebrow2{font-size:10.5px}
+  .meta .guru,.dims .full{display:none}
+  .tabs button{font-size:12px}
+  .vchip{font-size:11px;gap:8px;padding:5px 8px;max-width:calc(100% - 120px)}.vchip b{font-size:13px}
+  .pad{grid-template-columns:repeat(3,30px);grid-template-rows:repeat(3,30px);gap:3px;right:8px;bottom:8px}
+  .hud{top:8px;right:8px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <img src="data:image/webp;base64,UklGRkgMAABXRUJQVlA4WAoAAAAQAAAAXwAAXwAAQUxQSFwCAAABkETbkiFb+Wzb1rdt27Zt27Zt27Zt/2fbds7eisiI2ZtExASIcsOattU6jpi1bO2aJdMHt6pgwYx2pdFHPycVyzIWxLzc0dedC83aa74USNCMpzN8GLAY9apYImZd7aRDy2pOiER/31+Hju6YEKnk67ZU6j2XqpYed6WguzhHKhzVVz23e1Lx7YaKNQqVyj92VqpnuiT4p5JCQ/IlychaygwqlESjqynSKU+SDfFSokaKJPzRQgGbP5L0WU00jfOS+DS00ZJ6dg0kzyRy8rUeznnJ4GSU1iUcxDsgaL+SLG5E6CZ5TPOA28uEHAJ3hIuxcKe5mAp3iYs5cDe5WAL3gIvVcM+42Az3lovdYBqfuTgEpv2Ti1Ngev+4uAhmGMLFDTDTSC7ugVnEcfEUzDaZi9dgjulcfNSAcsvi4ocWlHceF391oSoUchFsAFW1hIsIE6jakstYc6gmbGTbQnmfeB1ZRC8v5Ml2EyghhOk9emsNBe4BeiMF8mp6XbGm0GuI1Y9cYQWsluTSHLGql1CLMsVyz6b2UxvLKp7ac4GtH0jtMprGe2p70cRtasvxjlGbgLeBWi+8mdSa4Q0mVlwFrwOxXFc8pyhad/XwRIscSoHOQsVhJXQSawg1Z5BJbyFUnU0krY1Qd0IhhdimQuUeyep9ryzUrv5ZtQs2QnXzvaUqZUzTFAS7/lHnQTVB02J5ihqBw7QEWa8dKXghsywEaY9lgSilb8dYCPImXU5EAZX82dJQS/Bo0WrFg8iCsuUEXplZR1+walqh/dilOw6fOH5wy4KhzT0NRLlJVlA4IMYJAACwKgCdASpgAGAAPm0qkUWkIiGYDOVUQAbEtgBnkw4u/yc/K+cDYP71+MOTUL11qfvOkP5gH6q/6LqJeYD9cf2Z96r0Xf5H+4ewB/Zv9V6y3+F9ij9tPYA/XT0zf2h+DX9xf20+A39lP//1gF7a4nPV/tnyregO0r+a/p/m/3l+87UC/G/5v/l95FsB6AXcD/ffbZzkdtZ6qf77wU/tf/D9gD89f8j06P+v/Redz6U/8HuDfq1/zfW89jXomfsY2ohbF+k3TAIvupRXyOz5YifYKJyzJPx/Goim5TkePBQjwFVGF5SpcuQJVfptQ6ENFrYcPSm43NPqlsjocl2HlAW/PDinZShNMMkuStV9OHPzuUABToBL1EDdr/W5oTD0HwTu7hU+oCFrbvhlCQFel+6d3TNZUGaTV9JuEIOiYQ0vhQUO5walkTr1CJWita3T2nPSeMmDTM3JQxAdDIu9gAD+/qU3P5N25GPy0R4hLnkBuQciWyPKeMvmkFfCcEmcBRdt4InbbnNFg0nGzRAIiJMZp2xYu3n4WH8w9m8uj1Nn4vDT538EJLphpwjHDdQD86NXHj5doTxWf1uwoi55qOcnnNlj6bsDfvFSC/r2xAiAgpRLP6T6s3hDa9vvWd7XJFpvdrgHSbAL5mfgJiLt++TpoA6IzXFpxiXffXxdSRwZ3snm0Drupus9avLL5U+wmAhn+o+vzEd9/1hUpWp3STDPxqb7d2D86V+z3ETdDQhEZZnz+eW8cy9xh5miKQwnbPN6ZquhKlxCEq+rYB0TEo7vnhfkkYIlDk2vl2gtc1/b+1tGH53/Xb0t24P+HIVzMuFSN5yGhoLF+jksDJ04yW+m+plvxhvr0vuGbPEidEgQPYRmfZCQaXtv3xtXXu9c0YzZSko7hjbkLMKE6qFE+bRnU8FBMCrIGI/wTK+Ht5TdlREdC0vrla+Kjc4BT/ZkRhJez+1kPlgtAPZ2sT1+BPd9QmZu6/2f05nEwALOU05dz9ajGUEs/Rt7sSdAgRVfK/QpfjcOMzO2cfIobiNxc+uXGBtg93T2CYkgYZlkA+FgEv0z9YSSA1zWlrQcZKH1H1GhRAaaxOP8MzjSV1znid7J0W5tG4dnQp8GrQoZqj5jhVFODncJMANvLGYSuhWjFiqDHMHZnfNfftyxY0WfnbSdMiQwko3Vgwf9U7Ii87IYMG6fmsbfOtNS/U/ifiSRA8E7ITJwiXHhdB19HJyUmo2cbmm4ExQNBe1uE2/8Vmim6uGfXVuy3frvtM8BTcXxZ/YPIlcG11W0NUyzqxb7wdAmbcIk+DqWKiJOUU9ol6vzZ0AetMV8cesZ8qwYdjCwhSq3fKwjUUM7o5wkNl7fe5wD2kb9Eld19AX1nuENoMZ9Cj8SIbGqqnZCDWsXv5HUHSFv2+USH5y1O4LznkHeSxqjF77N1kf11lQJsGLgJuwP5cvaddNCu2d4QlnDFJGRPyZfp40MEhZZc0CF1GNtqnKcC03kndwLljlf1UvDEZ6tQfWvHEf4w1K2JcLsdN6YwfvIXLEoTVkBBVqT7fXSZy9/IFUi/eXf9Al8/7Egqen9+ZP14McMQO4Iv0AMlLWsDUul/8J00J/BcIeXa/LPq7f8UJFhck6CTp2pjM8qNRccmTnLVe/V9FRjA8tHio5QWifYIpzQPSMFsGsYP7deISEtVGsGqzr3chFrsOIoxRVh6EEFE0qvrmuYngQRvB1Rps2vghLVwjyz61R85zGsehXC5Ec0qIXyOURBrklpV8rdT7ISVt7zVvMSHO12h/kxQcTDZY0sHroKMgds9jQk8REYc/iDRhOG2Uynw8nUmjQ/1v/T8KS0tf7EMuda1AcxB/2SMIcs3EeGhbJgbnOK668o/ItHGfEJwTM/GcA/n5yr+ZC2ewfG2SXk83nOctvQPigz1O/GyL+f1AusvhYVvHhZZogBPU9GDcG6V311vXCkikrNoavtEI7pC19L7gG6ns7BZyIBgEWO6R5moVG/TX1K0TzmPz137s2lF9CuPHG9Zkrz9q6IFCbF5gF8KAECm7Dxl+j1/i7udYqbkUaOyXNn/jmpPNbA9jhlHMHiAfsa5fSIYnvib8Aiq1enAbmIU0LDewRTvbL7mIM9P5oSGoGSA37mXO1Urpq5I2hKBO8Ugym6XupP9Y25OP8RhcLwBztHevPQqBtRxO2+yXuvrw9BBNbkKALINevm/jJoM4HZSbQntrvLfLAzZRwx1qdLnIOrN4EGzpn3YPFV/dOPrS0h/9rnhUa4mecefL33virtRylSjlTvl74D5A1f26/bBkYdRNvSdho3pqXrHp76xoc0fyGWHIqJ0+wcK0um4ljIfzu8UM434pVSnx3rh2/b5LOkeJMlCHdQJfDa5BHCypv3Ytb6R/6RpwgR/2efpnJ7VWiLZhxKard2+lz6ls8IXM804e0+eIoba3ypUXfWF3kBEzyulVBa5WLj1pTs5LWM0tDi7cOxrfbaTXjVU+LKBAPlhK4o4qLoX+yny1RQyAcgrVHt7S70J6ORmMT2/CbKXzFuGsoYKxbNImqgYSx5YEwsJeVvqPHKykHjEDE0bKayQE6lFqefvochatrujp9XcWz2iVtpT4Cprh9Az1pqkGAspnkv8D9M1iIQQFyd1FfBzPXxLAkkqIMcI6qLYy9PJ8W7QsRjcnCOu3U40+WAGHr1drlpV/EEMkz5DK3u4BEU3kkWlAZgdaMH8gYTQGLOjKpFt4hn7MCEMuqBOpq6BvYvkGe50kczLN7F6bXuscH9QA8YExlVmVURf4QMWCIurfT2xx9gotz3hWLKUlwudD1Qd1vKjrXo5j0M/zhOPHgR9u/sw9mWG0NMf9IFVrz4e0Mnp68QW5y1xEmXhMFC3RzOmrNJhUnVR/Km6ZFAmE8Tsv3E9SbQwSxI6juTdX6j8BjC+oZTtBz+xLYNNCwIbFAl3zvW8TFGceaQi0AZ9PnNqHwc7VQE69ve2yTn+2TXSIjFvtkFRfwBZ2tLP5/dwjVhj+zvxVU5+7nFOUnKcU8A5JDaygFih+vAHXyDBbFBi6+Y6Dl4Pi18GE16w9zm5gaoWOs+gvuMTN4oCZNmo4D6xXsUuQUyvOnnm5qp6c5h7Kuaarsb1qENgO/OBmWFGP1ZjD0KnIqnYJ+S/95X2E8eveu/5NonrXu4d2Yavqdbs1nvvJf7frHULYjWN43Ja+56gApfYI9VhejXBV8QynozqgnTJhargokOoV9g2i/93R3bSGq9hN8x24TbooafrLCpQnaVgNQV6KUJeTOB5R63GQUu+V0qfe7O3X6X8/wYusbEh3fE4wws64tIP2A20RNf8fgAAAA=" alt="Logo Teknik Otomasi Industri">
+    <div>
+      <div class="eyebrow2">SMK 2 Triple J · Teknik Otomasi Industri</div>
+      <h1>Simulasi 3D PLTS Off-Grid</h1>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="dims"><span class="full">Energi Terbarukan · </span>PLTS Off-Grid</span>
+    <span class="guru">Lanjutan modul Listrik di Rumahku</span>
+  </div>
+</header>
+<main class="layout">
+  <section class="stage">
+    <div class="viewer" id="viewer">
+      <canvas id="c" aria-label="Model 3D PLTS off-grid: panel surya, papan komponen, baterai, dan rumah"></canvas>
+      <div id="labels"></div>
+      <div class="pad" id="pad" aria-label="Geser dan zoom tampilan"><button data-p="zi" title="Perbesar">+</button><button data-p="u" title="Geser ke atas">▲</button><button data-p="zo" title="Perkecil">−</button><button data-p="l" title="Geser ke kiri">◀</button><button data-p="c" class="c" title="Kembali ke tengah">⌂</button><button data-p="r" title="Geser ke kanan">▶</button><span></span><button data-p="d" title="Geser ke bawah">▼</button><span></span></div>
+      <div class="hud"><button class="tool" data-v="ov">Semua</button><button class="tool" data-v="panel">Panel</button><button class="tool" data-v="board">Papan</button><button class="tool" data-v="house">Rumah</button></div>
+      <div id="toast"></div>
+      <div class="vchip" id="vchip"></div>
+      <div id="loading">Memuat model 3D…</div>
+    </div>
+  </section>
+  <section class="panel">
+    <nav class="tabs" id="tabs"></nav>
+    <div id="pane"></div>
+  </section>
+</main>
+<footer>Media pembelajaran interaktif · Program Keahlian Teknik Elektronika · Konsentrasi Teknik Otomasi Industri · SMKS 2 Triple J<br>Angka produksi dan baterai adalah model pendekatan untuk belajar. Kabel DC memakai merah (+) / hitam (−) sesuai kabel PV; kabel daya AC kuning dengan tube marking (standar Lab TOI).<br>Media pembelajaran dibuat dengan bantuan AI oleh lukman.hakim5830@guru.smk.belajar.id</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+/* ===== geser (pan) tampilan ===== */
+const PAN={v:null,drag:false,did:false};
+function panBy(dx,dy){
+  if(!T||!PAN.v) return; const cam=T.camera, h=T.viewer.clientHeight||1;
+  const tg=T.cur.t.clone().add(PAN.v), dist=cam.position.distanceTo(tg), s=2*dist*Math.tan(THREE.MathUtils.degToRad(cam.fov/2))/h;
+  const right=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,0), up=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,1);
+  PAN.v.addScaledVector(right,-dx*s).addScaledVector(up,dy*s); if(PAN.v.length()>25) PAN.v.setLength(25);
+}
+function setupPan(){
+  PAN.v=new THREE.Vector3();
+  const cv=T.canvas, P=new Map(); let mid=null,last=null;
+  const midp=()=>{const [a,b]=[...P.values()];return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};};
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  cv.addEventListener('pointerdown',e=>{P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1){PAN.did=false;PAN.drag=(e.button===2||e.button===1||e.shiftKey);last={x:e.clientX,y:e.clientY};}
+    if(P.size===2){mid=midp();PAN.did=true;}});
+  cv.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1&&PAN.drag){const dx=e.clientX-last.x,dy=e.clientY-last.y;if(Math.abs(dx)+Math.abs(dy)>0)PAN.did=true;panBy(dx,dy);last={x:e.clientX,y:e.clientY};}
+    else if(P.size===2){const m=midp();if(mid)panBy(m.x-mid.x,m.y-mid.y);mid=m;}});
+  const up=e=>{P.delete(e.pointerId);if(P.size<2)mid=null;if(P.size===0)PAN.drag=false;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  const pad=document.getElementById('pad'); let rep=null;
+  const act=k=>{const st=Math.max(10,T.viewer.clientHeight*0.03);
+    if(k==='u')panBy(0,st);else if(k==='d')panBy(0,-st);else if(k==='l')panBy(st,0);else if(k==='r')panBy(-st,0);
+    else if(k==='zi')T.zoom=Math.max(0.25,T.zoom*0.92);else if(k==='zo')T.zoom=Math.min(2.2,T.zoom*1.08);else if(k==='c'){PAN.v.set(0,0,0);T.zoom=1;}};
+  const stop=()=>{clearInterval(rep);rep=null;};
+  pad.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();const k=b.dataset.p;act(k);stop();if(k!=='c')rep=setInterval(()=>act(k),45);});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>pad.addEventListener(ev,stop));
+}
+
+const $=s=>document.querySelector(s);
+const nf=(x,d=1)=>Number(x).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const fmtClock=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.floor(m%60)).padStart(2,'0');};
+
+/* ================= TES DIAGNOSTIK ================= */
+const MISC={
+  m1:{t:'Panel surya dianggap menyimpan listrik (padahal yang menyimpan adalah baterai)',go:'komp'},
+  m2:{t:'Panel surya dianggap langsung menghasilkan listrik AC 220 V',go:'komp'},
+  m3:{t:'Fungsi SCC dan inverter masih tertukar',go:'komp'},
+  m4:{t:'Panel surya dianggap bekerja karena panas matahari, bukan cahaya',go:'materi'},
+  m5:{t:'Angka Wp dianggap daya yang keluar sepanjang hari',go:'materi'},
+  m6:{t:'PLTS off-grid dianggap tetap memakai listrik PLN pada malam hari',go:'materi'},
+  m7:{t:'Baterai dianggap boleh dipakai sampai habis (DoD diabaikan)',go:'materi'},
+  m8:{t:'Urutan menyambung salah: panel disambung sebelum baterai',go:'praktik'},
+  m9:{t:'PLTS kecil dianggap kuat menyalakan alat pemanas dan beban besar',go:'materi'},
+  m10:{t:'Arah dan kemiringan panel di Indonesia belum dipahami',go:'praktik'},
+  m11:{t:'Belum bisa menghitung kebutuhan energi (Wh = W × jam)',go:'materi'}
+};
+const QUEST=[
+  {q:'Apa fungsi utama panel surya pada PLTS?',o:[['Mengubah cahaya matahari menjadi listrik DC',1],['Menyimpan listrik untuk malam hari','m1'],['Menghasilkan listrik AC 220 V langsung ke stop kontak','m2'],['Mengubah panas matahari menjadi listrik','m4']]},
+  {q:'Pada PLTS off-grid, lampu yang menyala pukul 21.00 mendapat listrik dari…',o:[['Baterai, yang sudah diisi panel surya pada siang hari',1],['Panel surya, yang menyimpan cahaya siang hari','m1'],['Jaringan PLN, yang otomatis menggantikan','m6'],['Inverter, yang membuat listrik sendiri','m3']]},
+  {q:'Komponen yang mengubah listrik DC 12 V dari baterai menjadi listrik AC 220 V adalah…',o:[['Inverter',1],['SCC (solar charge controller)','m3'],['MCB DC','m3'],['Panel surya','m2']]},
+  {q:'Fungsi SCC (solar charge controller) adalah…',o:[['Mengatur pengisian baterai agar tidak kelebihan isi dan tidak terkuras berlebihan',1],['Mengubah listrik DC menjadi AC 220 V','m3'],['Melipatgandakan daya panel surya','m5'],['Menyimpan listrik cadangan','m1']]},
+  {q:'Panel surya bertuliskan 100 Wp dipasang di Citeureup. Pukul 12.00 saat cerah, daya yang keluar biasanya…',o:[['Sekitar 70–85 W, karena sel panel panas dan ada rugi-rugi',1],['Tepat 100 W, dan sama besarnya sepanjang hari','m5'],['Lebih dari 100 W, karena udaranya panas','m4'],['100 W × 24 jam = 2.400 Wh setiap hari','m5']]},
+  {q:'Urutan menyambung PLTS off-grid yang benar adalah…',o:[['Baterai ke SCC → panel surya ke SCC → inverter dan beban',1],['Panel surya ke SCC → baterai ke SCC → beban','m8'],['Beban → inverter → panel surya → baterai','m8'],['Urutannya bebas, asal polaritas kabel benar','m8']]},
+  {q:'Baterai VRLA 12 V 100 Ah dengan batas pemakaian (DoD) 50%. Energi yang aman dipakai adalah…',o:[['600 Wh',1],['1.200 Wh, karena baterai boleh dipakai sampai habis','m7'],['100 Wh','m11'],['12 Wh','m11']]},
+  {q:'PLTS off-grid 200 Wp dengan baterai 100 Ah dan inverter 500 W paling cocok untuk menyalakan…',o:[['Lampu LED, TV, kipas angin, dan charger HP',1],['Setrika, rice cooker, dan pompa air bersamaan','m9'],['AC ½ PK sepanjang malam','m9'],['Dispenser pemanas dan kulkas sepanjang hari','m9']]},
+  {q:'Di Citeureup (±6,5° Lintang Selatan), panel surya sebaiknya dipasang…',o:[['Menghadap utara, miring sekitar 10–15°',1],['Menghadap selatan, miring 45°','m10'],['Datar 0°, supaya terkena matahari dari segala arah','m10'],['Tegak lurus menghadap timur','m10']]},
+  {q:'Kebutuhan energi malam hari: 4 lampu LED 9 W menyala 5 jam dan TV 60 W menyala 4 jam. Totalnya…',o:[['420 Wh',1],['69 W','m11'],['4.200 Wh','m11'],['0,42 Wh','m11']]}
+];
+const PROFILE={sp:'Salah paham',bt:'Belum tahu',rg:'Benar tapi ragu',ok:'Paham'};
+
+/* ================= SISTEM & MODEL ENERGI ================= */
+const SYS={wp:200,cap:1200,inv:500,idle:5,etaC:.85,etaI:.9};
+const AZ={U:0,T:-90,S:180,B:90}, AZN={U:'Utara',T:'Timur',S:'Selatan',B:'Barat'};
+const WX={cerah:{b:1,d:1,nm:'Cerah ☀️'},berawan:{b:.4,d:1.7,nm:'Berawan ⛅'},mendung:{b:.04,d:1.5,nm:'Mendung ☁️'}};
+const LOADS=[
+  {id:'lr',nama:'3 lampu LED ruang',W:27,sch:[[18,22]],jd:'18.00–22.00',ic:'💡'},
+  {id:'lt',nama:'Lampu LED teras',W:9,sch:[[18,24],[0,6]],jd:'18.00–06.00',ic:'💡'},
+  {id:'tv',nama:'TV 32 inci',W:60,sch:[[18,21]],jd:'18.00–21.00',ic:'📺'},
+  {id:'hp',nama:'Charger HP',W:10,sch:[[19,22]],jd:'19.00–22.00',ic:'🔌'},
+  {id:'kp',nama:'Kipas angin',W:45,sch:[[12,15]],jd:'12.00–15.00',ic:'🌀'},
+  {id:'kl',nama:'Kulkas',W:80,sch:[[0,24]],duty:.4,jd:'24 jam (kompresor hidup–mati)',ic:'🧊'},
+  {id:'pa',nama:'Pompa air',W:250,sch:[[6,6.5],[16.5,17]],jd:'06.00 & 16.30 (½ jam)',ic:'🚰'},
+  {id:'rc',nama:'Rice cooker',W:350,sch:[[5.5,6],[16.5,17]],warm:[[6,10],[17,21]],warmW:40,jd:'masak 05.30 & 16.30, lalu hangat',ic:'🍚'},
+  {id:'st',nama:'Setrika',W:350,sch:[[9,10]],jd:'09.00–10.00',ic:'👕'}
+];
+const LD=Object.fromEntries(LOADS.map(l=>[l.id,l]));
+const inS=(s,h)=>s.some(([a,b])=>h>=a&&h<b);
+function loadNow(id,h){const l=LD[id];if(inS(l.sch,h)){if(l.duty)return ((h*60)%60)<60*l.duty?l.W:0;return l.W;}if(l.warm&&inS(l.warm,h))return l.warmW;return 0;}
+function pvCalc(h,wx,az,tilt){
+  if(h<6||h>=18) return {P:0,poa:0,tc:28};
+  const a=Math.PI*(h-6)/12;let s=[-Math.cos(a),Math.sin(a),.12*Math.sin(a)];const L=Math.hypot(s[0],s[1],s[2]);s=s.map(x=>x/L);
+  const t=tilt*Math.PI/180,f=AZ[az]*Math.PI/180,n=[Math.sin(t)*Math.sin(f),Math.cos(t),Math.sin(t)*Math.cos(f)];
+  const sy=Math.max(0,s[1]),W=WX[wx],dni=850*Math.pow(sy,.5)*W.b,dhi=100*sy*W.d;
+  const poa=dni*Math.max(0,n[0]*s[0]+n[1]*s[1]+n[2]*s[2])+dhi*(1+n[1])/2, tc=30+.03*poa, tf=1-.004*(tc-25);
+  return {P:SYS.wp*poa/1000*tf*(tilt===0?.9:.97)*.97,poa,tc};
+}
+function dayWh(az,tilt,wx){let e=0;for(let m=360;m<1080;m+=5)e+=pvCalc(m/60,wx,az,tilt).P*5/60;return e;}
+/* hitung keadaan listrik sesaat */
+function elec(c){
+  const r=Object.assign({},c);
+  const g=pvCalc(c.h,c.wx,c.az,c.tilt); r.poa=c.cover?0:g.poa; r.tc=g.tc;
+  const avail=c.cover?0:g.P;
+  r.voc=(!c.cover&&g.poa>3)?21.6*(0.9+0.1*Math.min(1,g.poa/300))*(1-0.0033*(g.tc-25)):0;
+  const batOK=c.wired.bat&&c.f1;
+  if(!batOK) r.scc='off'; else if(!(c.wired.pv&&c.mcbdc)) r.scc='standby'; else if(avail<1) r.scc='night'; else if(c.soc>=0.995) r.scc='float'; else r.scc='charge';
+  r.loadReq=0; r.loadsOn={};
+  Object.keys(c.loads||{}).forEach(id=>{const w=c.loads[id];if(w>0){r.loadReq+=w;}});
+  const invPow=c.wired.inv&&c.f2;
+  if(!invPow||!c.invOn) r.inv='off'; else if(c.trip) r.inv='ovl'; else if(c.lvd) r.inv='lvd'; else r.inv='on';
+  const acOn=r.inv==='on'&&c.wired.ac&&c.mcbac;
+  r.loadP=acOn?r.loadReq:0; if(acOn) Object.keys(c.loads||{}).forEach(id=>{if(c.loads[id]>0)r.loadsOn[id]=c.loads[id];});
+  r.drain=r.inv==='on'?r.loadP/SYS.etaI+SYS.idle:0;
+  r.charge=r.scc==='charge'?avail*SYS.etaC:r.scc==='float'?Math.min(avail*SYS.etaC,r.drain):0;
+  r.pvUsed=r.charge/SYS.etaC; r.net=batOK||c.wired.inv?r.charge-r.drain:0;
+  r.pvAvail=avail;
+  let v=11.95+0.8*c.soc+(r.net/12)*0.012;
+  if(r.scc==='float') v=13.6; else if(r.scc==='charge'&&c.soc>0.88) v=Math.max(v,13.4+(c.soc-0.88)*8);
+  r.vbat=(c.wired.bat||c.wired.inv)?clamp(v,10.4,14.4):0;
+  r.vpv=(r.scc==='charge'||r.scc==='float')?17.8*(1-0.0035*(g.tc-25))+0.6:r.voc;
+  r.ipv=r.vpv>1?r.pvUsed/r.vpv:0;
+  return r;
+}
+
+/* ================= KOMPONEN ================= */
+const COMP=[
+  {id:'pv',ic:'☀️',nm:'Panel surya 2 × 100 Wp',cam:'panel',
+   fn:'Mengubah <b>cahaya</b> matahari menjadi listrik <b>DC</b>. Panel tidak menyimpan listrik: begitu gelap, keluarannya nol. Dua panel 100 Wp dirangkai <b>paralel</b> → 200 Wp, tegangan tetap ±18 V, arus dijumlahkan.',
+   spec:[['Pmax','100 Wp / panel (200 Wp total)'],['Vmp / Imp','18,0 V / 5,56 A'],['Voc / Isc','21,6 V / 5,95 A'],['Kondisi uji (STC)','1.000 W/m², sel 25 °C'],['Jenis','monokristal 36 sel']],
+   cek:'Di bawah matahari, ukur Voc dengan multimeter DC (±20–22 V). Ukur Isc dengan tang ampere DC bila ada.',
+   k3:'Panel <b>tidak punya saklar</b>. Selama terkena cahaya, kabelnya bertegangan. Tutup panel dengan terpal saat menyambung.'},
+  {id:'mc4',ic:'🔗',nm:'Konektor MC4 & kabel PV',cam:'panel',
+   fn:'Menyambung kabel panel dengan aman di luar ruangan. Kabel PV 4 mm² berlapis ganda dan tahan sinar UV. Konektor MC4 terkunci dan tahan air.',
+   spec:[['Kabel','PV1-F 4 mm², merah (+) / hitam (−)'],['Konektor','MC4 1000 V DC, 30 A'],['Paralel','konektor cabang MC4 Y (2 → 1)']],
+   cek:'Tarik pelan setelah dikunci — konektor tidak boleh lepas. Cek polaritas dengan multimeter sebelum masuk SCC.',
+   k3:'Jangan mencabut MC4 saat berarus: busur api DC tidak padam sendiri seperti listrik AC.'},
+  {id:'mcbdc',ic:'🔘',nm:'MCB DC 2P 16 A',cam:'board',
+   fn:'Pemutus dan pengaman sisi panel surya. Memutus kabel + dan − sekaligus saat perawatan, dan trip bila arus berlebih.',
+   spec:[['Rating','16 A, 2 kutub, 250 V DC'],['Pemilihan','≥ 1,25 × Isc = 1,25 × 11,9 A = 14,9 A → 16 A'],['Wajib','tipe DC (ada tanda + / −)']],
+   cek:'Posisi OFF: multimeter di sisi SCC harus 0 V walau panel terkena matahari.',
+   k3:'Jangan memakai MCB AC untuk DC — busur api DC lebih sulit dipadamkan.'},
+  {id:'scc',ic:'🎛️',nm:'SCC MPPT 20 A',cam:'board',
+   fn:'<b>Solar charge controller</b> mengatur pengisian baterai: <b>bulk → absorption → float</b>. Mencegah baterai kelebihan isi (overcharge), mencegah arus balik ke panel saat malam, dan MPPT mencari titik daya maksimum panel.',
+   spec:[['Sistem','12/24 V otomatis (deteksi dari baterai)'],['Arus isi','maks. 20 A'],['Tegangan PV','maks. 100 V'],['Terminal','PV · BAT · LOAD (beban DC kecil)'],['Float','13,6–13,8 V (VRLA)']],
+   cek:'Layar SCC menampilkan tegangan PV, tegangan baterai, dan status pengisian.',
+   k3:'Sambung <b>baterai dulu</b>, baru panel. Lepas dengan urutan terbalik: panel dulu, baru baterai.'},
+  {id:'bat',ic:'🔋',nm:'Baterai VRLA 12 V 100 Ah',cam:'batt',
+   fn:'Menyimpan energi dari siang untuk dipakai malam hari. Seperti <b>botol air minum</b>: diisi siang hari, diminum malam hari — tapi jangan diminum sampai tetes terakhir.',
+   spec:[['Energi nominal','12 V × 100 Ah = 1.200 Wh'],['DoD aman','50% → 600 Wh boleh dipakai'],['Penuh (istirahat)','±12,7 V'],['±50%','±12,2 V'],['Jenis','VRLA deep cycle (AGM/gel)']],
+   cek:'Ukur tegangan istirahat (tanpa beban dan pengisian ±30 menit) untuk memperkirakan isi baterai.',
+   k3:'Korsleting baterai mengalirkan ratusan sampai ribuan ampere. Lepas jam tangan dan cincin. Baterai melepas gas hidrogen saat diisi — ruang harus berventilasi, jauh dari api.'},
+  {id:'fuse',ic:'🧯',nm:'Fuse baterai F1 20 A & F2 60 A',cam:'board',
+   fn:'Melindungi <b>kabel</b> dari kebakaran bila terjadi korsleting. Dipasang sedekat mungkin dengan baterai. F1 untuk cabang SCC, F2 untuk cabang inverter.',
+   spec:[['F1 (SCC)','20 A, kabel 6 mm²'],['Arus inverter','500 W ÷ (12 V × 0,9) ≈ 46 A'],['F2 (inverter)','60 A, kabel 16 mm²']],
+   cek:'Cabut fuse lalu ukur kontinuitasnya dengan multimeter (bunyi beep = baik).',
+   k3:'Fuse dicabut saat menyambung dan dipasang paling akhir. Jangan pernah mengganti fuse dengan kawat.'},
+  {id:'inv',ic:'⚡',nm:'Inverter 500 W pure sine',cam:'board',
+   fn:'Mengubah listrik <b>DC 12 V</b> dari baterai menjadi <b>AC 220 V 50 Hz</b> — sama dengan listrik di stop kontak rumah. Gelombang <b>pure sine</b> aman untuk kipas, pompa, dan kulkas.',
+   spec:[['Input','12 V DC (10,5–15 V)'],['Output','220 V AC 50 Hz, 500 W kontinu'],['Lonjakan','1.000 W sesaat (start motor)'],['Konsumsi sendiri','±5 W selama menyala'],['Proteksi','overload, baterai lemah (10,5 V)']],
+   cek:'Nyalakan tanpa beban, ukur output dengan multimeter AC: 215–230 V.',
+   k3:'Inverter disambung <b>langsung ke baterai</b> lewat fuse, bukan ke terminal LOAD SCC. Output 220 V berbahaya seperti listrik PLN.'},
+  {id:'mcbac',ic:'🏠',nm:'MCB AC 4 A',cam:'board',
+   fn:'Pengaman sisi AC menuju instalasi rumah — sama seperti MCB di modul Listrik di Rumahku. Memutus bila terjadi hubung singkat pada kabel rumah.',
+   spec:[['Rating','4 A, 1 kutub, 230 V AC'],['Arus maks. inverter','500 W ÷ 220 V ≈ 2,3 A'],['Kabel','daya kuning, tube marking L dan N']],
+   cek:'Ukur tegangan di sisi keluaran MCB saat ON: ±220 V.',
+   k3:'Matikan MCB AC sebelum mengerjakan instalasi rumah.'},
+  {id:'pe',ic:'⏚',nm:'Grounding (PE)',cam:'ground',
+   fn:'Menghubungkan rangka panel dan bodi inverter ke bumi. Bila ada kebocoran listrik atau induksi petir, arus dialirkan ke tanah, bukan ke tubuh manusia.',
+   spec:[['Kabel','hijau-kuning 6 mm²'],['Elektroda','batang tembaga ± 1,5 m'],['Target','tahanan pentanahan ≤ 5 Ω']],
+   cek:'Ukur tahanan pentanahan dengan earth tester.',
+   k3:'Warna hijau-kuning hanya untuk grounding — jangan dipakai untuk kabel lain.'},
+  {id:'rack',ic:'📐',nm:'Rangka panel',cam:'panel',
+   fn:'Menopang panel dengan arah dan kemiringan yang tepat. Di Citeureup (±6,5° LS) panel menghadap <b>utara</b>, miring <b>10–15°</b> agar air hujan ikut membersihkan debu.',
+   spec:[['Bahan','aluminium / besi galvanis'],['Arah','utara (U)'],['Kemiringan','10–15°'],['Jarak ke tanah','≥ 50 cm, sirkulasi udara']],
+   cek:'Gunakan kompas dan busur derajat (atau aplikasi HP) untuk memeriksa arah dan kemiringan.',
+   k3:'Rangka harus kokoh terhadap angin. Hindari bayangan pohon atau bangunan.'}
+];
+const CP=Object.fromEntries(COMP.map(c=>[c.id,c]));
+
+/* ================= PRAKTIK ================= */
+const K3=[
+  ['Sarung tangan isolasi',1],['Kacamata safety',1],['Sepatu safety',1],['Obeng & kunci bergagang isolasi',1],['Multimeter DC/AC',1],['Terpal penutup panel',1],
+  ['Tetap memakai jam tangan & cincin logam',0,'Logam di tangan bisa menghubungkan kutub + dan − baterai → luka bakar.'],
+  ['Bekerja saat hujan supaya panel tidak panas',0,'Air + listrik = bahaya sengatan, rangka dan atap licin.'],
+  ['Merokok di dekat baterai',0,'Baterai melepas gas hidrogen saat diisi — mudah terbakar.']
+];
+const SEQ=[
+  {id:'off',t:'Pastikan MCB DC, MCB AC, dan saklar inverter OFF; cabut fuse F1 & F2; tutup panel surya dengan terpal.',ok:'Semua sumber energi terisolasi. Panel ditutup karena panel surya <b>tidak punya saklar</b> — selama terkena cahaya, kabelnya bertegangan.'},
+  {id:'pe',t:'Pasang kabel grounding hijau-kuning dari rangka panel dan bodi inverter ke batang pentanahan.',ok:'Rangka panel dan bodi inverter sudah terhubung ke bumi sebelum kabel daya dikerjakan.'},
+  {id:'bat',t:'Sambung kabel baterai ke terminal BAT SCC: merah ke BAT+ lewat dudukan fuse F1, hitam ke BAT−.',ok:'Kabel baterai–SCC terpasang. Fuse masih dicabut, jadi ujung kabel belum bertegangan.'},
+  {id:'f1',t:'Pasang fuse F1 20 A, lalu amati layar SCC.',ok:'SCC menyala: <b>BAT 12,6 V</b> → sistem 12 V terdeteksi. Inilah alasan baterai disambung <b>sebelum</b> panel.'},
+  {id:'pol',t:'Ukur polaritas dan tegangan (Voc) kabel panel dengan multimeter DC.',ok:''},
+  {id:'pv',t:'Sambung kabel panel (MC4) ke MCB DC 16 A, lalu dari MCB DC ke terminal PV SCC. MCB DC tetap OFF.',ok:'Kabel panel terpasang ke SCC melalui MCB DC.'},
+  {id:'inv',t:'Sambung inverter langsung ke baterai dengan kabel 16 mm² lewat dudukan fuse F2 60 A.',ok:'Inverter terhubung ke baterai — bukan ke terminal LOAD SCC.'},
+  {id:'ac',t:'Sambung output inverter ke MCB AC 4 A, lalu ke instalasi rumah (kabel kuning, tube marking L dan N).',ok:'Sisi AC terpasang. Instalasi rumah sama seperti di modul Listrik di Rumahku.'},
+  {id:'open',t:'Periksa ulang semua sambungan, lalu buka terpal penutup panel.',ok:'Panel terkena matahari. Kabel sampai MCB DC kini bertegangan.'},
+  {id:'mcbdc',t:'ON-kan MCB DC, lalu amati layar SCC.',ok:'SCC mulai mengisi: <b>PV ±18 V</b>, baterai naik ke ±13 V, status <b>CHARGING</b>.'},
+  {id:'f2',t:'Pasang fuse F2 60 A.',ok:'Inverter mendapat suplai dari baterai (masih OFF).'},
+  {id:'invon',t:'Nyalakan inverter tanpa beban, lalu ukur tegangan output dengan multimeter AC.',ok:'Multimeter AC: <b>221 V, 50 Hz</b>. Inverter siap dibebani.'},
+  {id:'mcbac',t:'ON-kan MCB AC, lalu nyalakan beban satu per satu.',ok:'Beban menyala. PLTS off-grid siap dipakai! 🎉'}
+];
+const SI=Object.fromEntries(SEQ.map((s,i)=>[s.id,i]));
+const EARLY={
+  f1:'Fuse dipasang setelah kabel baterai–SCC tersambung dan diperiksa. Fuse adalah pemutus terakhir.',
+  pv:'',open:'Terpal dibuka setelah semua kabel selesai dan diperiksa. Begitu dibuka, kabel panel bertegangan ±21 V dan bisa memercik saat disambung.',
+  mcbdc:'MCB DC baru di-ON-kan saat pengujian, setelah semua kabel selesai dan terpal dibuka.',
+  f2:'Fuse F2 dipasang setelah semua kabel inverter (sisi DC dan AC) selesai. Kalau dipasang lebih dulu, terminal inverter bertegangan saat masih dikerjakan.',
+  invon:'Inverter belum siap dinyalakan — selesaikan dulu langkah sebelumnya (kabel, fuse F2).',
+  mcbac:'Nyalakan inverter tanpa beban dulu dan ukur 220 V. Menyalakan inverter langsung dengan beban bisa memicu overload.'
+};
+const DIST=[
+  {at:'off',t:'Langsung mulai menyambung; panel cuma 21 V jadi tidak perlu ditutup',why:'Dua panel paralel bisa mengalirkan ±12 A. Saat ujung kabel bersentuhan terjadi percikan busur api DC. Biasakan memutus semua sumber dulu.'},
+  {at:'pe',t:'Grounding tidak perlu, sistem 12 V aman disentuh',why:'Sisi output inverter 220 V. Bila bocor, bodi bisa bertegangan. Rangka panel juga perlu grounding untuk induksi petir.'},
+  {at:'bat',t:'Kencangkan terminal baterai dengan kunci pas biasa sambil memakai jam tangan logam',why:'Kunci atau jam tangan yang menyentuh + dan − sekaligus = korsleting baterai: arus ratusan ampere, logam memerah, percikan bisa menyalakan gas hidrogen.'},
+  {at:'f1',t:'Lewati fuse F1, sambung kabel langsung ke baterai supaya lebih pendek',why:'Fuse dekat baterai melindungi kabel. Tanpa fuse, korsleting pada kabel = kabel terbakar.'},
+  {at:'pol',t:'Tidak perlu diukur, kabel merah pasti positif',why:'Kabel di lapangan bisa tertukar. Polaritas terbalik ke SCC bisa merusak SCC. Selalu ukur.'},
+  {at:'pv',t:'Sambung kabel panel langsung ke terminal baterai agar pengisian lebih cepat',why:'Tanpa SCC, baterai bisa kelebihan isi (panas, menggelembung, umur pendek) dan malam hari arus baterai bisa mengalir balik ke panel.'},
+  {at:'inv',t:'Sambung inverter ke terminal LOAD SCC agar lebih praktis',why:'Terminal LOAD SCC maksimal 20 A (±240 W). Inverter 500 W bisa menarik ±46 A → SCC panas dan rusak.'},
+  {at:'inv',t:'Pakai kabel NYAF 1,5 mm² untuk inverter–baterai',why:'Arus ±46 A, sedangkan kabel 1,5 mm² hanya aman ±15 A → panas dan isolasinya meleleh. Gunakan 16 mm².'},
+  {at:'ac',t:'Sambung output inverter ke instalasi PLN rumah supaya bisa dipakai bersama',why:'Inverter off-grid tidak boleh disambung paralel dengan jaringan PLN: inverter bisa rusak dan listrik bisa mengalir balik ke jaringan, membahayakan petugas PLN.'},
+  {at:'open',t:'Bersihkan kaca panel dengan sikat kawat sebelum dibuka',why:'Sikat kawat menggores kaca dan lapisan anti-pantul. Bersihkan dengan air dan kain lembut, pagi atau sore hari.'},
+  {at:'mcbdc',t:'Cabut lalu pasang lagi konektor MC4 untuk mengetes percikan',why:'Busur api DC tidak padam sendiri. Jangan mencabut MC4 saat berarus.'},
+  {at:'f2',t:'Ganti fuse F2 dengan kawat tembaga karena fuse mahal',why:'Kawat tidak memutus saat korsleting — kabel dan baterai bisa terbakar.'},
+  {at:'invon',t:'Nyalakan inverter sambil semua beban sudah tercolok dan menyala',why:'Lonjakan arus saat start bisa membuat inverter overload. Nyalakan tanpa beban, ukur, baru bebani satu per satu.'},
+  {at:'mcbac',t:'Nyalakan setrika, rice cooker, dan pompa bersamaan untuk tes kekuatan',why:'350 + 350 + 250 = 950 W > kapasitas inverter 500 W → inverter overload dan mati.'}
+];
+const MISI={
+  m1:{nm:'Misi 1 · Hari cerah',wx:'cerah',req:['lr','lt','tv','hp','kp'],goal:'Cuaca cerah. Wajib menyala: 3 lampu ruang, lampu teras, TV, charger HP, dan kipas angin. Boleh menambah alat lain. Lewati 24 jam dengan <b>isi baterai tidak pernah di bawah 50%</b> dan inverter tidak overload.'},
+  m2:{nm:'Misi 2 · Hari mendung',wx:'mendung',req:['lr','lt'],goal:'Cuaca mendung seharian. Wajib menyala: 3 lampu ruang dan lampu teras. Pilih alat lain yang masih boleh dinyalakan agar <b>isi baterai tetap ≥ 50%</b> selama 24 jam.'},
+  bebas:{nm:'Bebas',wx:null,req:[],goal:'Coba sendiri: ubah cuaca dan alat yang dipakai. Amati kapan baterai terisi dan kapan terkuras.'}
+};
+
+/* ================= STATE ================= */
+const KEY='toi-plts-offgrid-v1';
+const S={tab:'pre',name:'',kelas:'',
+  test:{pre:{ans:[],conf:[],i:0,done:false},post:{ans:[],conf:[],i:0,done:false,order:null}},
+  visited:{},
+  mat:{g:1000,tc:45,jam:{lr:4,lt:12,tv:3,hp:3,kp:3,kl:0,pa:0,rc:0,st:0}},
+  kom:{sel:'pv',seen:{},g:null,best:null},
+  pr:{st:'k3',k3:{sel:{},done:false,fb:''},arah:{az:'S',tilt:0,done:false,fb:'',fbc:''},seq:{i:0,opts:null,fb:'',fbc:'',pol:null,done:false},pen:0,log:[],misi:{m1:false,m2:false}},
+  sim:null};
+function newSim(mode){
+  const m=MISI[mode||'m1'], inc={}; (m.req.length?m.req:['lr','lt','tv','hp']).forEach(k=>inc[k]=true);
+  S.sim={mode:mode||'m1',wx:m.wx||(S.sim&&S.sim.wx)||'cerah',inc,t:0,E:SYS.cap*0.7,run:false,spd:3,minSoc:0.7,trip:false,lvd:false,fail:'',pvWh:0,ldWh:0,hist:[{t:0,pv:0,ld:0,soc:.7}],ended:false,acc:0};
+}
+newSim('m1');
+try{const sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv){Object.assign(S.test,sv.test||{});S.name=sv.name||'';S.kelas=sv.kelas||'';S.visited=sv.visited||{};
+  if(sv.kom){S.kom.seen=sv.kom.seen||{};S.kom.best=sv.kom.best||null;}
+  if(sv.pr){Object.assign(S.pr,sv.pr);S.pr.seq.opts=null;}}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({test:S.test,name:S.name,kelas:S.kelas,visited:S.visited,kom:{seen:S.kom.seen,best:S.kom.best},pr:S.pr}));}catch(e){}}
+const score=()=>Math.max(0,100-S.pr.pen);
+function penal(n,txt){S.pr.pen+=n;S.pr.log.push(txt);if(S.pr.log.length>40)S.pr.log.shift();save();}
+
+/* ================= KEADAAN LIVE ================= */
+const FULLW={pe:true,bat:true,pv:true,inv:true,ac:true};
+function demoCfg(){return {h:11,wx:'cerah',az:'U',tilt:12,cover:false,wired:FULLW,f1:true,f2:true,mcbdc:true,invOn:true,mcbac:true,soc:.78,loads:{tv:60,kp:45,hp:10},trip:false,lvd:false};}
+function seqCfg(){
+  const pr=S.pr, done=id=>pr.seq.i>SI[id]||pr.seq.done;
+  const a=pr.arah;
+  const w={pe:done('pe'),bat:done('bat'),pv:done('pv'),inv:done('inv'),ac:done('ac')};
+  const inSeq=pr.st==='rangkai';
+  let cover=done('off')&&!done('open');
+  if(inSeq&&pr.seq.pol&&pr.seq.pol.ans==null) cover=false;
+  return {h:11,wx:'cerah',az:a.done?'U':a.az,tilt:a.done?12:a.tilt,cover,wired:w,f1:done('f1'),f2:done('f2'),mcbdc:done('mcbdc'),invOn:done('invon'),mcbac:done('mcbac'),soc:.72,loads:done('mcbac')?{kp:45,tv:60}:{},trip:false,lvd:false};
+}
+function simCfg(){
+  const sm=S.sim, h=((360+sm.t)/60)%24, loads={};
+  Object.keys(sm.inc).forEach(id=>{if(sm.inc[id]){const w=loadNow(id,h);if(w>0)loads[id]=w;}});
+  return {h,wx:sm.wx,az:'U',tilt:12,cover:false,wired:FULLW,f1:true,f2:true,mcbdc:true,invOn:true,mcbac:true,soc:sm.E/SYS.cap,loads,trip:sm.trip,lvd:sm.lvd};
+}
+function liveCfg(){
+  if(S.tab==='praktik'){ if(S.pr.st==='uji'&&S.pr.seq.done) return simCfg(); return seqCfg(); }
+  return demoCfg();
+}
+let ST=elec(demoCfg());
+
+/* ================= 3D ================= */
+let T=null;
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+const M=(h,o)=>new THREE.MeshStandardMaterial(Object.assign({color:col(h),roughness:.6,metalness:0},o||{}));
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.userData={c,g,draw};return t;}
+function redraw(t){const {c,g,draw}=t.userData;g.clearRect(0,0,c.width,c.height);draw(g,c.width,c.height);t.needsUpdate=true;}
+function glowSprite(rgb){const t=canvasTex(128,128,g=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,`rgba(${rgb},.95)`);gr.addColorStop(.35,`rgba(${rgb},.45)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,128,128);});return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0,toneMapped:false}));}
+function box(g,w,h,d,c,x,y,z,o){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(c,o));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
+function cyl(g,r1,r2,h,c,x,y,z,o,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg||20),M(c,o));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
+function textPlane(w,h,draw,basic){const t=canvasTex(Math.round(w*160),Math.round(h*160),draw);const mat=basic?new THREE.MeshBasicMaterial({map:t,transparent:true,toneMapped:false}):new THREE.MeshStandardMaterial({map:t,roughness:.7,transparent:true});const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);m.userData.tex=t;return m;}
+function reg(id,...ms){ms.forEach(m=>m.traverse(o=>{if(o.isMesh&&o.material&&o.material.emissive){(T.hl[id]=T.hl[id]||[]).push(o.material);}}));}
+function tapReg(id,pos,r){const s=new THREE.Mesh(new THREE.SphereGeometry(r||0.3,8,6),new THREE.MeshBasicMaterial({visible:false}));s.position.copy(pos);s.userData.comp=id;T.scene.add(s);T.taps.push(s);}
+
+const CAMS={
+  ov:{t:[-1.6,0.9,0],yaw:.42,pitch:.44,d:19},
+  panel:{t:[-9,0.9,0.3],yaw:.6,pitch:.42,d:5.4},
+  board:{t:[-3.0,1.5,-0.9],yaw:.14,pitch:.14,d:4.7},
+  batt:{t:[-3.0,0.55,-0.6],yaw:.3,pitch:.35,d:2.3},
+  house:{t:[5,1.0,-0.2],yaw:-.12,pitch:.6,d:10.5},
+  ground:{t:[-8,0.45,0.9],yaw:.7,pitch:.45,d:3.8}
+};
+function camTo(k){if(!T)return;const p=CAMS[k];T.goal={t:V3(...p.t),yaw:p.yaw,pitch:p.pitch,d:p.d};T.anim=1.2;T.camKey=k;if(PAN.v)PAN.v.set(0,0,0);T.zoom=1;}
+
+function init3D(){
+  if(typeof THREE==='undefined') throw new Error('three');
+  const canvas=$('#c'),viewer=$('#viewer');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.LinearToneMapping;renderer.toneMappingExposure=1;
+  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(36,1,0.05,300);
+  scene.background=new THREE.Color(0xa9cbe6);
+  const pmrem=new THREE.PMREMGenerator(renderer),env=new THREE.Scene();
+  const sky=new THREE.SphereGeometry(50,32,16),pa=sky.attributes.position,cols=[];const lo=new THREE.Color(0x3a4550),hi=new THREE.Color(0xf2f5f8);
+  for(let i=0;i<pa.count;i++){const t=(pa.getY(i)/50+1)/2;const c=lo.clone().lerp(hi,Math.pow(t,.8));cols.push(c.r,c.g,c.b);}
+  sky.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));env.add(new THREE.Mesh(sky,new THREE.MeshBasicMaterial({side:THREE.BackSide,vertexColors:true})));
+  scene.environment=pmrem.fromScene(env,0.03).texture;
+  const hemi=new THREE.HemisphereLight(0xffffff,0x6f7d62,0.5);scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xfff4e0,1);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-15,right:15,top:12,bottom:-12,near:1,far:80});sun.shadow.bias=-0.0006;scene.add(sun);scene.add(sun.target);sun.target.position.set(-2,0,0);
+  const houseLight=new THREE.PointLight(0xffd8a0,0,14,1.6);houseLight.position.set(5,2.4,-0.6);scene.add(houseLight);
+  const dots=new THREE.InstancedMesh(new THREE.SphereGeometry(0.03,8,6),new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}),600);
+  dots.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(600*3).fill(1),3);dots.count=0;dots.frustumCulled=false;scene.add(dots);
+  T={renderer,scene,camera,canvas,viewer,hemi,sun,houseLight,dots,pins:[],taps:[],hl:{},wg:{},flow:{},ld:{},zoom:1,anim:0,
+     cur:{t:V3(...CAMS.ov.t),yaw:CAMS.ov.yaw,pitch:CAMS.ov.pitch,d:CAMS.ov.d},goal:null};
+  buildWorld();
+  bind();setupPan();new ResizeObserver(resize).observe(viewer);resize();
+  $('#loading').style.display='none';
+  requestAnimationFrame(loop);
+}
+function panelTex(){return canvasTex(512,336,(g,w,h)=>{g.fillStyle='#c9ced4';g.fillRect(0,0,w,h);const cx=9,cy=4,pw=(w-16)/cx,ph=(h-16)/cy;
+  for(let i=0;i<cx;i++)for(let j=0;j<cy;j++){const x=8+i*pw,y=8+j*ph;g.fillStyle='#14233f';g.fillRect(x+1.5,y+1.5,pw-3,ph-3);g.fillStyle='rgba(120,150,210,.18)';g.fillRect(x+1.5,y+1.5,pw-3,(ph-3)*.4);
+    g.strokeStyle='rgba(200,210,225,.55)';g.lineWidth=1;for(let k=1;k<4;k++){g.beginPath();g.moveTo(x+k*pw/4,y+2);g.lineTo(x+k*pw/4,y+ph-2);g.stroke();}
+    g.fillStyle='#e7eaee';[[0,0],[pw,0],[0,ph],[pw,ph]].forEach(([a,b])=>{g.fillRect(x+a-2.5,y+b-2.5,5,5);});}});}
+function buildWorld(){
+  const S3=T.scene, g=new THREE.Group(); S3.add(g); T.world=g;
+  // tanah
+  const gr=new THREE.Mesh(new THREE.PlaneGeometry(70,46),M('#6f8c4c',{roughness:.95}));gr.rotation.x=-Math.PI/2;gr.receiveShadow=true;g.add(gr);
+  box(g,4.2,0.06,2.4,'#9d988e',-3,0.03,-0.3,{roughness:.9}); // lantai papan
+  box(g,3.2,0.05,2.6,'#9d988e',-9,0.025,0.3,{roughness:.9});
+  // kompas
+  const cmp=textPlane(2.6,2.6,(c,w,h)=>{c.translate(w/2,h/2);c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=6;c.beginPath();c.arc(0,0,w*.36,0,7);c.stroke();
+    c.fillStyle='#c42b22';c.beginPath();c.moveTo(0,w*.34);c.lineTo(-w*.06,0);c.lineTo(w*.06,0);c.fill();c.fillStyle='#fff';c.beginPath();c.moveTo(0,-w*.34);c.lineTo(-w*.06,0);c.lineTo(w*.06,0);c.fill();
+    c.font=`700 ${w*.13}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';
+    c.fillText('S',0,-w*.44);c.fillStyle='#ffdf6a';c.fillText('U',0,w*.44);c.fillStyle='#fff';c.fillText('T',-w*.44,0);c.fillText('B',w*.44,0);});
+  cmp.rotation.x=-Math.PI/2;cmp.position.set(-6.2,0.02,4.2);g.add(cmp);
+  // pohon dekor (di selatan, tidak menaungi panel)
+  [[-15,-9],[11,-7],[13,3]].forEach(([x,z])=>{cyl(g,0.15,0.2,1.6,'#6b4a2e',x,0.8,z);const cr=new THREE.Mesh(new THREE.SphereGeometry(1.2,14,10),M('#4f7f3a',{roughness:.9}));cr.position.set(x,2.2,z);cr.castShadow=true;g.add(cr);});
+  buildRack(g); buildBoard(g); buildHouse(g); buildWires(g);
+  // matahari
+  const sunM=new THREE.Mesh(new THREE.SphereGeometry(1.1,20,14),new THREE.MeshBasicMaterial({color:0xfff2b0,toneMapped:false}));g.add(sunM);
+  const sg=glowSprite('255,214,120');sg.scale.setScalar(9);sg.material.opacity=.9;g.add(sg);T.sunM=sunM;T.sunG=sg;
+}
+function buildRack(g){
+  const rk=new THREE.Group();rk.position.set(-9,0,0.3);g.add(rk);T.rack=rk;
+  const rot=new THREE.Group();rk.add(rot);T.pvRot=rot;
+  cyl(rot,0.04,0.05,0.95,'#9aa2a8',-0.75,0.475,0,{metalness:.6,roughness:.4});cyl(rot,0.04,0.05,0.95,'#9aa2a8',0.75,0.475,0,{metalness:.6,roughness:.4});
+  box(rot,1.7,0.05,0.05,'#9aa2a8',0,0.92,0,{metalness:.6,roughness:.4});
+  box(rot,0.3,0.06,0.3,'#8e8e86',-0.75,0.03,0);box(rot,0.3,0.06,0.3,'#8e8e86',0.75,0.03,0);
+  const tilt=new THREE.Group();tilt.position.y=0.97;rot.add(tilt);T.pvTilt=tilt;
+  const tx=panelTex(), frames=[];
+  [-0.53,0.53].forEach(x=>{const fr=box(tilt,1.02,0.035,0.67,'#c4c9ce',x,0,0,{metalness:.7,roughness:.35});frames.push(fr);
+    const top=new THREE.Mesh(new THREE.PlaneGeometry(0.98,0.63),new THREE.MeshStandardMaterial({map:tx,roughness:.18,metalness:.35,envMapIntensity:1.2}));top.rotation.x=-Math.PI/2;top.position.set(x,0.019,0);tilt.add(top);frames.push(top);
+    const jb=box(tilt,0.12,0.03,0.08,'#1a1a1a',x,-0.035,-0.15);frames.push(jb);});
+  box(tilt,0.06,0.04,0.7,'#9aa2a8',-0.75,-0.04,0,{metalness:.6});box(tilt,0.06,0.04,0.7,'#9aa2a8',0.75,-0.04,0,{metalness:.6});
+  const cov=box(tilt,2.18,0.012,0.76,'#3f6e9e',0,0.035,0,{roughness:.95});T.cover=cov;
+  [[-1.09,.38],[1.09,.38],[-1.09,-.38],[1.09,-.38]].forEach(([x,z])=>{const t=box(cov,0.05,0.04,0.05,'#d9c14a',x,0,z);});
+  // MC4 konektor di kaki
+  T.mc4=[];[[-0.07,0],[0.07,0]].forEach(([x])=>{const m=cyl(rk,0.018,0.018,0.1,'#1a1a1a',x+0.08,0.45,-0.12);m.rotation.z=Math.PI/2;T.mc4.push(m);});
+  reg('pv',...frames);reg('rack',rot);reg('mc4',...T.mc4);
+  tapReg('pv',V3(-9,1.0,0.3),0.8);tapReg('rack',V3(-9,0.4,0.3),0.4);tapReg('mc4',V3(-8.9,0.45,0.18),0.18);
+  // batang grounding
+  const gr=new THREE.Group();gr.position.set(-7.8,0,1.2);g.add(gr);cyl(gr,0.02,0.02,0.35,'#c98a4a',0,0.12,0,{metalness:.8,roughness:.3});box(gr,0.22,0.04,0.22,'#7a7a72',0,0.02,0);
+  const lb=textPlane(0.5,0.16,(c,w,h)=>{c.fillStyle='#2f8f3a';c.fillRect(0,0,w,h);c.fillStyle='#ffe14a';c.fillRect(0,h*.4,w,h*.2);c.fillStyle='#fff';c.font=`700 ${h*.55}px Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('⏚ PE',w/2,h/2);});lb.position.set(0,0.42,0);gr.add(lb);
+  reg('pe',gr);tapReg('pe',V3(-7.8,0.25,1.2),0.3);
+}
+function lcdDraw(fn){return canvasTex(256,128,fn);}
+function buildBoard(g){
+  const B=new THREE.Group();g.add(B);T.board=B;
+  box(B,3.0,2.6,0.12,'#d8d3c8',-3,1.3,-1.12,{roughness:.9});
+  const roof=box(B,3.4,0.06,1.7,'#8f9aa3',-3,2.72,-0.45,{transparent:true,opacity:.35,roughness:.5});roof.castShadow=false;roof.rotation.x=0.08;
+  box(B,2.7,1.95,0.04,'#c99c62',-3,1.55,-1.0,{roughness:.85}); // papan kayu
+  box(B,2.5,0.035,0.02,'#b7bcc1',-3,2.05,-0.97,{metalness:.7});box(B,2.5,0.035,0.02,'#b7bcc1',-3,1.3,-0.97,{metalness:.7});
+  const tag=textPlane(1.1,0.16,(c,w,h)=>{c.fillStyle='#1d2a36';c.fillRect(0,0,w,h);c.fillStyle='#ffd54a';c.font=`700 ${h*.62}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('PANEL PLTS OFF-GRID 12 V',w/2,h/2);});tag.position.set(-3,2.42,-0.975);B.add(tag);
+  // MCB DC 2P
+  const md=new THREE.Group();md.position.set(-3.94,2.05,-0.92);B.add(md);
+  box(md,0.075,0.3,0.1,'#f4f4f1',-0.04,0,0);box(md,0.075,0.3,0.1,'#f4f4f1',0.04,0,0);
+  const lvD=box(md,0.13,0.06,0.05,'#c42b22',0,0.04,0.065);T.lvD=lvD;
+  const mdl=textPlane(0.15,0.06,(c,w,h)=>{c.fillStyle='#fff';c.fillRect(0,0,w,h);c.fillStyle='#c42b22';c.font=`700 ${h*.7}px Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('DC 16A',w/2,h/2);},true);mdl.position.set(0,-0.08,0.051);md.add(mdl);
+  reg('mcbdc',md);tapReg('mcbdc',V3(-3.94,2.05,-0.85),0.17);
+  // SCC
+  const sc=new THREE.Group();sc.position.set(-3.3,2.0,-0.9);B.add(sc);
+  box(sc,0.5,0.34,0.1,'#1f5592',0,0,0,{roughness:.45});for(let i=0;i<6;i++)box(sc,0.02,0.3,0.03,'#17406e',-0.2+i*0.08,0,-0.05);
+  const scT=lcdDraw(drawSCC);const scl=new THREE.Mesh(new THREE.PlaneGeometry(0.26,0.13),new THREE.MeshBasicMaterial({map:scT,toneMapped:false}));scl.position.set(0,0.05,0.051);sc.add(scl);T.scT=scT;
+  const scn=textPlane(0.3,0.05,(c,w,h)=>{c.fillStyle='#fff';c.font=`700 ${h*.7}px Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('MPPT SOLAR CHARGE CONTROLLER 20A',w/2,h/2);},true);scn.position.set(0,0.14,0.051);sc.add(scn);
+  // terminal SCC
+  const tlab=['PV+','PV−','BAT+','BAT−','LD+','LD−'];
+  tlab.forEach((t,i)=>{const x=-0.19+i*0.08;box(sc,0.05,0.05,0.05,i%2?'#222':'#b8312a',x,-0.13,0.04);});
+  const tl=textPlane(0.5,0.035,(c,w,h)=>{c.fillStyle='#fff';c.font=`700 ${h*.75}px Arial`;c.textAlign='center';c.textBaseline='middle';tlab.forEach((t,i)=>c.fillText(t,w*(0.12+i*0.16),h/2));},true);tl.position.set(0,-0.085,0.051);sc.add(tl);
+  reg('scc',sc);tapReg('scc',V3(-3.3,2.0,-0.82),0.22);
+  // fuse F1 & F2
+  const fu=new THREE.Group();B.add(fu);
+  box(fu,0.07,0.2,0.06,'#1a1a1a',-3.45,1.3,-0.93);const f1=box(fu,0.05,0.1,0.03,'#d4462c',-3.45,1.3,-0.89);T.f1=f1;
+  box(fu,0.1,0.24,0.06,'#1a1a1a',-2.75,1.3,-0.93);const f2=box(fu,0.06,0.16,0.02,'#d7dbe0',-2.75,1.3,-0.89,{metalness:.8,roughness:.3});T.f2=f2;
+  const fl=textPlane(0.9,0.05,(c,w,h)=>{c.fillStyle='#1d2a36';c.font=`700 ${h*.8}px Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('F1 20A',w*.22,h/2);c.fillText('F2 60A',w*.98,h/2);},true);fl.position.set(-3.35,1.45,-0.975);fu.add(fl);
+  reg('fuse',fu);tapReg('fuse',V3(-3.1,1.3,-0.88),0.35);
+  // inverter
+  const iv=new THREE.Group();iv.position.set(-2.4,1.95,-0.88);B.add(iv);
+  box(iv,0.62,0.3,0.2,'#b9c0c6',0,0,0,{metalness:.55,roughness:.35});for(let i=0;i<9;i++)box(iv,0.62,0.012,0.02,'#8f989f',0,-0.12+i*0.03,0.105,{metalness:.6});
+  box(iv,0.2,0.3,0.205,'#2a3038',-0.21,0,0);
+  const ivT=lcdDraw(drawINV);const ivl=new THREE.Mesh(new THREE.PlaneGeometry(0.15,0.075),new THREE.MeshBasicMaterial({map:ivT,toneMapped:false}));ivl.position.set(-0.21,0.05,0.104);iv.add(ivl);T.ivT=ivT;
+  const ivLed=new THREE.Mesh(new THREE.SphereGeometry(0.012,8,6),M('#2fd35a',{emissive:new THREE.Color(0x2fd35a),emissiveIntensity:0}));ivLed.position.set(-0.26,-0.06,0.105);iv.add(ivLed);T.ivLed=ivLed;
+  const ivn=textPlane(0.4,0.05,(c,w,h)=>{c.fillStyle='#1d2a36';c.font=`700 ${h*.7}px Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('PURE SINE 500W 12V→220V',w/2,h/2);},true);ivn.position.set(0.1,0.12,0.107);iv.add(ivn);
+  reg('inv',iv);tapReg('inv',V3(-2.4,1.95,-0.8),0.3);
+  // MCB AC
+  const ma=new THREE.Group();ma.position.set(-1.92,2.2,-0.92);B.add(ma);box(ma,0.08,0.2,0.1,'#f4f4f1',0,0,0);const lvA=box(ma,0.05,0.05,0.05,'#1d4fa8',0,0.03,0.06);T.lvA=lvA;
+  const mal=textPlane(0.1,0.04,(c,w,h)=>{c.fillStyle='#fff';c.fillRect(0,0,w,h);c.fillStyle='#1d4fa8';c.font=`700 ${h*.75}px Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('C4',w/2,h/2);},true);mal.position.set(0,-0.06,0.051);ma.add(mal);
+  reg('mcbac',ma);tapReg('mcbac',V3(-1.92,2.2,-0.85),0.14);
+  // PE bar
+  box(B,0.18,0.04,0.04,'#3a9a3a',-1.88,1.0,-0.95);
+  // baterai
+  const bt=new THREE.Group();bt.position.set(-3,0,-0.55);B.add(bt);
+  box(bt,0.8,0.18,0.45,'#6d5b45',0,0.09,0,{roughness:.8});
+  const bb=box(bt,0.46,0.31,0.24,'#2b2f33',0,0.335,0,{roughness:.6});
+  const bl=textPlane(0.4,0.2,(c,w,h)=>{c.fillStyle='#2b2f33';c.fillRect(0,0,w,h);c.fillStyle='#f3b52f';c.fillRect(0,0,w,h*.18);c.fillStyle='#14202b';c.font=`700 ${h*.13}px Arial`;c.textAlign='center';c.fillText('VRLA DEEP CYCLE',w/2,h*.13);
+    c.fillStyle='#fff';c.font=`700 ${h*.3}px "Barlow Condensed",Arial`;c.fillText('12V 100Ah',w/2,h*.52);c.font=`600 ${h*.12}px Arial`;c.fillStyle='#c3ccd5';c.fillText('⚠ jauhkan dari api · jangan korsleting',w/2,h*.82);});bl.position.set(0,0.34,0.121);bt.add(bl);
+  cyl(bt,0.025,0.025,0.04,'#c0392b',-0.17,0.51,0);cyl(bt,0.025,0.025,0.04,'#1a1a1a',0.17,0.51,0);
+  const socBar=new THREE.Mesh(new THREE.PlaneGeometry(0.36,0.025),new THREE.MeshBasicMaterial({color:0x3ad16b,toneMapped:false}));socBar.position.set(0,0.205,0.121);bt.add(socBar);T.socBar=socBar;
+  reg('bat',bt);tapReg('bat',V3(-3,0.35,-0.5),0.3);
+}
+function drawSCC(g,w,h){
+  const s=ST; g.fillStyle=s.scc==='off'?'#0a0d0c':'#13324a';g.fillRect(0,0,w,h);
+  if(s.scc==='off'){return;}
+  g.fillStyle='#bfe6ff';g.font='600 22px "IBM Plex Mono",monospace';g.textBaseline='middle';g.textAlign='left';
+  g.fillText('PV '+(s.vpv>0.5?s.vpv.toFixed(1):' 0.0')+'V',10,22);g.fillText('BAT '+s.vbat.toFixed(1)+'V',10,58);
+  g.textAlign='right';g.fillText(s.ipv.toFixed(1)+'A',w-10,22);
+  const st={standby:'STANDBY',night:'NIGHT',charge:'CHARGING',float:'FLOAT'}[s.scc];
+  g.fillStyle=s.scc==='charge'?'#ffd24a':s.scc==='float'?'#8cf0a0':'#9fb0bf';g.font='700 22px "IBM Plex Mono",monospace';g.textAlign='left';g.fillText(st,10,98);
+  // ikon baterai
+  const soc=clamp(s.soc,0,1);g.strokeStyle='#bfe6ff';g.lineWidth=3;g.strokeRect(w-80,80,60,30);g.fillRect(w-20,88,5,14);
+  g.fillStyle=soc<.5?'#ff7a5a':'#8cf0a0';for(let i=0;i<4;i++)if(soc>i*0.25+0.05)g.fillRect(w-76+i*14,84,11,22);
+}
+function drawINV(g,w,h){
+  const s=ST; g.fillStyle=s.inv==='off'?'#0a0d0c':'#0f1a12';g.fillRect(0,0,w,h); if(s.inv==='off') return;
+  g.textBaseline='middle';
+  if(s.inv==='ovl'||s.inv==='lvd'){g.fillStyle='#ff6a5a';g.font='700 34px "IBM Plex Mono",monospace';g.textAlign='center';g.fillText(s.inv==='ovl'?'OVERLOAD':'LOW BATT',w/2,h/2);return;}
+  g.fillStyle='#8cf0a0';g.font='38px "Share Tech Mono",monospace';g.textAlign='left';g.fillText('220V 50Hz',10,36);
+  g.font='600 26px "IBM Plex Mono",monospace';g.fillText(Math.round(s.loadP)+' W',10,92);g.textAlign='right';g.fillText(s.vbat.toFixed(1)+'V',w-10,92);
+}
+function lampObj(g,x,y,z,post){
+  const o={};
+  if(post){cyl(g,0.05,0.06,y,'#4a4a4a',x,y/2,z);}
+  else box(g,0.12,0.12,0.06,'#e9e9e4',x,y,z-0.05);
+  o.gm=new THREE.MeshStandardMaterial({color:col('#fff6dc'),roughness:.1,transparent:true,opacity:.7,emissive:new THREE.Color(0xffd27a),emissiveIntensity:0});
+  const b=new THREE.Mesh(new THREE.SphereGeometry(0.12,18,12),o.gm);b.position.set(x,y+(post?0.12:-0.06),z+(post?0:0.08));g.add(b);
+  o.gs=glowSprite('255,214,130');o.gs.position.copy(b.position);g.add(o.gs);o.pos=b.position.clone().add(V3(0,0.3,0));return o;
+}
+function buildHouse(g){
+  const H=new THREE.Group();g.add(H);
+  box(H,6.2,0.12,4.8,'#d9d2c3',5,0.06,-0.4,{roughness:.8});
+  box(H,6.2,2.9,0.15,'#efe9dc',5,1.45,-2.75,{roughness:.9});
+  box(H,0.15,2.9,4.8,'#e7e0d0',1.95,1.45,-0.4,{roughness:.9});box(H,0.15,2.9,4.8,'#e7e0d0',8.05,1.45,-0.4,{roughness:.9});
+  // atap (separuh belakang) supaya rumah tetap terlihat
+  const rf=box(H,6.8,0.08,2.6,'#a3543a',5,3.15,-1.95,{roughness:.8});rf.rotation.x=0.35;
+  const nm=textPlane(2.2,0.36,(c,w,h)=>{c.fillStyle='#7a6a52';c.font=`700 ${h*.62}px "Barlow Condensed",Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText('RUMAHKU (OFF-GRID)',w/2,h/2);});nm.rotation.x=-Math.PI/2;nm.position.set(5,0.13,1.6);H.add(nm);
+  const L=T.ld;
+  L.lr=[lampObj(H,3.3,2.45,-2.6),lampObj(H,5,2.45,-2.6),lampObj(H,6.7,2.45,-2.6)];
+  L.lt=[lampObj(H,2.3,2.2,2.6,true)];
+  // TV
+  box(H,2.0,0.6,0.6,'#8a6a45',5,0.42,-2.3);const scrM=new THREE.MeshStandardMaterial({color:0x0a0c10,emissive:new THREE.Color(0x3a8fe0),emissiveIntensity:0,roughness:.3});
+  box(H,1.6,0.95,0.07,'#14171a',5,1.35,-2.62);const scr=new THREE.Mesh(new THREE.PlaneGeometry(1.5,0.84),scrM);scr.position.set(5,1.35,-2.58);H.add(scr);L.tv={m:scrM,pos:V3(5,2.0,-2.5)};
+  // HP
+  box(H,0.7,0.6,0.6,'#8a6a45',3.0,0.42,1.0);const phM=new THREE.MeshStandardMaterial({color:0x111111,emissive:new THREE.Color(0x56e07a),emissiveIntensity:0});const ph=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.02,0.3),phM);ph.position.set(3.0,0.73,1.0);H.add(ph);L.hp={m:phM,pos:V3(3.0,1.1,1.0)};
+  // kipas
+  const kp=new THREE.Group();kp.position.set(2.9,0.12,-0.8);H.add(kp);cyl(kp,0.22,0.26,0.08,'#e8e8e8',0,0.04,0);cyl(kp,0.03,0.03,1.1,'#d0d0d0',0,0.6,0);
+  const head=new THREE.Group();head.position.set(0,1.2,0.05);kp.add(head);const cage=new THREE.Mesh(new THREE.TorusGeometry(0.28,0.02,8,28),M('#bfc7cf'));head.add(cage);
+  const bl=new THREE.Group();head.add(bl);for(let i=0;i<3;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.24,0.015),M('#7fb2e0'));b.position.y=0.13;const p=new THREE.Group();p.rotation.z=i*2.094;p.add(b);bl.add(p);}
+  L.kp={rot:bl,pos:V3(2.9,1.7,-0.8)};
+  // kulkas
+  const kl=new THREE.Group();kl.position.set(7.4,0.12,-2.1);H.add(kl);box(kl,0.9,1.9,0.8,'#f1f3f5',0,0.95,0,{roughness:.35});box(kl,0.04,0.6,0.04,'#9aa2aa',-0.35,1.2,0.42);
+  const klL=new THREE.Mesh(new THREE.SphereGeometry(0.03,8,6),M('#2fd35a',{emissive:new THREE.Color(0x2fd35a),emissiveIntensity:0}));klL.position.set(0.3,1.7,0.41);kl.add(klL);L.kl={m:klL.material,pos:V3(7.4,2.3,-2.1)};
+  // rice cooker
+  box(H,1.2,0.75,0.7,'#b98f62',6.7,0.49,0.6);const rc=new THREE.Group();rc.position.set(6.6,0.86,0.6);H.add(rc);cyl(rc,0.22,0.22,0.3,'#f4f1ec',0,0.15,0);cyl(rc,0.22,0.18,0.1,'#e9e2d6',0,0.35,0);
+  const rcL=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.04,0.02),M('#ff4020',{emissive:new THREE.Color(0xff4020),emissiveIntensity:0}));rcL.position.set(0,0.15,0.225);rc.add(rcL);
+  const steam=glowSprite('235,240,245');steam.material.blending=THREE.NormalBlending;steam.position.set(6.6,1.6,0.6);H.add(steam);L.rc={led:rcL.material,steam,pos:V3(6.6,1.6,0.6)};
+  // setrika
+  box(H,1.2,0.05,0.38,'#c0c6cc',4.6,0.9,1.5);cyl(H,0.02,0.02,0.8,'#888',4.2,0.5,1.5);cyl(H,0.02,0.02,0.8,'#888',5.0,0.5,1.5);
+  const stM=M('#5a6068',{emissive:new THREE.Color(0xff4020),emissiveIntensity:0});const st=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.13,0.18),stM);st.position.set(4.7,0.99,1.5);H.add(st);L.st={m:stM,pos:V3(4.7,1.5,1.5)};
+  // pompa air
+  const pa=new THREE.Group();pa.position.set(8.9,0,1.5);H.add(pa);box(pa,0.6,0.4,0.4,'#2f7fc4',0,0.2,0);cyl(pa,0.06,0.06,1.2,'#9aa2aa',0.2,0.8,0);L.pa={g:pa,pos:V3(8.9,1.2,1.5)};
+  // kotak sambung AC
+  box(H,0.2,0.25,0.08,'#f2f2f0',2.1,1.0,-0.8);
+  T.houseG=H;
+}
+function wire(key,pts,c,r){
+  if(!T.wg[key]){T.wg[key]=new THREE.Group();T.world.add(T.wg[key]);}
+  const cu=new THREE.CatmullRomCurve3(pts.map(p=>V3(...p)),false,'catmullrom',0.08);
+  const m=new THREE.Mesh(new THREE.TubeGeometry(cu,Math.max(30,pts.length*16),r||0.012,7,false),M(c,{roughness:.5}));m.castShadow=true;T.wg[key].add(m);
+  [0.012,0.988].forEach(u=>{const p=cu.getPointAt(u),tg=cu.getTangentAt(u).normalize();const s=new THREE.Mesh(new THREE.CylinderGeometry((r||0.012)*1.7,(r||0.012)*1.7,0.035,8),M('#f4f4f0'));s.position.copy(p);s.quaternion.setFromUnitVectors(V3(0,1,0),tg);T.wg[key].add(s);});
+  return cu;
+}
+function mkPath(cu,rev){let pts=cu.getSpacedPoints(80);if(rev)pts=pts.slice().reverse();let L=0;const c=[0];for(let i=1;i<pts.length;i++){L+=pts[i].distanceTo(pts[i-1]);c.push(L);}return {pts,cum:c,len:L,u:0};}
+function buildWires(){
+  const zb=-0.955, R='#c0392b', K='#1c1c1c', Y='#e8c21a', GY='#3c9a3c';
+  // PV (dari kotak sambung panel → tanah → papan → MCB DC → SCC)
+  const pvP=wire('pv',[[-8.92,0.85,0.2],[-8.92,0.5,0.15],[-8.88,0.05,0.05],[-7,0.05,-0.3],[-4.5,0.05,-0.82],[-4.42,0.4,zb],[-4.42,2.36,zb],[-4.1,2.38,zb],[-3.98,2.3,zb],[-3.98,2.2,-0.93]],R,0.014);
+  wire('pv',[[-9.06,0.85,0.2],[-9.06,0.5,0.15],[-9.02,0.05,0.0],[-7,0.05,-0.38],[-4.58,0.05,-0.88],[-4.34,0.4,zb],[-4.34,2.3,zb],[-3.9,2.33,zb],[-3.9,2.2,-0.93]],K,0.014);
+  wire('pv',[[-3.98,1.9,-0.93],[-3.98,1.76,zb],[-3.62,1.72,zb],[-3.49,1.78,zb],[-3.49,1.84,-0.88]],R,0.012);
+  wire('pv',[[-3.9,1.9,-0.93],[-3.9,1.8,zb],[-3.55,1.76,zb],[-3.41,1.8,zb],[-3.41,1.84,-0.88]],K,0.012);
+  // baterai ↔ SCC (lewat F1)
+  const batP=wire('bat',[[-3.17,0.53,-0.55],[-3.2,0.68,-0.7],[-3.45,0.95,zb],[-3.45,1.2,-0.92],[-3.45,1.4,-0.92],[-3.45,1.6,zb],[-3.33,1.72,zb],[-3.33,1.84,-0.88]],R,0.016);
+  wire('bat',[[-2.83,0.53,-0.55],[-2.95,0.7,-0.75],[-3.25,1.0,zb],[-3.25,1.6,zb],[-3.25,1.84,-0.88]],K,0.016);
+  // baterai ↔ inverter (lewat F2)
+  const invP=wire('inv',[[-3.17,0.53,-0.55],[-3.05,0.66,-0.75],[-2.75,0.92,zb],[-2.75,1.18,-0.92],[-2.75,1.42,-0.92],[-2.72,1.62,zb],[-2.64,1.74,zb],[-2.64,1.8,-0.86]],R,0.022);
+  wire('inv',[[-2.83,0.53,-0.55],[-2.62,0.68,-0.75],[-2.5,0.95,zb],[-2.5,1.6,zb],[-2.54,1.8,-0.86]],K,0.022);
+  // AC: inverter → MCB AC → rumah
+  const acP=wire('ac',[[-2.18,1.8,-0.86],[-2.16,1.7,zb],[-2.0,1.7,zb],[-2.0,2.38,zb],[-1.92,2.38,zb],[-1.92,2.3,-0.93],]
+    ,Y,0.01);
+  const acL=wire('ac',[[-1.92,2.1,-0.93],[-1.92,1.95,zb],[-1.8,1.6,zb],[-1.72,0.6,zb],[-1.55,0.05,-0.82],[1.0,0.05,-0.82],[1.95,0.05,-0.8],[2.05,0.5,-0.8],[2.05,0.95,-0.8]],Y,0.012);
+  wire('ac',[[-2.1,1.8,-0.86],[-2.08,1.66,zb],[-1.86,1.62,zb],[-1.66,0.6,zb],[-1.48,0.05,-0.74],[1.0,0.05,-0.74],[1.95,0.05,-0.72],[2.05,0.5,-0.72],[2.05,0.95,-0.74]],Y,0.012);
+  // grounding
+  wire('pe',[[-9.6,0.2,0.3],[-9.5,0.03,0.6],[-8.3,0.03,1.1],[-7.85,0.05,1.2],[-7.8,0.25,1.2]],GY,0.008);
+  wire('pe',[[-2.1,1.82,-0.9],[-2.0,1.4,zb],[-1.88,1.02,-0.94],[-1.7,0.5,zb],[-2.5,0.04,-0.4],[-6,0.04,0.7],[-7.7,0.05,1.18],[-7.78,0.25,1.2]],GY,0.008);
+  T.flow={pv:mkPath(pvP),bat:mkPath(batP,true),inv:mkPath(invP),ac:mkPath(acL),acIn:mkPath(acP)};
+  T.flow.pv.c=new THREE.Color(0xffa31a);T.flow.bat.c=new THREE.Color(0x3ad16b);T.flow.inv.c=new THREE.Color(0x3aa0ff);T.flow.ac.c=new THREE.Color(0xffd21a);T.flow.acIn.c=T.flow.ac.c;
+}
+function setPins(){
+  const L=$('#labels');L.innerHTML='';T.pins=[];
+  const add=(html,p,cls,near)=>{const el=document.createElement('div');el.className='lbl'+(cls?' '+cls:'');el.innerHTML=html;L.appendChild(el);T.pins.push({el,p,near});return el;};
+  const P={pv:V3(-9,1.45,0.3),scc:V3(-3.3,2.28,-0.88),bat:V3(-3,0.62,-0.45),inv:V3(-2.4,2.22,-0.82),mcbdc:V3(-3.94,2.33,-0.9),mcbac:V3(-1.92,2.42,-0.9),fuse:V3(-3.1,1.48,-0.9),pe:V3(-7.8,0.6,1.2),mc4:V3(-8.85,0.62,0.18),rack:V3(-9.75,0.55,0.3)};
+  T.pinP=P;
+  if(S.tab==='komp'){
+    COMP.forEach(c=>{const g=S.kom.g;const hide=g&&!g.done;if(hide&&c.id!==g.q)return;add(hide?'?':c.nm.split(' ')[0]+(c.id==='mcbdc'?' DC':c.id==='mcbac'?' AC':''),P[c.id],(!hide&&S.kom.sel===c.id)?'big':'');});
+  } else {
+    add('Panel surya',P.pv,'sun');add('SCC',P.scc);add('Baterai',P.bat);add('Inverter',P.inv);
+    add('MCB DC',P.mcbdc,'',1);add('MCB AC',P.mcbac,'',1);add('F1 · F2',P.fuse,'',1);
+  }
+  T.ldPins={};
+  LOADS.forEach(l=>{const o=T.ld[l.id];const pos=Array.isArray(o)?o[0].pos:o.pos;const el=add(l.nama.replace('3 lampu LED ruang','Lampu ruang'),pos,'');el.style.display='none';T.ldPins[l.id]=el;});
+}
+function bind(){
+  const cv=T.canvas,pts=new Map();let pinch=null,start=null,moved=false;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===1){start={x:e.clientX,y:e.clientY};moved=false;}if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:T.zoom};moved=true;}});
+  cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const pr=pts.get(e.pointerId),cu={x:e.clientX,y:e.clientY};pts.set(e.pointerId,cu);
+    if(pts.size===1&&!PAN.drag){T.anim=0;T.cur.yaw=T.cur.yaw-(cu.x-pr.x)*0.006;T.cur.pitch=clamp(T.cur.pitch+(cu.y-pr.y)*0.005,0.03,1.45);if(Math.hypot(cu.x-start.x,cu.y-start.y)>6)moved=true;}
+    else if(pts.size===2&&pinch){T.zoom=clamp(pinch.z*pinch.d/Math.hypot(a(0).x-a(1).x,a(0).y-a(1).y),0.25,2.2);}
+    function a(i){return [...pts.values()][i];}});
+  const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+  const up=e=>{if(pts.size===1&&!moved&&!PAN.did&&e.type==='pointerup'){const r=cv.getBoundingClientRect();ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,T.camera);
+      const h=ray.intersectObjects(T.taps,false)[0];
+      if(h&&h.object.userData.comp){const id=h.object.userData.comp; if(S.tab==='komp'){if(S.kom.g&&!S.kom.g.done){}else selComp(id);} else {toast('',CP[id].nm,'<br>Lihat penjelasannya di tab Komponen.');}}}
+    pts.delete(e.pointerId);if(pts.size<2)pinch=null;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{e.preventDefault();T.zoom=clamp(T.zoom*Math.exp(e.deltaY*0.0012),0.25,2.2);},{passive:false});
+  document.querySelector('.hud').addEventListener('click',e=>{const b=e.target.closest('button');if(b)camTo(b.dataset.v);});
+}
+function resize(){if(!T)return;const w=T.viewer.clientWidth,h=T.viewer.clientHeight;T.renderer.setSize(w,h,false);T.camera.aspect=w/h;T.camera.updateProjectionMatrix();}
+const SKY={night:new THREE.Color(0x0f1c2e),dusk:new THREE.Color(0xe8a982),cerah:new THREE.Color(0x9cc6ea),berawan:new THREE.Color(0xb4c2ce),mendung:new THREE.Color(0x8d98a2)};
+let last=performance.now(),lcdT=0;const mtx=new THREE.Matrix4(),tmp=V3(0,0,0),tmpC=new THREE.Color();
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000);last=t;
+  ST=elec(liveCfg());
+  const c=T.cur;
+  if(T.anim>0&&T.goal){const k=1-Math.exp(-dt*4.5);c.t.lerp(T.goal.t,k);c.yaw+=(T.goal.yaw-c.yaw)*k;c.pitch+=(T.goal.pitch-c.pitch)*k;c.d+=(T.goal.d-c.d)*k;T.anim-=dt;}
+  const asp=T.camera.aspect, df=c.d*Math.pow(Math.max(1,1.35/asp),0.85)*T.zoom;
+  const tg=PAN.v?c.t.clone().add(PAN.v):c.t;
+  T.camera.position.set(tg.x+df*Math.cos(c.pitch)*Math.sin(c.yaw),tg.y+df*Math.sin(c.pitch),tg.z+df*Math.cos(c.pitch)*Math.cos(c.yaw));T.camera.lookAt(tg);
+  // matahari & langit
+  const h=ST.h, night=h<6||h>=18, day=!night;
+  if(day){const a=Math.PI*(h-6)/12, sv=V3(-Math.cos(a),Math.sin(a),.12*Math.sin(a)).normalize();
+    T.sunM.visible=T.sunG.visible=true;T.sunM.position.copy(sv).multiplyScalar(38).add(V3(-2,0,0));T.sunG.position.copy(T.sunM.position);
+    T.sun.position.copy(sv).multiplyScalar(30).add(V3(-2,0,0));
+    const W=WX[ST.wx];T.sunG.material.opacity=0.25+0.7*W.b;T.sunM.material.opacity=1;
+    T.sun.intensity=(0.2+0.8*W.b)*Math.min(1,sv.y*3);T.renderer.toneMappingExposure+=(Math.min(1,0.45+sv.y*2.5)-T.renderer.toneMappingExposure)*0.1;T.hemi.intensity=0.35+0.25*Math.min(1,sv.y*2);
+    const dusk=Math.min(1,Math.max(0,1-sv.y*3.5));tmpC.copy(SKY[ST.wx]).lerp(SKY.dusk,dusk*0.7);T.scene.background.lerp(tmpC,0.1);
+  } else {T.renderer.toneMappingExposure+=(0.42-T.renderer.toneMappingExposure)*0.08;T.sunM.visible=T.sunG.visible=false;T.sun.intensity+=(0.05-T.sun.intensity)*0.1;T.hemi.intensity+=(0.13-T.hemi.intensity)*0.1;T.scene.background.lerp(SKY.night,0.1);}
+  // panel orientasi
+  T.pvRot.rotation.y+=(AZ[ST.az]*Math.PI/180-T.pvRot.rotation.y)*0.12;
+  T.pvTilt.rotation.x+=(ST.tilt*Math.PI/180-T.pvTilt.rotation.x)*0.12;
+  T.cover.visible=!!ST.cover;
+  Object.keys(T.wg).forEach(k=>T.wg[k].visible=!!ST.wired[k]);
+  T.f1.visible=!!ST.f1;T.f2.visible=!!ST.f2;
+  T.lvD.position.y=ST.mcbdc?0.08:-0.02;T.lvA.position.y=ST.mcbac?0.05:-0.03;T.lvA.material.color.copy(col(ST.mcbac?'#1d4fa8':'#6c8ac0'));
+  T.ivLed.material.emissiveIntensity=ST.inv==='on'?1.8:0;T.ivLed.material.emissive.setHex(ST.inv==='on'?0x2fd35a:0xff3020);if(ST.inv==='ovl'||ST.inv==='lvd')T.ivLed.material.emissiveIntensity=Math.floor(t/300)%2?2:0;
+  const soc=clamp(ST.soc,0,1);T.socBar.scale.x=Math.max(0.02,soc);T.socBar.position.x=-0.18+0.18*soc;T.socBar.material.color.setHex(soc<.5?0xff6a4a:0x3ad16b);T.socBar.visible=!!(ST.wired.bat||ST.wired.inv);
+  // beban
+  const on=ST.loadsOn, L=T.ld; let lampN=0;
+  const lampSet=(arr,v)=>arr.forEach(o=>{o.gm.emissiveIntensity=v?2.2:0;o.gs.material.opacity=v?(night?1:0.4):0;o.gs.scale.setScalar(v?1.6:0.5);if(v)lampN++;});
+  lampSet(L.lr,on.lr);lampSet(L.lt,on.lt);
+  T.houseLight.intensity=night?lampN*0.45:0;
+  L.tv.m.emissiveIntensity=on.tv?(0.6+0.15*Math.sin(t/300)):0;L.hp.m.emissiveIntensity=on.hp?1.2:0;
+  if(on.kp)L.kp.rot.rotation.z-=dt*14;L.kl.m.emissiveIntensity=on.kl?1.6:0;
+  L.rc.led.emissiveIntensity=on.rc?1.4:0;L.rc.steam.material.opacity=on.rc>100?0.45+0.2*Math.sin(t/200):0;L.rc.steam.scale.setScalar(0.5+0.2*Math.sin(t/300));
+  L.st.m.emissiveIntensity=on.st?0.9:0;L.pa.g.position.x=8.9+(on.pa?Math.sin(t/25)*0.012:0);
+  // sorot komponen
+  const hlId=S.tab==='komp'?(S.kom.g&&!S.kom.g.done?S.kom.g.q:S.kom.sel):null; const pulse=0.35+0.35*Math.sin(t/220);
+  Object.keys(T.hl).forEach(id=>T.hl[id].forEach(m=>{if(m.userData.e0===undefined){m.userData.e0=m.emissive.getHex();m.userData.i0=m.emissiveIntensity;}
+    if(id===hlId){m.emissive.setHex(0x2a8fff);m.emissiveIntensity=pulse;}else if(m.emissive.getHex()===0x2a8fff){m.emissive.setHex(m.userData.e0);m.emissiveIntensity=m.userData.i0;}}));
+  // aliran energi
+  let k=0;
+  const runFlow=(p,act,spd)=>{if(!act)return;p.u=(p.u+dt*spd/p.len)%1;const n=Math.max(4,Math.round(p.len/0.12));
+    for(let j=0;j<n&&k<600;j++){const u=((p.u+j/n)%1)*p.len;let s2=1;while(s2<p.cum.length-1&&p.cum[s2]<u)s2++;const fr=(u-p.cum[s2-1])/Math.max(1e-6,p.cum[s2]-p.cum[s2-1]);tmp.copy(p.pts[s2-1]).lerp(p.pts[s2],Math.min(1,fr));mtx.makeTranslation(tmp.x,tmp.y,tmp.z);T.dots.setMatrixAt(k,mtx);T.dots.setColorAt(k,p.c);k++;}};
+  const F=T.flow, sp=w=>0.25+Math.min(1.2,w/120);
+  runFlow(F.pv,ST.pvUsed>1&&ST.wired.pv,sp(ST.pvUsed));
+  runFlow(F.bat,ST.net>1&&ST.wired.bat,sp(ST.net));
+  runFlow(F.inv,ST.inv==='on'&&ST.drain>0.5,sp(ST.drain));
+  runFlow(F.acIn,ST.loadP>0,sp(ST.loadP));runFlow(F.ac,ST.loadP>0,sp(ST.loadP));
+  T.dots.count=k;T.dots.instanceMatrix.needsUpdate=true;if(T.dots.instanceColor)T.dots.instanceColor.needsUpdate=true;
+  lcdT-=dt;if(lcdT<=0){lcdT=0.25;redraw(T.scT);redraw(T.ivT);updateChip();}
+  T.renderer.render(T.scene,T.camera);
+  const W=T.viewer.clientWidth,Hh=T.viewer.clientHeight,v=V3(0,0,0);
+  if(T.ldPins) LOADS.forEach(l=>{const el=T.ldPins[l.id];const w=on[l.id];const show=!!w&&S.tab!=='komp';el.style.display=show?'':'none';if(show){const html=`${esc(l.nama.replace('3 lampu LED ruang','Lampu ruang'))}<small>${w} W</small>`;if(el._h!==html){el.innerHTML=html;el._h=html;}}});
+  const near=T.camera.position.distanceTo(V3(-3,1.4,-0.9))<8;
+  T.pins.forEach(p=>{if(p.el.style.display==='none')return;if(p.near&&!near){p.el.style.opacity=0;return;}v.copy(p.p).project(T.camera);if(v.z>1||Math.abs(v.x)>1.2||Math.abs(v.y)>1.2){p.el.style.opacity=0;return;}p.el.style.opacity=1;p.el.style.transform=`translate(${(v.x+1)/2*W}px,${(1-v.y)/2*Hh}px) translate(-50%,-100%)`;});
+  requestAnimationFrame(loop);
+}
+function updateChip(){
+  const c=$('#vchip'); if(!c) return; const s=ST;
+  c.innerHTML=`<span>🕒 <b>${fmtClock(s.h*60)}</b></span><span>☀ <b>${Math.round(s.pvUsed)} W</b></span><span>Beban <b>${Math.round(s.loadP)} W</b></span>${(s.wired.bat||s.wired.inv)?`<span>🔋 <b>${Math.round(clamp(s.soc,0,1)*100)}%</b></span>`:''}`;
+}
+
+/* ================= SIMULASI 24 JAM ================= */
+let lastTick=performance.now();
+setInterval(()=>{
+  const now=performance.now(),el=Math.min(0.5,(now-lastTick)/1000);lastTick=now;
+  const sm=S.sim; if(!(S.tab==='praktik'&&S.pr.st==='uji'&&sm.run&&!sm.ended)) return;
+  sm.acc+=el*10*sm.spd; // menit simulasi
+  let n=0; while(sm.acc>=1&&n<200){sm.acc-=1;n++;simStep();if(sm.ended)break;}
+  if(n){tickUI();}
+},100);
+function simStep(){
+  const sm=S.sim, cfg=simCfg(), r=elec(cfg);
+  if(r.loadReq>SYS.inv&&!sm.trip){sm.trip=true;if(!sm.fail)sm.fail=`Inverter overload pukul ${fmtClock(360+sm.t)}: beban ${r.loadReq} W > 500 W.`;toast('bad','Inverter OVERLOAD ⚡',`<br>Beban ${r.loadReq} W melebihi 500 W. Semua beban padam. Kurangi alat yang menyala bersamaan, lalu reset inverter.`);}
+  sm.E=clamp(sm.E+r.net/60,0,SYS.cap);const soc=sm.E/SYS.cap;
+  if(soc<0.1&&!sm.lvd){sm.lvd=true;if(!sm.fail)sm.fail=`Baterai hampir habis pukul ${fmtClock(360+sm.t)} — inverter mati (low battery).`;toast('bad','Baterai lemah — inverter mati','<br>Tegangan baterai turun ke ±10,5 V. Rumah gelap.');}
+  if(sm.lvd&&soc>0.3)sm.lvd=false;
+  sm.pvWh+=r.pvUsed/60;sm.ldWh+=r.loadP/60;
+  if(soc<sm.minSoc){if(sm.minSoc>=0.5&&soc<0.5)toast('warn','Isi baterai di bawah 50%','<br>Melewati batas DoD — umur baterai VRLA berkurang bila sering begini.');sm.minSoc=soc;}
+  sm.t+=1;
+  if(sm.t%10===0)sm.hist.push({t:sm.t,pv:r.pvUsed,ld:r.loadP,soc});
+  if(sm.t>=1440){sm.ended=true;sm.run=false;endMission();}
+}
+function endMission(){
+  const sm=S.sim; if(sm.mode==='bebas'){toast('ok','24 jam selesai','');return;}
+  const ok=!sm.fail&&sm.minSoc>=0.5;
+  if(ok){S.pr.misi[sm.mode]=true;save();toast('ok',MISI[sm.mode].nm+' berhasil! 🎉',`<br>Isi baterai terendah ${Math.round(sm.minSoc*100)}%.`);}
+  else {if(!sm.fail)sm.fail=`Isi baterai turun sampai ${Math.round(sm.minSoc*100)}% — di bawah batas 50%.`;toast('bad','Misi belum berhasil','<br>'+sm.fail);}
+  renderTabs();
+}
+
+/* ================= UI ================= */
+const TABS=[['pre','Tes Awal'],['materi','Materi'],['komp','Komponen'],['praktik','Praktik'],['post','Tes Akhir']];
+function toast(sev,t,m){const box=$('#toast');const d=document.createElement('div');d.className='tst '+(sev||'');d.innerHTML=`<b>${t}</b>${m||''}`;box.appendChild(d);while(box.children.length>2)box.removeChild(box.firstChild);setTimeout(()=>d.remove(),6000);}
+const kompDone=()=>Object.keys(S.kom.seen).length>=COMP.length||!!(S.kom.best&&S.kom.best>=5);
+function renderTabs(){
+  const done={pre:S.test.pre.done,materi:S.visited.materi,komp:kompDone(),praktik:S.pr.seq.done&&S.pr.misi.m1,post:S.test.post.done};
+  $('#tabs').innerHTML=TABS.map(([k,t],i)=>`<button data-t="${k}" class="${S.tab===k?'active':''} ${done[k]?'done':''}"><span class="n">${i+1}</span>${t}</button>`).join('');
+}
+function stageCam(){
+  if(S.tab==='komp'){camTo(CP[S.kom.sel].cam);return;}
+  if(S.tab==='materi'){camTo('ov');return;}
+  if(S.tab==='praktik'){const st=S.pr.st;if(st==='arah')camTo('panel');else if(st==='rangkai'){const cur=SEQ[S.pr.seq.i];camTo(cur&&['off','pol','open'].includes(cur.id)?'panel':cur&&cur.id==='pe'?'ground':cur&&cur.id==='bat'?'batt':'board');}else camTo('ov');return;}
+  camTo('ov');
+}
+function setTab(t){S.tab=t;if(t==='materi'){S.visited.materi=true;save();}
+  if(T){setPins();stageCam();}renderTabs();render();window.scrollTo({top:0,behavior:'smooth'});}
+
+/* ---- tes ---- */
+function grade(kind){const st=S.test[kind];return QUEST.map((q,i)=>{const a=st.ans[i];if(a==null)return {right:false,sure:false,cat:'bt',misc:null};const opt=q.o[a];const right=opt[1]===1;const sure=st.conf[i]==='y';return {right,sure,cat:right?(sure?'ok':'rg'):(sure?'sp':'bt'),misc:right?null:opt[1]};});}
+function miscSummary(kind){const m={};grade(kind).forEach(x=>{if(x.misc){m[x.misc]=m[x.misc]||{n:0,sure:0};m[x.misc].n++;if(x.sure)m[x.misc].sure++;}});return m;}
+function testHTML(kind){
+  const st=S.test[kind], isPost=kind==='post';
+  if(!isPost&&!S.started&&!st.done&&st.ans.length===0)
+    return `<div class="card"><h2>Tes awal: PLTS off-grid</h2><div class="goal">10 soal singkat tentang panel surya, SCC, baterai, inverter, dan cara memasangnya. Tidak dinilai untuk rapor — hasilnya menunjukkan bagian yang perlu dipelajari.</div>
+      <p class="muted">Modul ini lanjutan <b>Listrik di Rumahku</b>. Di sana listrik datang dari PLN. Di sini rumah yang sama membuat listriknya sendiri dari cahaya matahari.</p>
+      <p class="muted">Setiap soal: pilih jawaban, lalu pilih <b>Yakin</b> atau <b>Menebak</b>. Jawab jujur.</p>
+      <div class="field"><label class="lbl2" for="fNama" style="margin:6px 0 0">Nama murid</label><input id="fNama" value="${esc(S.name)}" placeholder="Nama lengkap"></div>
+      <div class="field"><label class="lbl2" for="fKelas" style="margin:6px 0 0">Kelas</label><input id="fKelas" value="${esc(S.kelas)}" placeholder="mis. XI TOI 1"></div>
+      <div class="row"><button class="btn primary" id="bStart">Mulai tes</button></div></div>`;
+  if(st.done) return resultHTML(kind);
+  const order=isPost?(st.order||(st.order=shuffle([...Array(QUEST.length).keys()]))):[...Array(QUEST.length).keys()];
+  const qi=order[st.i], q=QUEST[qi]; if(!st.optOrder) st.optOrder={};
+  const oo=st.optOrder[qi]||(st.optOrder[qi]=isPost?shuffle([0,1,2,3]):[0,1,2,3].sort((a,b)=>((qi*7+a*3)%4)-((qi*7+b*3)%4)));
+  const a=st.ans[qi], cf=st.conf[qi];
+  return `<div class="card"><h2>${isPost?'Tes akhir':'Tes awal'} · soal ${st.i+1} dari ${QUEST.length}</h2>
+    <div class="qnav">${order.map((x,k)=>`<span class="${k===st.i?'cur':(st.ans[x]!=null?'ans':'')}">${k+1}</span>`).join('')}</div>
+    <div class="qtext">${q.q}</div>
+    <div class="opts" id="qOpts">${oo.map((oi,k)=>`<button class="opt ${a===oi?'on':''}" data-o="${oi}"><span class="k">${'ABCD'[k]}</span><span>${q.o[oi][0]}</span></button>`).join('')}</div>
+    <span class="lbl2">Seberapa yakin kamu?</span>
+    <div class="conf" id="qConf"><button data-c="y" class="${cf==='y'?'on':''}">Yakin</button><button data-c="n" class="${cf==='n'?'on':''}">Menebak / ragu</button></div>
+    <div class="row"><button class="btn" id="bPrev" ${st.i===0?'disabled':''}>← Sebelumnya</button><button class="btn primary" id="bNextQ" ${a==null||!cf?'disabled':''}>${st.i===QUEST.length-1?'Selesai':'Berikutnya →'}</button></div></div>`;
+}
+function resultHTML(kind){
+  const g=grade(kind),sc=g.filter(x=>x.right).length,cats={ok:0,rg:0,bt:0,sp:0};g.forEach(x=>cats[x.cat]++);
+  const ms=miscSummary(kind),isPost=kind==='post',keys=Object.keys(ms);
+  let h=`<div class="card"><h2>Hasil ${isPost?'tes akhir':'tes awal'}${S.name?' · '+esc(S.name):''}</h2>
+    <div class="kv"><div><dt>Skor</dt><dd>${sc} / ${QUEST.length}</dd></div><div><dt>Paham</dt><dd>${cats.ok}</dd></div><div><dt>Benar tapi ragu</dt><dd>${cats.rg}</dd></div><div><dt>Belum tahu</dt><dd>${cats.bt}</dd></div><div><dt>Salah paham</dt><dd class="${cats.sp?'bad':''}">${cats.sp}</dd></div></div>
+    <p class="muted"><b>Salah paham</b> = salah tapi yakin — paling perlu diluruskan. <b>Belum tahu</b> = salah sambil menebak.</p>`;
+  if(keys.length) h+=`<h3>Yang perlu diluruskan</h3><ul class="prof">${keys.map(k=>`<li><span>${MISC[k].t}<br><button class="go" data-go="${MISC[k].go}">Pelajari di tab ${TABS.find(x=>x[0]===MISC[k].go)[1]} →</button></span><span class="tag ${ms[k].sure?'sp':'bt'}">${ms[k].sure?'salah paham':'belum tahu'}</span></li>`).join('')}</ul>`;
+  else h+=`<div class="fb ok">Tidak ditemukan salah paham. Mantap!</div>`;
+  h+=`<h3>Rincian per soal</h3><ul class="prof">${QUEST.map((q,i)=>{const x=g[i];return `<li><span style="font-size:13px">${i+1}. ${q.q}${!x.right?`<br><span style="color:var(--ok);font-size:12.5px">Jawaban benar: ${q.o.find(o=>o[1]===1)[0]}</span>`:''}</span><span class="tag ${x.cat}">${PROFILE[x.cat]}</span></li>`;}).join('')}</ul>`;
+  if(!isPost) h+=`<div class="row"><button class="btn primary" data-go="materi">Mulai belajar →</button><button class="btn" id="bRedo">Ulangi tes awal</button></div>`;
+  h+='</div>';
+  if(isPost&&S.test.pre.done) h+=compareHTML();
+  if(isPost) h+=`<div class="row" style="margin:-4px 0 12px"><button class="btn" id="bRedoPost">Ulangi tes akhir</button></div>`;
+  return h;
+}
+function compareHTML(){
+  const gp=grade('pre'),gq=grade('post'),sp=gp.filter(x=>x.right).length,sq=gq.filter(x=>x.right).length;
+  const mp=miscSummary('pre'),mq=miscSummary('post'),fixed=Object.keys(mp).filter(k=>!mq[k]),still=Object.keys(mq);
+  const cp=c=>gp.filter(x=>x.cat===c).length,cq=c=>gq.filter(x=>x.cat===c).length;
+  const txt=`REKAP PLTS OFF-GRID\nNama  : ${S.name||'-'}\nKelas : ${S.kelas||'-'}\nTes awal : ${sp}/10 (paham ${cp('ok')}, ragu ${cp('rg')}, belum tahu ${cp('bt')}, salah paham ${cp('sp')})\nTes akhir: ${sq}/10 (paham ${cq('ok')}, ragu ${cq('rg')}, belum tahu ${cq('bt')}, salah paham ${cq('sp')})\nKomponen dipelajari: ${Object.keys(S.kom.seen).length}/${COMP.length} · Tebak komponen terbaik: ${S.kom.best!=null?S.kom.best+'/6':'-'}\nPraktik perakitan: ${S.pr.seq.done?'selesai':'belum selesai'} · Nilai lisensi ${score()}/100 (KKTP 70: ${score()>=70&&S.pr.seq.done?'tuntas':'belum'})\nMisi 1 hari cerah: ${S.pr.misi.m1?'berhasil':'belum'} · Misi 2 hari mendung: ${S.pr.misi.m2?'berhasil':'belum'}\nSalah paham yang sudah lurus: ${fixed.length?fixed.map(k=>MISC[k].t).join('; '):'-'}\nMasih perlu bimbingan: ${still.length?still.map(k=>MISC[k].t).join('; '):'-'}`;
+  return `<div class="card"><h2>Perbandingan tes awal → tes akhir</h2>
+    <div class="bars"><span style="font-weight:600">Skor</span><i><b style="width:${sp*10}%"></b></i><span style="font-family:var(--f-mono)">${sp}</span><span></span><i><b class="post" style="width:${sq*10}%"></b></i><span style="font-family:var(--f-mono)">${sq}</span>
+    <span>Salah paham</span><i><b style="width:${cp('sp')*10}%"></b></i><span style="font-family:var(--f-mono)">${cp('sp')}</span><span></span><i><b class="post" style="width:${cq('sp')*10}%"></b></i><span style="font-family:var(--f-mono)">${cq('sp')}</span></div>
+    <p class="muted">Batang biru = tes awal, hijau = tes akhir.</p>
+    ${fixed.length?`<div class="fb ok"><b>Sudah diluruskan:</b><br>${fixed.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    ${still.length?`<div class="fb warn"><b>Masih perlu dibahas dengan guru:</b><br>${still.map(k=>'• '+MISC[k].t).join('<br>')}</div>`:''}
+    <h3>Rekap untuk guru</h3><p class="muted">Salin lalu kirim ke Google Classroom atau grup kelas.</p>
+    <textarea class="rekap" id="rekap" readonly>${esc(txt)}</textarea>
+    <div class="row"><button class="btn primary" id="bCopy">Salin rekap</button></div></div>`;
+}
+
+/* ---- materi ---- */
+function matCalc(){const J=S.mat.jam;let wh=0,wmax=0;const rows=LOADS.map(l=>{const h=J[l.id]||0,e=l.W*h;wh+=e;if(h>0)wmax+=l.W;return {l,h,e};});
+  return {rows,wh,wp:wh/(4*0.7),ah:wh/(12*0.5),inv:wmax*1.25,wmax};}
+function materiHTML(){
+  const m=S.mat, pOut=100*m.g/1000*(1-0.004*(m.tc-25)), c=matCalc();
+  const ok=(a,b)=>a<=b?'<span class="tag ok">cukup</span>':'<span class="tag sp">kurang</span>';
+  return `<div class="card"><h2>1 · Dari PLN ke matahari</h2>
+    <div class="goal">Di modul <b>Listrik di Rumahku</b>, listrik datang dari PLN lewat kWh meter dan MCB. Pada <b>PLTS off-grid</b>, rumah tidak tersambung PLN sama sekali: listrik dibuat sendiri dari cahaya matahari, disimpan di baterai, lalu diubah menjadi 220 V AC.</div>
+    <div class="flow"><div class="nd"><span class="ic">☀️</span><b>Cahaya</b><small>matahari</small></div><span class="ar">→</span>
+    <div class="nd"><span class="ic">▦</span><b>Panel surya</b><small>DC ±18 V</small></div><span class="ar">→</span>
+    <div class="nd"><span class="ic">🎛️</span><b>SCC</b><small>atur isi</small></div><span class="ar">⇄</span>
+    <div class="nd"><span class="ic">🔋</span><b>Baterai</b><small>DC 12 V</small></div><span class="ar">→</span>
+    <div class="nd"><span class="ic">⚡</span><b>Inverter</b><small>DC → AC</small></div><span class="ar ac">→</span>
+    <div class="nd"><span class="ic">🏠</span><b>Rumah</b><small>AC 220 V</small></div></div>
+    <p class="muted">Lihat model 3D: titik <b style="color:#e08a00">oranye</b> = panel → SCC, <b style="color:#24a04b">hijau</b> = mengisi baterai, <b style="color:#2a7fd0">biru</b> = baterai → inverter, <b style="color:#b38900">kuning</b> = 220 V AC ke rumah.</p>
+    <table class="tbl"><tr><th></th><th>Rumah PLN</th><th>PLTS off-grid</th><th>PLTS on-grid</th></tr>
+    <tr><td><b>Sumber</b></td><td>pembangkit PLN</td><td>panel surya</td><td>panel surya + PLN</td></tr>
+    <tr><td><b>Malam hari</b></td><td>tetap dari PLN</td><td><b>dari baterai</b></td><td>dari PLN</td></tr>
+    <tr><td><b>Baterai</b></td><td>tidak ada</td><td>wajib</td><td>umumnya tidak</td></tr>
+    <tr><td><b>Pengaman batas</b></td><td>MCB daya langganan</td><td>kapasitas inverter & baterai</td><td>inverter grid-tie</td></tr>
+    <tr><td><b>Dipakai di</b></td><td>rumah perkotaan</td><td>daerah terpencil, kebun, pos ronda, lampu jalan</td><td>rumah/pabrik yang ingin hemat tagihan</td></tr></table>
+    <div class="note"><b class="h">✍️ Tulis di buku</b>Gambar diagram blok PLTS off-grid di atas dengan tanganmu sendiri, lalu tulis di bawah setiap kotak: listriknya <b>DC</b> atau <b>AC</b>?</div></div>
+
+    <div class="card"><h2>2 · Panel surya bekerja dengan cahaya</h2>
+    <div class="goal">Sel surya mengubah <b>cahaya</b> menjadi listrik, bukan panas. Justru semakin panas sel, dayanya sedikit <b>turun</b> (±0,4% per °C).</div>
+    <span class="lbl2">Kuat cahaya matahari (iradiasi)</span><div class="slider"><input type="range" id="mG" min="0" max="1100" step="10" value="${m.g}"><output id="oG">${m.g} W/m²</output></div>
+    <span class="lbl2">Suhu sel panel</span><div class="slider"><input type="range" id="mT" min="20" max="75" step="1" value="${m.tc}"><output id="oT">${m.tc} °C</output></div>
+    <div class="kv"><div><dt>Daya panel 100 Wp</dt><dd id="oP">${nf(pOut,1)} W</dd></div><div><dt>Terhadap label</dt><dd id="oPct">${Math.round(pOut)}%</dd></div><div><dt>Keadaan</dt><dd id="oK" style="font-size:13px">${matCond(m.g)}</dd></div></div>
+    <div class="map" style="margin-top:10px"><b>Wp (watt-peak)</b><span>daya panel pada kondisi uji pabrik: cahaya <b>1.000 W/m²</b> dan sel <b>25 °C</b>. Di lapangan, siang terik sel bisa 55–65 °C, jadi panel 100 Wp biasanya hanya ±70–85 W.</span>
+    <b>Pagi & sore</b><span>cahaya datang miring dan lemah → daya kecil. Puncaknya sekitar pukul 11.00–13.00.</span>
+    <b>Mendung</b><span>panel tetap menghasilkan, tetapi hanya ±10–25% dari hari cerah.</span>
+    <b>PSH</b><span><i>peak sun hours</i> = jam matahari setara 1.000 W/m². Rata-rata di Jawa Barat ±4 jam per hari.</span></div>
+    <div class="note"><b class="h">✍️ Tulis di buku</b>Jelaskan dengan kalimatmu sendiri: mengapa panel 100 Wp tidak menghasilkan 100 W × 24 jam = 2.400 Wh setiap hari?</div></div>
+
+    <div class="card"><h2>3 · Hitung kebutuhan energi</h2>
+    <div class="goal">Rumusnya sama dengan di Listrik di Rumahku: <b>Wh = W × jam</b>. Atur berapa jam setiap alat dipakai per hari, lalu cek apakah PLTS kita (200 Wp · baterai 100 Ah · inverter 500 W) cukup.</div>
+    <table class="tg"><tr><th>Alat</th><th>W</th><th>Jam/hari</th><th>Wh/hari</th></tr>
+    ${c.rows.map(r=>`<tr><td>${r.l.ic} ${r.l.nama}</td><td>${r.l.W}</td><td><input type="range" min="0" max="${r.l.id==='lt'||r.l.id==='kl'?24:12}" step="${r.l.id==='pa'||r.l.id==='rc'?0.5:1}" value="${r.h}" data-j="${r.l.id}"> <span id="jv-${r.l.id}">${r.h}</span></td><td id="je-${r.l.id}">${nf(r.e,0)}</td></tr>`).join('')}
+    <tr class="tot"><td>Total sehari</td><td></td><td></td><td id="jTot">${nf(c.wh,0)}</td></tr></table>
+    <div id="jRes">${matResHTML(c)}</div>
+    <p class="muted">Rumus sederhana: <b>Panel (Wp)</b> = Wh ÷ (4 jam × 0,7) · <b>Baterai (Ah)</b> = Wh ÷ (12 V × 0,5) untuk cadangan 1 hari · <b>Inverter (W)</b> ≥ jumlah W alat yang dipakai × 1,25. Angka 0,7 mewakili rugi-rugi panas, kabel, debu, dan pengisian baterai.</p>
+    <div class="note"><b class="h">✍️ Tulis di buku</b>Pilih 4 alat di rumahmu sendiri, catat watt dan jam pakainya, lalu hitung Wh/hari dan ukuran panel serta baterai yang dibutuhkan.</div></div>
+
+    <div class="card"><h2>4 · Baterai, DoD, dan arah panel</h2>
+    <div class="map"><b>Baterai = botol air minum</b><span>diisi siang hari, diminum malam hari. Baterai VRLA 12 V 100 Ah menyimpan 1.200 Wh, tetapi hanya <b>±50% (600 Wh)</b> yang sebaiknya dipakai. Batas ini disebut <b>DoD</b> (<i>depth of discharge</i>). Dikuras habis terus-menerus → umur baterai pendek.</span>
+    <b>Beban pemanas</b><span>setrika, rice cooker, dispenser (±350 W) menghabiskan energi sangat cepat. Pada PLTS kecil, pakai beban besar <b>siang hari</b> saat matahari terik, dan jangan bersamaan.</span>
+    <b>Arah panel</b><span>Citeureup berada ±6,5° di <b>selatan</b> khatulistiwa. Sepanjang tahun matahari lebih sering berada di langit <b>utara</b>, jadi panel menghadap <b>utara</b>.</span>
+    <b>Kemiringan</b><span><b>10–15°</b>: cukup tegak lurus terhadap matahari siang, dan air hujan bisa mengalir membawa debu. Panel datar membuat debu dan air menggenang.</span>
+    <b>Bayangan</b><span>satu sel terkena bayangan daun bisa menurunkan daya seluruh panel. Pilih tempat bebas bayangan pukul 09.00–15.00.</span></div>
+    <div class="note"><b class="h">✍️ Catatan materi — salin ke buku</b><ol>
+    <li>PLTS off-grid berdiri sendiri, tidak tersambung PLN; malam hari listrik berasal dari baterai.</li>
+    <li>Panel surya mengubah cahaya menjadi listrik DC; panel tidak menyimpan listrik.</li>
+    <li>SCC mengatur pengisian baterai; inverter mengubah DC 12 V menjadi AC 220 V.</li>
+    <li>Wp adalah daya pada kondisi uji 1.000 W/m² dan 25 °C; di lapangan daya lebih kecil.</li>
+    <li>Energi (Wh) = daya (W) × waktu (jam). Baterai VRLA sebaiknya dipakai hanya sampai 50%.</li>
+    <li>Di Citeureup panel menghadap utara, miring 10–15°, bebas bayangan.</li></ol></div>
+    <div class="row"><button class="btn primary" data-go="komp">Lanjut: kenali komponennya →</button></div></div>`;
+}
+function matCond(g){return g<=0?'gelap — 0 W':g<200?'mendung / pagi':g<600?'berawan / miring':g<900?'cerah':'terik siang';}
+function matResHTML(c){const ok=(a,b)=>a<=b?'<span class="tag ok">cukup</span>':'<span class="tag sp">kurang</span>';
+  return `<div class="kv"><div><dt>Panel dibutuhkan</dt><dd>${nf(c.wp,0)} Wp</dd></div><div><dt>Baterai dibutuhkan</dt><dd>${nf(c.ah,0)} Ah</dd></div><div><dt>Inverter minimal</dt><dd>${nf(c.inv,0)} W</dd></div></div>
+  <ul class="prof"><li><span>Panel kita 200 Wp</span>${ok(c.wp,200)}</li><li><span>Baterai kita 100 Ah (12 V)</span>${ok(c.ah,100)}</li><li><span>Inverter kita 500 W (bila semua alat menyala bersamaan)</span>${ok(c.inv,500)}</li></ul>
+  ${c.wh>600?`<div class="fb warn">Kebutuhan ${nf(c.wh,0)} Wh/hari melebihi energi aman baterai (600 Wh). Kurangi alat pemanas/kulkas, atau perbesar sistem.</div>`:`<div class="fb ok">Kebutuhan ${nf(c.wh,0)} Wh/hari masih dalam batas sistem.</div>`}`;}
+function updateMat(){
+  const m=S.mat, pOut=Math.max(0,100*m.g/1000*(1-0.004*(m.tc-25)));
+  const o=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
+  o('#oG',m.g+' W/m²');o('#oT',m.tc+' °C');o('#oP',nf(pOut,1)+' W');o('#oPct',Math.round(pOut)+'%');o('#oK',matCond(m.g));
+  const c=matCalc();c.rows.forEach(r=>{o('#jv-'+r.l.id,r.h);o('#je-'+r.l.id,nf(r.e,0));});o('#jTot',nf(c.wh,0));const jr=$('#jRes');if(jr)jr.innerHTML=matResHTML(c);
+}
+
+/* ---- komponen ---- */
+function selComp(id){S.kom.sel=id;S.kom.seen[id]=true;save();camTo(CP[id].cam);setPins();renderTabs();render();}
+function kompHTML(){
+  const c=CP[S.kom.sel], g=S.kom.g;
+  let h=`<div class="card"><h2>Kenali komponen PLTS</h2><div class="goal">Ketuk komponen di bawah atau langsung di model 3D. Komponen yang dipilih menyala biru.</div>
+    <div class="cgrid" id="cGrid">${COMP.map(x=>`<button data-c="${x.id}" class="${x.id===S.kom.sel?'on':''} ${S.kom.seen[x.id]?'seen':''}"><span class="ic">${x.ic}</span><b>${x.nm}</b></button>`).join('')}</div>
+    <p class="muted">${Object.keys(S.kom.seen).length} dari ${COMP.length} komponen sudah dipelajari.</p></div>`;
+  if(!(g&&!g.done)) h+=`<div class="card"><h2>${c.ic} ${c.nm}</h2>
+    <h3>Fungsi</h3><p style="margin:2px 0 0;font-size:14.5px">${c.fn}</p>
+    <h3>Spesifikasi di sistem ini</h3><div class="spec">${c.spec.map(([a,b])=>`<span>${a}</span><span>${b}</span>`).join('')}</div>
+    <h3>Cara memeriksa</h3><p style="margin:2px 0 0;font-size:14px">${c.cek}</p>
+    <div class="fb warn"><b>K3:</b> ${c.k3}</div></div>`;
+  h+=`<div class="card"><h2>Tebak komponen</h2>`;
+  if(!g) h+=`<p class="muted">6 putaran. Satu komponen akan menyala biru di model 3D — pilih namanya.${S.kom.best!=null?` Skor terbaikmu: <b>${S.kom.best}/6</b>.`:''}</p><div class="row"><button class="btn primary" id="gStart">Mulai tebak</button></div>`;
+  else if(g.done) h+=`<div class="stat"><div><b>${g.ok}</b><span>benar</span></div><div><b>6</b><span>soal</span></div><div><b>${Math.round(g.ok/6*100)}%</b><span>skor</span></div></div><div class="fb ${g.ok>=5?'ok':'warn'}">${g.ok>=5?'Hebat! Kamu sudah mengenali komponen PLTS.':'Pelajari lagi komponen yang masih tertukar, lalu coba sekali lagi.'}</div><div class="row"><button class="btn" id="gStart">Main lagi</button><button class="btn primary" data-go="praktik">Lanjut ke praktik →</button></div>`;
+  else h+=`<p class="muted">Putaran ${g.n+1} dari 6 · benar ${g.ok}</p><div class="qtext">Komponen yang menyala biru di model 3D adalah…</div><div class="opts" id="gOpts">${g.opts.map((o,k)=>`<button class="opt ${g.ans===o?(o===g.q?'on':''):''}" data-g="${o}" ${g.ans?'disabled':''}><span class="k">${'ABCD'[k]}</span><span>${CP[o].nm}</span></button>`).join('')}</div>
+    ${g.ans?`<div class="fb ${g.ans===g.q?'ok':'bad'}">${g.ans===g.q?'Tepat!':'Belum tepat — itu <b>'+CP[g.q].nm+'</b>.'} ${CP[g.q].fn.split('. ')[0].replace(/<[^>]+>/g,'')}.</div><div class="row"><button class="btn primary" id="gNext">${g.n>=5?'Lihat hasil':'Berikutnya →'}</button></div>`:''}`;
+  h+=`</div>`;
+  return h;
+}
+function gNew(){const g=S.kom.g;const pool=shuffle(COMP.map(c=>c.id)).filter(x=>!g.used.includes(x));g.q=pool[0];g.used.push(g.q);g.opts=shuffle([g.q,...shuffle(COMP.map(c=>c.id).filter(x=>x!==g.q)).slice(0,3)]);g.ans=null;camTo(CP[g.q].cam);setPins();}
+
+/* ---- praktik ---- */
+const PST=[['k3','1 · K3'],['arah','2 · Arah panel'],['rangkai','3 · Rangkai & uji'],['uji','4 · Uji 24 jam']];
+function stUnlocked(k){const p=S.pr;return k==='k3'||(k==='arah'&&p.k3.done)||(k==='rangkai'&&p.arah.done)||(k==='uji'&&p.seq.done);}
+function stDone(k){const p=S.pr;return k==='k3'?p.k3.done:k==='arah'?p.arah.done:k==='rangkai'?p.seq.done:(p.misi.m1&&p.misi.m2);}
+function praktikHTML(){
+  const p=S.pr;
+  let h=`<div class="seg" id="pSt" style="margin-bottom:12px">${PST.map(([k,t])=>`<button data-v="${k}" class="${p.st===k?'on':''} ${stDone(k)?'dn':''}" ${stUnlocked(k)?'':'disabled'}>${t}</button>`).join('')}</div>`;
+  if(p.st==='k3') h+=k3HTML(); else if(p.st==='arah') h+=arahHTML(); else if(p.st==='rangkai') h+=seqHTML(); else h+=ujiHTML();
+  h+=licHTML();
+  return h;
+}
+function k3HTML(){
+  const k=S.pr.k3;
+  return `<div class="card"><h2>Persiapan K3</h2><div class="goal">Sebelum menyentuh baterai dan kabel panel, pilih semua perlengkapan dan kebiasaan yang <b>benar</b>. Jangan pilih yang berbahaya.</div>
+    <div class="chips" id="k3c">${K3.map((x,i)=>{const on=k.sel[i];let cls=on?'on':'';if(k.done)cls=x[1]?'good':(on?'wrong':'');return `<button data-k="${i}" class="${cls}" ${k.done?'disabled':''}>${x[0]}</button>`;}).join('')}</div>
+    <div class="row"><button class="btn primary" id="k3Chk" ${k.done?'disabled':''}>Periksa</button>${k.done?`<button class="btn primary" data-pst="arah">Lanjut: arah panel →</button>`:''}</div>
+    <div class="fb ${k.done?'ok':k.fb?'bad':''}">${k.done?'<b>Siap bekerja.</b> Ingat: baterai tidak pernah benar-benar “mati”, dan panel surya bertegangan selama terkena cahaya.':k.fb}</div></div>`;
+}
+function arahHTML(){
+  const a=S.pr.arah, e=dayWh(a.az,a.tilt,'cerah'), best=dayWh('U',12,'cerah');
+  return `<div class="card"><h2>Arah dan kemiringan panel</h2><div class="goal">Putar rangka panel dengan memilih arah hadap dan kemiringannya. Lihat kompas di tanah (U = utara). Perkiraan energi sehari berubah sesuai pilihanmu.</div>
+    <span class="lbl2">Panel menghadap ke</span><div class="seg" id="aAz">${['U','T','S','B'].map(v=>`<button data-v="${v}" class="${a.az===v?'on':''}" ${a.done?'disabled':''}>${AZN[v]}</button>`).join('')}</div>
+    <span class="lbl2">Kemiringan</span><div class="seg" id="aTilt">${[[0,'0° datar'],[12,'10–15°'],[30,'30°'],[45,'45°']].map(([v,t])=>`<button data-v="${v}" class="${a.tilt===v?'on':''}" ${a.done?'disabled':''}>${t}</button>`).join('')}</div>
+    <div class="kv"><div><dt>Perkiraan energi sehari (cerah)</dt><dd>${nf(e,0)} Wh</dd></div><div><dt>Dibanding posisi terbaik</dt><dd class="${e/best<0.9?'bad':'ok'}">${Math.round(e/best*100)}%</dd></div></div>
+    <div class="row"><button class="btn primary" id="aChk" ${a.done?'disabled':''}>Kunci posisi panel</button>${a.done?`<button class="btn primary" data-pst="rangkai">Lanjut: rangkai →</button>`:''}</div>
+    <div class="fb ${a.fbc||''}">${a.fb||''}</div></div>`;
+}
+function seqOpts(){
+  const sq=S.pr.seq, cur=SEQ[sq.i]; if(!cur) return [];
+  if(sq.opts&&sq.opts.i===sq.i) return sq.opts.list;
+  const list=[{k:'ok',t:cur.t}];
+  const pool=['f1','pv','open','mcbdc','f2','invon','mcbac'].filter(id=>SI[id]>sq.i+0&&id!==cur.id&&!(cur.id==='bat'&&id==='f1'&&false));
+  const pre=pool.filter(id=>SI[id]>sq.i);
+  if(pre.length){const id=rnd(pre);list.push({k:'early',id,t:SEQ[SI[id]].t});}
+  const ds=DIST.filter(d=>d.at===cur.id);
+  if(ds.length){const d=rnd(ds);list.push({k:'dist',t:d.t,why:d.why});}
+  if(list.length<3&&pre.length>1){const id=rnd(pre.filter(x=>!list.some(l=>l.id===x)));if(id)list.push({k:'early',id,t:SEQ[SI[id]].t});}
+  const sh=shuffle(list); sq.opts={i:sq.i,list:sh}; return sh;
+}
+function earlyMsg(id){
+  const sq=S.pr.seq;
+  if(id==='pv'){ if(sq.i<=SI.f1) return '<b>Panel tidak boleh disambung sebelum baterai.</b> SCC mendeteksi tegangan sistem (12/24 V) dari baterai. Bila panel masuk lebih dulu, SCC bisa salah membaca atau rusak oleh tegangan panel tanpa beban (Voc).'; return 'Cek polaritas kabel panel dulu dengan multimeter. Polaritas terbalik ke terminal PV bisa merusak SCC.'; }
+  return EARLY[id]||'Urutannya belum tepat.';
+}
+function seqHTML(){
+  const sq=S.pr.seq, cur=SEQ[sq.i];
+  let h=`<div class="card"><h2>Rangkai &amp; uji PLTS</h2><div class="goal">Pilih langkah kerja berikutnya yang <b>benar dan aman</b>. Setiap pilihan salah mengurangi nilai lisensi 5 poin. Amati model 3D: kabel muncul sesuai langkahmu.</div>
+    <ol class="steps">${SEQ.slice(0,sq.i).map(s=>`<li>${s.t}</li>`).join('')}${!sq.done?`<li class="cur">?</li>`:''}</ol></div>`;
+  if(sq.done){
+    h+=`<div class="card"><h2>PLTS menyala! 🎉</h2><div class="fb ok">Semua langkah selesai dengan urutan yang benar. Ingat urutan <b>membongkar</b> adalah kebalikannya: matikan beban & MCB AC → matikan inverter → cabut fuse F2 → MCB DC OFF & tutup panel → cabut fuse F1 → lepas baterai.</div>
+      <div class="note"><b class="h">✍️ Tulis di buku</b>Tulis urutan pemasangan PLTS off-grid (13 langkah) dalam bentuk diagram alir, lalu beri tanda ⚠ pada langkah yang paling berbahaya bila dilanggar.</div>
+      <div class="row"><button class="btn primary" data-pst="uji">Lanjut: uji 24 jam →</button></div></div>`;
+    return h;
+  }
+  if(cur.id==='pol'&&sq.pol){
+    const pl=sq.pol;
+    h+=`<div class="card"><h2>Ukur polaritas kabel panel</h2><p class="muted">Terpal dibuka sebentar. Probe <b style="color:#c0392b">merah</b> menempel ke kabel <b>A</b>, probe <b>hitam</b> ke kabel <b>B</b>. Multimeter pada posisi V DC.</p>
+      <div class="meter"><div><small>MULTIMETER · V DC</small><div class="lcd">${pl.sign>0?'':'−'}${nf(21.4,1)}</div></div><div style="font:600 12px var(--f-mono);text-align:center">merah → A<br>hitam → B</div></div>
+      <div class="qtext" style="margin-top:10px">Kabel mana yang positif (+)?</div>
+      <div class="opts" id="polO"><button class="opt" data-pl="A" ${pl.ans?'disabled':''}><span class="k">A</span><span>Kabel A positif (+)</span></button><button class="opt" data-pl="B" ${pl.ans?'disabled':''}><span class="k">B</span><span>Kabel B positif (+)</span></button></div>
+      ${pl.ans?`<div class="fb ${pl.right?'ok':'bad'}">${pl.right?'Tepat!':'Belum tepat (−10 poin).'} Tanda ${pl.sign>0?'<b>positif</b>':'<b>minus (−)</b>'} pada layar berarti probe merah menempel ke kutub ${pl.sign>0?'<b>positif</b>':'<b>negatif</b>'}. Jadi kabel <b>${pl.sign>0?'A':'B'}</b> adalah +. Beri tube marking <b>PV+</b> dan <b>PV−</b>. Voc 21,4 V wajar untuk panel 12 V di bawah matahari.</div><div class="row"><button class="btn primary" id="polNext">Lanjut →</button></div>`:''}</div>`;
+    return h;
+  }
+  const opts=seqOpts();
+  h+=`<div class="card"><h2>Langkah ${sq.i+1} dari ${SEQ.length}</h2><div class="qtext">Apa yang kamu lakukan sekarang?</div>
+    <div class="opts" id="sqO">${opts.map((o,k)=>`<button class="opt" data-sq="${k}"><span class="k">${'ABC'[k]}</span><span>${o.t}</span></button>`).join('')}</div>
+    <div class="fb ${sq.fbc||''}">${sq.fb||''}</div></div>`;
+  return h;
+}
+function pickSeq(k){
+  const sq=S.pr.seq, o=sq.opts.list[k], cur=SEQ[sq.i];
+  if(o.k==='ok'){
+    if(cur.id==='pol'){sq.pol={sign:Math.random()<.5?1:-1,ans:null};sq.fb='';render();return;}
+    sq.i++;sq.opts=null;sq.fb=`<b>✓ Benar.</b> ${cur.ok}`;sq.fbc='ok';
+    if(sq.i>=SEQ.length){sq.done=true;toast('ok','PLTS berhasil dirangkai! 🎉','<br>Lanjutkan ke uji 24 jam.');renderTabs();}
+    else if(['f1','mcbdc','invon'].includes(cur.id)) toast('ok',{f1:'SCC: BAT 12,6 V',mcbdc:'SCC: CHARGING',invon:'Output 221 V AC'}[cur.id],'');
+    save();stageCam();render();return;
+  }
+  if(o.k==='early'){penal(5,`Langkah ${sq.i+1}: terlalu cepat memilih "${SEQ[SI[o.id]].t.split(',')[0]}"`);sq.fb=`<b>✗ Belum saatnya (−5).</b> ${earlyMsg(o.id)}`;sq.fbc='bad';}
+  else {penal(5,`Langkah ${sq.i+1}: memilih tindakan berbahaya "${o.t}"`);sq.fb=`<b>✗ Berbahaya (−5).</b> ${o.why}`;sq.fbc='bad';}
+  toast('bad','Pilihan kurang tepat','');sq.opts=null;render();
+}
+function ujiHTML(){
+  const sm=S.sim, mi=MISI[sm.mode], cfg=simCfg(), r=elec(cfg), soc=sm.E/SYS.cap;
+  const sccTxt={off:'mati',standby:'standby',night:'malam',charge:'mengisi',float:'penuh (float)'}[r.scc], invTxt={on:'menyala',off:'mati',ovl:'OVERLOAD',lvd:'baterai lemah'}[r.inv];
+  return `<div class="card"><h2>Uji 24 jam</h2>
+    <div class="seg" id="mSel">${['m1','m2','bebas'].map(k=>`<button data-v="${k}" class="${sm.mode===k?'on':''} ${S.pr.misi[k]?'dn':''}">${MISI[k].nm}</button>`).join('')}</div>
+    <div class="goal" style="margin-top:8px">${mi.goal}</div>
+    ${sm.mode==='bebas'?`<span class="lbl2">Cuaca</span><div class="seg" id="wSel">${Object.keys(WX).map(k=>`<button data-v="${k}" class="${sm.wx===k?'on':''}">${WX[k].nm}</button>`).join('')}</div>`:`<p class="muted" style="margin-top:6px">Cuaca: <b>${WX[sm.wx].nm}</b> · mulai pukul 06.00 dengan isi baterai 70%.</p>`}
+    <span class="lbl2">Alat yang dipakai (sesuai jadwal) — sama dengan alat di Listrik di Rumahku</span>
+    <div class="ld" id="ldSel">${LOADS.map(l=>{const req=mi.req.includes(l.id),on=!!sm.inc[l.id];return `<label class="${on?'on':''} ${req?'req':''}"><input type="checkbox" data-l="${l.id}" ${on?'checked':''} ${req?'disabled':''}><b>${l.ic} ${l.nama}${req?' *':''}</b><small>${l.W} W · ${l.jd}</small></label>`;}).join('')}</div>
+    <p class="muted">* wajib menyala pada misi ini. Alat boleh diubah saat simulasi berjalan.</p>
+    <div class="row"><button class="btn primary" id="sRun" ${sm.ended?'disabled':''}>${sm.run?'⏸ Jeda':(sm.t>0?'▶ Lanjutkan':'▶ Mulai 24 jam')}</button>
+      <div class="seg" id="sSpd" style="flex:0 0 auto">${[1,3,6].map(v=>`<button data-v="${v}" class="${sm.spd===v?'on':''}">×${v}</button>`).join('')}</div>
+      <button class="btn" id="sReset">↺ Ulangi hari</button>${sm.trip?'<button class="btn" id="sInv">Reset inverter</button>':''}</div>
+    <div class="kv" id="sKv">${ujiKV(r,soc,sccTxt,invTxt)}</div>
+    <canvas id="chart" width="720" height="360"></canvas>
+    <p class="muted">Garis <b style="color:#e08a00">oranye</b> = daya panel, <b style="color:#2a7fd0">biru</b> = beban, <b style="color:#24834b">hijau</b> = isi baterai (%), garis putus merah = batas 50%.</p>
+    <div id="sMsg">${ujiMsg()}</div>
+    <div class="note"><b class="h">✍️ Tulis di buku</b>Catat hasil kedua misi: alat apa saja yang kamu nyalakan, berapa Wh produksi panel, berapa Wh pemakaian, dan isi baterai terendah. Mengapa hasil hari mendung berbeda?</div></div>`;
+}
+function ujiKV(r,soc,sccTxt,invTxt){const sm=S.sim;
+  return `<div><dt>Jam</dt><dd>${fmtClock(360+sm.t)}</dd></div><div><dt>Cahaya</dt><dd>${Math.round(r.poa)} W/m²</dd></div><div><dt>Daya panel</dt><dd>${Math.round(r.pvUsed)} W</dd></div><div><dt>Beban</dt><dd>${Math.round(r.loadP)} W</dd></div>
+  <div><dt>Isi baterai</dt><dd class="${soc<.5?'bad':'ok'}">${Math.round(soc*100)}%</dd></div><div><dt>Tegangan baterai</dt><dd>${nf(r.vbat,1)} V</dd></div><div><dt>SCC</dt><dd style="font-size:13px">${sccTxt}</dd></div><div><dt>Inverter</dt><dd style="font-size:13px" class="${r.inv==='on'?'':'bad'}">${invTxt}</dd></div>
+  <div><dt>Produksi hari ini</dt><dd>${nf(sm.pvWh,0)} Wh</dd></div><div><dt>Pemakaian</dt><dd>${nf(sm.ldWh,0)} Wh</dd></div><div><dt>Isi terendah</dt><dd class="${sm.minSoc<.5?'bad':''}">${Math.round(sm.minSoc*100)}%</dd></div>`;}
+function ujiMsg(){const sm=S.sim;
+  if(sm.ended&&sm.mode!=='bebas'){const ok=!sm.fail&&sm.minSoc>=.5;return ok?`<div class="fb ok"><b>${MISI[sm.mode].nm} berhasil!</b> Isi baterai terendah ${Math.round(sm.minSoc*100)}%. ${sm.mode==='m1'&&!S.pr.misi.m2?'Coba Misi 2 · Hari mendung.':''}</div>`:`<div class="fb bad"><b>Belum berhasil.</b> ${sm.fail} <br>Petunjuk: lihat grafik — kapan garis hijau paling turun? Alat apa yang menyala saat itu? Pakai beban besar siang hari, atau matikan alat yang tidak wajib.</div>`;}
+  if(sm.ended) return `<div class="fb">24 jam selesai. Produksi ${nf(sm.pvWh,0)} Wh, pemakaian ${nf(sm.ldWh,0)} Wh.</div>`;
+  if(sm.fail) return `<div class="fb bad">${sm.fail}</div>`;
+  return '';}
+function tickUI(){
+  if(S.tab!=='praktik'||S.pr.st!=='uji') return;
+  const sm=S.sim, r=elec(simCfg()), soc=sm.E/SYS.cap;
+  const kv=$('#sKv'); if(kv) kv.innerHTML=ujiKV(r,soc,{off:'mati',standby:'standby',night:'malam',charge:'mengisi',float:'penuh (float)'}[r.scc],{on:'menyala',off:'mati',ovl:'OVERLOAD',lvd:'baterai lemah'}[r.inv]);
+  const ms=$('#sMsg'); if(ms) ms.innerHTML=ujiMsg();
+  drawChart();
+  if(sm.ended||(sm.trip&&!$('#sInv'))) render();
+}
+function drawChart(){
+  const cv=$('#chart'); if(!cv) return; const g=cv.getContext('2d'), W=cv.width, H=cv.height, sm=S.sim;
+  const L=44,R=44,Tp=14,B=34,pw=W-L-R,ph=H-Tp-B; g.clearRect(0,0,W,H);
+  g.font='600 13px "IBM Plex Mono",monospace';g.fillStyle='#56636e';g.strokeStyle='#e3e8ec';g.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=Tp+ph*i/4;g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();g.textAlign='right';g.fillText(String(250-i*62.5|0),L-6,y+4);g.textAlign='left';g.fillText((100-i*25)+'%',L+pw+6,y+4);}
+  for(let hh=0;hh<=24;hh+=3){const x=L+pw*hh/24;g.textAlign='center';g.fillText(fmtClock(360+hh*60).slice(0,2),x,H-12);}
+  g.textAlign='left';g.fillText('W',6,12);
+  const y50=Tp+ph*0.5;g.setLineDash([6,5]);g.strokeStyle='#bb3a2c';g.beginPath();g.moveTo(L,y50);g.lineTo(L+pw,y50);g.stroke();g.setLineDash([]);
+  // malam
+  g.fillStyle='rgba(20,32,43,.06)';g.fillRect(L+pw*12/24,Tp,pw*12/24,ph);
+  const line=(f,c,w)=>{g.strokeStyle=c;g.lineWidth=w;g.beginPath();sm.hist.forEach((p,i)=>{const x=L+pw*p.t/1440,y=f(p);i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();};
+  const yW=w=>Tp+ph*(1-Math.min(1,w/250)), yS=s=>Tp+ph*(1-s);
+  line(p=>yW(p.pv),'#e8890c',2.2);line(p=>yW(p.ld),'#2a7fd0',2);line(p=>yS(p.soc),'#24834b',2.6);
+  const x=L+pw*sm.t/1440;g.strokeStyle='#14202b';g.lineWidth=1;g.beginPath();g.moveTo(x,Tp);g.lineTo(x,Tp+ph);g.stroke();
+}
+function licHTML(){
+  const p=S.pr, sc=score(), fin=p.seq.done;
+  return `<div class="card"><h2>Lisensi teknisi PLTS (simulasi)</h2>
+    <div class="lic"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><div class="eyebrow2" style="color:#0a62a8">${esc(S.name)||'Nama murid'} · ${esc(S.kelas)||'kelas'}</div><div style="font-size:13px;color:var(--muted)">K3 ${p.k3.done?'✓':'–'} · Arah panel ${p.arah.done?'✓':'–'} · Rangkai ${fin?'✓':p.seq.i+'/'+SEQ.length} · Misi cerah ${p.misi.m1?'✓':'–'} · Misi mendung ${p.misi.m2?'✓':'–'}</div></div><div class="big">${sc}</div></div>
+    <div class="fb ${fin&&sc>=70?'ok':fin?'warn':''}" style="margin-top:8px">${!fin?'Nilai mulai dari 100 dan berkurang setiap pilihan berbahaya atau urutan yang salah. KKTP: 70.':sc>=70?'<b>Tuntas</b> (KKTP 70). Siap praktik di trainer PLTS bengkel dengan pengawasan guru.':'<b>Belum tuntas</b> (KKTP 70). Ulangi praktik perakitan.'}</div></div>
+    ${p.log.length?`<h3>Catatan kesalahan</h3><ul class="prof">${p.log.slice(-8).map(t=>`<li><span style="font-size:13px">${esc(t)}</span><span class="tag sp">−</span></li>`).join('')}</ul>`:''}
+    <div class="row"><button class="btn" id="prReset">↺ Ulangi praktik dari awal</button></div></div>`;
+}
+
+/* ---- render ---- */
+function render(){
+  let h='';
+  if(S.tab==='pre') h=testHTML('pre');
+  else if(S.tab==='post'){
+    if(!S.test.pre.done&&!S.test.post.done) h=`<div class="card"><h2>Tes akhir</h2><div class="fb warn">Kerjakan dulu tes awal supaya hasilnya bisa dibandingkan.</div><div class="row"><button class="btn primary" data-go="pre">Ke tes awal</button></div></div>`;
+    else if(!S.test.post.done&&S.test.post.ans.length===0&&!S.postStarted) h=`<div class="card"><h2>Tes akhir</h2><div class="goal">Soal yang sama dengan tes awal, urutan soal dan pilihannya diacak. Bandingkan hasilnya.</div><p class="muted">Sudah menjelajah: Materi ${S.visited.materi?'✓':'–'}, Komponen ${kompDone()?'✓':'–'}, Rangkai ${S.pr.seq.done?'✓':'–'}, Misi cerah ${S.pr.misi.m1?'✓':'–'}, Misi mendung ${S.pr.misi.m2?'✓':'–'}.</p><div class="row"><button class="btn primary" id="bStartPost">Mulai tes akhir</button></div></div>`;
+    else h=testHTML('post');
+  }
+  else if(S.tab==='materi') h=materiHTML();
+  else if(S.tab==='komp') h=kompHTML();
+  else h=praktikHTML();
+  $('#pane').innerHTML=h;
+  if(S.tab==='praktik'&&S.pr.st==='uji') drawChart();
+}
+
+/* ---------- event ---------- */
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.t);});
+$('#pane').addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='fNama'){S.name=t.value;save();} if(t.id==='fKelas'){S.kelas=t.value;save();}
+  if(t.id==='mG'){S.mat.g=+t.value;updateMat();} if(t.id==='mT'){S.mat.tc=+t.value;updateMat();}
+  if(t.dataset.j){S.mat.jam[t.dataset.j]=+t.value;updateMat();}
+});
+$('#pane').addEventListener('change',e=>{const t=e.target;if(t.dataset.l){S.sim.inc[t.dataset.l]=t.checked;render();}});
+$('#pane').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return; const p=b.parentElement&&b.parentElement.id;
+  if(b.dataset.go){setTab(b.dataset.go);return;}
+  if(b.dataset.pst){S.pr.st=b.dataset.pst;stageCam();setPins();render();window.scrollTo({top:0,behavior:'smooth'});return;}
+  if(b.id==='bStart'){S.started=true;S.test.pre={ans:[],conf:[],i:0,done:false};render();return;}
+  if(b.id==='bStartPost'){S.postStarted=true;S.test.post={ans:[],conf:[],i:0,done:false,order:null};render();return;}
+  if(S.tab==='pre'||S.tab==='post'){
+    const kind=S.tab,st=S.test[kind],order=kind==='post'&&st.order?st.order:[...Array(QUEST.length).keys()];
+    if(b.closest('#qOpts')){st.ans[order[st.i]]=+b.dataset.o;save();render();return;}
+    if(p==='qConf'){st.conf[order[st.i]]=b.dataset.c;save();render();return;}
+    if(b.id==='bPrev'){st.i=Math.max(0,st.i-1);render();return;}
+    if(b.id==='bNextQ'){if(st.i<QUEST.length-1)st.i++;else{st.done=true;toast('ok','Tes selesai','');renderTabs();}save();render();return;}
+    if(b.id==='bRedo'){S.test.pre={ans:[],conf:[],i:0,done:false};S.started=true;save();renderTabs();render();return;}
+    if(b.id==='bRedoPost'){S.test.post={ans:[],conf:[],i:0,done:false,order:null};S.postStarted=true;save();renderTabs();render();return;}
+    if(b.id==='bCopy'){const ta=$('#rekap');(navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(()=>toast('ok','Rekap tersalin','')).catch(()=>{ta.select();toast('warn','Teks sudah dipilih','<br>Tekan Ctrl+C / tahan lalu Salin.');});return;}
+  }
+  // komponen
+  if(b.dataset.c){selComp(b.dataset.c);return;}
+  if(b.id==='gStart'){S.kom.g={n:0,ok:0,used:[],done:false};gNew();render();return;}
+  if(b.dataset.g){const g=S.kom.g;g.ans=b.dataset.g;if(g.ans===g.q){g.ok++;S.kom.seen[g.q]=true;}render();return;}
+  if(b.id==='gNext'){const g=S.kom.g;g.n++;if(g.n>=6){g.done=true;S.kom.best=Math.max(S.kom.best||0,g.ok);save();setPins();camTo(CP[S.kom.sel].cam);renderTabs();}else gNew();render();return;}
+  // praktik
+  if(p==='pSt'){S.pr.st=b.dataset.v;stageCam();setPins();render();return;}
+  if(b.dataset.k!=null&&p==='k3c'){const i=+b.dataset.k;S.pr.k3.sel[i]=!S.pr.k3.sel[i];render();return;}
+  if(b.id==='k3Chk'){const k=S.pr.k3;const miss=K3.filter((x,i)=>x[1]&&!k.sel[i]),bad=K3.filter((x,i)=>!x[1]&&k.sel[i]);
+    if(!miss.length&&!bad.length){k.done=true;k.fb='';toast('ok','K3 siap ✓','');renderTabs();}
+    else{penal(5,'K3: perlengkapan/kebiasaan belum tepat');k.fb=`<b>Belum tepat (−5).</b> ${miss.length?`Masih kurang ${miss.length} perlengkapan penting. `:''}${bad.map(x=>`<br>✗ <b>${x[0]}</b>: ${x[2]}`).join('')}`;}
+    save();render();return;}
+  if(p==='aAz'){S.pr.arah.az=b.dataset.v;S.pr.arah.fb='';render();return;}
+  if(p==='aTilt'){S.pr.arah.tilt=+b.dataset.v;S.pr.arah.fb='';render();return;}
+  if(b.id==='aChk'){const a=S.pr.arah;
+    if(a.az==='U'&&a.tilt===12){a.done=true;a.fb='<b>✓ Tepat.</b> Menghadap utara, miring 10–15°: energi terbesar sepanjang tahun di Citeureup, dan air hujan membersihkan debu.';a.fbc='ok';toast('ok','Posisi panel terkunci','');renderTabs();}
+    else{penal(5,`Arah panel: memilih ${AZN[a.az]} ${a.tilt}°`);let w=[];
+      if(a.az==='S')w.push('Menghadap <b>selatan</b> cocok untuk negara di belahan bumi utara jauh dari khatulistiwa (mis. Jepang, Eropa). Citeureup di ±6,5° LS: matahari lebih sering di langit <b>utara</b>.');
+      if(a.az==='T'||a.az==='B')w.push(`Menghadap ${AZN[a.az].toLowerCase()} hanya bagus di ${a.az==='T'?'pagi':'sore'} hari; siang dan ${a.az==='T'?'sore':'pagi'} hari energinya berkurang.`);
+      if(a.tilt===0)w.push('Panel <b>datar</b>: debu dan air hujan menggenang, kotoran tidak terbilas → daya turun.');
+      if(a.tilt>=30)w.push(`Kemiringan ${a.tilt}° terlalu curam untuk daerah dekat khatulistiwa; siang hari cahaya jatuh miring.`);
+      if(a.az==='U'&&a.tilt!==12&&!w.length)w.push('Arah sudah benar, tapi kemiringan belum pas.');
+      a.fb='<b>✗ Belum tepat (−5).</b> '+w.join(' ');a.fbc='bad';}
+    save();render();return;}
+  if(b.closest('#sqO')){pickSeq(+b.dataset.sq);return;}
+  if(b.dataset.pl){const pl=S.pr.seq.pol;pl.ans=b.dataset.pl;pl.right=(pl.ans==='A')===(pl.sign>0);if(!pl.right)penal(10,'Salah menentukan polaritas kabel panel');save();render();return;}
+  if(b.id==='polNext'){const sq=S.pr.seq;sq.pol=null;sq.i++;sq.opts=null;sq.fb='<b>✓ Polaritas sudah dipastikan</b> dan kabel diberi tube marking PV+ / PV−. Terpal ditutup kembali.';sq.fbc='ok';save();stageCam();render();return;}
+  if(p==='mSel'){S.sim.run=false;newSim(b.dataset.v);render();return;}
+  if(p==='wSel'){S.sim.wx=b.dataset.v;render();return;}
+  if(p==='sSpd'){S.sim.spd=+b.dataset.v;render();return;}
+  if(b.id==='sRun'){S.sim.run=!S.sim.run;lastTick=performance.now();render();return;}
+  if(b.id==='sReset'){const keep=Object.assign({},S.sim.inc),wx=S.sim.wx;newSim(S.sim.mode);S.sim.inc=Object.assign(S.sim.inc,keep);if(S.sim.mode==='bebas')S.sim.wx=wx;render();return;}
+  if(b.id==='sInv'){const r=elec(simCfg());if(r.loadReq>SYS.inv){toast('warn','Beban masih berlebih',`<br>${r.loadReq} W > 500 W. Matikan dulu beberapa alat.`);return;}S.sim.trip=false;render();return;}
+  if(b.id==='prReset'){if(!confirm('Ulangi praktik dari awal? Nilai lisensi kembali ke 100.'))return;S.pr={st:'k3',k3:{sel:{},done:false,fb:''},arah:{az:'S',tilt:0,done:false,fb:'',fbc:''},seq:{i:0,opts:null,fb:'',fbc:'',pol:null,done:false},pen:0,log:[],misi:{m1:false,m2:false}};newSim('m1');save();stageCam();setPins();renderTabs();render();return;}
+});
+
+/* ---------- mulai ---------- */
+try{init3D();setPins();stageCam();}catch(err){$('#loading').textContent='Model 3D tidak dapat dimuat di perangkat ini. Tes, materi, dan latihan tetap bisa digunakan.';console.error(err);}
+renderTabs();render();
+})();
+</script>
+</body>
+</html>

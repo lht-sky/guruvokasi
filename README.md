@@ -29,6 +29,7 @@ Simulasi dapat dibuka langsung di browser (laptop maupun HP) tanpa instalasi.
 | 18 | PKL Bengkel Las Maju Jaya — Fabrikasi Dasar, Pengukuran, Bor & Tap (Teknik Mesin, tahap 1) | Game Tycoon | [Buka](https://lht-sky.github.io/guruvokasi/pkl-bengkel-maju-jaya/) |
 | 19 | Buku Saku Anak TOI — pegangan cepat K3LH, listrik, panel, pneumatik, PLC, PKL + kalkulator | Buku Saku & Referensi | [Buka](https://lht-sky.github.io/guruvokasi/buku-saku-toi/) |
 | 20 | Alat Ukur Presisi: Jangka Sorong & Mikrometer — lup skala, ukur benda kerja, kuis baca skala (Teknik Mesin, Dasar Kejuruan Fase E) | Dasar-Dasar Teknik Mesin | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-alat-ukur-presisi/) |
+| 21 | PLTS Off-Grid: Listrik dari Matahari — panel surya, SCC, baterai, inverter; hitung energi, rangkai 13 langkah, uji 24 jam cerah & mendung, lisensi teknisi (dengan tes awal & tes akhir) | Energi Terbarukan | [Buka](https://lht-sky.github.io/guruvokasi/simulasi-3d-plts-offgrid/) |
 
 Segera hadir: Forward–Reverse Berbasis PLC (JS-PLC-01), Elektropneumatik 1 Silinder.
 
