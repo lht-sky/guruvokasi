@@ -154,7 +154,7 @@ function baru(){return {stage:0,jenis:isPh()?'perorangan':'kelompok',ind:{nama:'
   uji:{first:null,orderBad:false,shutBad:false,cyc:0,done:false},
   obs:{t:[[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null]],tries:0,done:false,bad:[]},
   lis:{q:null,sk:{}},hid:null};}
-let S=LS.get('cur',null);if(!S||!S.k3)S=baru();if(!S.ind)S.ind={nama:'',absen:'',kelas:'XII TOI'};if(!S.jenis)S.jenis='kelompok';if(S.el&&S.el.p&&S.el.p[0].length===3){S.el.p=S.el.p.map(q=>[q[0],q[1],null,q[2]]);S.el.done=false;S.el.cek=null;}
+let S=LS.get('cur',null);if(!S||!S.k3)S=baru();if(!S.ind)S.ind={nama:'',absen:'',kelas:'XII TOI'};if(!S.jenis)S.jenis='kelompok';if(S.el&&S.el.p&&!S.m4){S.m4=1;S.el.p=S.el.p.map(q=>q.length===3?[q[0],q[1],'J',q[2]]:(q[3]&&q[1]&&q[2]==null?[q[0],q[1],'J',q[3]]:q));}
 const save=()=>LS.set('cur',S);
 let GURU=false;
 
@@ -626,6 +626,7 @@ function panelGuru(info){const H=LS.get('hist',[]),B=SET.bobot,sum=Object.values
 /* ====================== render ====================== */
 function render(){stopLoop();closeModal();topBar();const id=STG[S.stage].id;if(id!=='obs'&&SIM)SIM.keep=0;if(id!=='pn')SELP=null;
   if(S.stage>0&&!S.t0){S.stage=0;}
+  if((id==='uji'||id==='obs')&&!S.el.done){if(cekLadder(S.el.p).every(c=>c.ok)){S.el.done=true;save();}else{S.stage=3;save();toast('Rangkaian kontrol belum lolos pemeriksaan. Perbaiki dulu di tahap Listrik.',4000);topBar();R.el();return;}}
   if(!S.ts[id]&&S.t0)S.ts[id]={a:now()};R[id]();}
 render();
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));}
