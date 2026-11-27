@@ -86,6 +86,36 @@ table.ob td.k{text-align:left;font-size:17px;width:330px}
 .qcard{background:#0f2238;border-radius:16px;padding:14px 16px;margin-top:10px}
 .kunci{background:#fff8e1;color:#4a3b00;border-radius:10px;padding:8px 12px;font-size:17px;margin-top:6px}
 .chk{font-size:19px;margin:4px 0}.chk b.i{display:inline-block;width:30px}
+.kode{font:900 38px ui-monospace,Consolas,monospace;background:#fff;color:#12325e;padding:12px 20px;border-radius:14px;letter-spacing:.05em;-webkit-user-select:all;user-select:all}
+/* ---------- tampilan HP (otomatis: layar tegak / sempit) ---------- */
+body.ph{overflow:auto;height:auto}
+body.ph #stage{position:relative;width:100%;height:auto;min-height:100vh;transform:none!important;left:0!important;top:0!important;overflow:visible}
+body.ph #top{height:auto;flex-wrap:wrap;padding:8px 10px;gap:8px}
+body.ph #steps{order:5;flex-basis:100%;overflow-x:auto;justify-content:flex-start;padding-bottom:2px}
+body.ph .st{font-size:13px;padding:5px 9px}body.ph .brand{flex:1}body.ph .brand b{font-size:16px}body.ph .brand span{font-size:12px}
+body.ph #clock b{font-size:16px}body.ph #clock span{font-size:12px}body.ph .ib{width:44px;height:44px;font-size:20px;border-radius:11px}body.ph .mode{font-size:11px}
+body.ph #main{position:static;padding:10px}
+body.ph .row{flex-direction:column;height:auto!important}body.ph .row.keep{flex-direction:row}
+body.ph .dgbox{width:100%!important;height:auto!important;flex:none!important}body.ph svg.dg{height:auto}
+body.ph .panel{padding:12px 14px;border-radius:14px}
+body.ph h1{font-size:23px}body.ph h2{font-size:19px}body.ph h3{font-size:17px}body.ph p,body.ph li{font-size:16px}body.ph .small{font-size:14px}
+body.ph .btn{font-size:17px;min-height:50px;padding:10px 16px}body.ph .btn.sm{font-size:15px;min-height:44px}
+body.ph .foot{position:sticky;bottom:0;left:auto;right:auto;margin-top:10px;background:#0E1C2E;padding:8px 0;gap:10px;z-index:5}
+body.ph .msg{font-size:15px;padding:10px 12px}
+body.ph .cards{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}body.ph .card .e{font-size:36px}body.ph .card .n{font-size:14px}
+body.ph .seq button{font-size:15px;min-height:48px;padding:8px 10px}body.ph .seq .slot b{width:32px;height:32px;font-size:16px}
+body.ph table.t td,body.ph table.t th{font-size:15px;padding:6px 8px}
+body.ph table.ob th{font-size:14px;padding:4px}body.ph table.ob td{padding:3px}body.ph table.ob td.k{width:auto;font-size:13px}body.ph .cell{width:40px;height:44px;font-size:20px;border-radius:9px}
+body.ph .uctl{height:auto!important;position:sticky;bottom:0;z-index:5;padding:8px 10px;gap:10px;flex-wrap:wrap;margin-top:8px!important}
+body.ph .tg{min-width:118px;min-height:54px;font-size:15px;padding:6px 10px}body.ph .tg small{font-size:12px}
+body.ph .s1{width:92px;height:92px;font-size:20px;border-width:6px}body.ph .leds{gap:6px}body.ph .leds div{font-size:13px}body.ph .leds i{width:26px;height:26px}
+body.ph .pal{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}body.ph .pal button{min-height:120px;font-size:13px}body.ph .pal button svg{width:96px;height:84px}
+body.ph #modal{position:fixed}body.ph #mbox{width:94vw!important;max-height:88vh;padding:14px}
+body.ph .pad{grid-template-columns:repeat(3,76px)}body.ph .pad button{height:64px;font-size:26px}
+body.ph #toast{position:fixed;top:12px;font-size:16px;max-width:92vw}
+body.ph .sc button{width:48px;height:46px;font-size:20px}body.ph .kode{font-size:26px}
+body.ph #bFull{display:none}body.ph .nt{display:none}body.ph .uctl .pel{display:none}body.ph #ins{font-size:13px}body.ph .uctl p{font-size:15px}
+body.ph input.tx{font-size:18px;padding:10px 12px}
 @media print{#top,.foot,.noprint{display:none!important}#stage{position:static;transform:none!important;width:auto;height:auto;background:#fff;color:#000}#main{position:static}.panel{background:#fff;color:#000}table.t td,table.t th{border-color:#555;color:#000}table.t th{background:#eee}}
 </style>
 </head>
@@ -108,20 +138,23 @@ table.ob td.k{text-align:left;font-size:17px;width:330px}
 /* ====================== data & penyimpanan ====================== */
 const KEY='jsifp-skeh-asas-xii';
 const LS={get(k,d){try{const v=localStorage.getItem(KEY+':'+k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem(KEY+':'+k,JSON.stringify(v));}catch(e){}}};
-const DEF_SET={pin:'2026',mode:'ujian',bobot:{k3:10,pn:20,el:25,uji:15,obs:15,lis:15}};
+function fnv(t){let h=0x811c9dc5;for(const c of String(t)){h^=c.charCodeAt(0);h=Math.imul(h,0x01000193)>>>0;}return h>>>0;}
+const hp=v=>fnv('guruvokasi-skeh'+v).toString(36);
+const DEF_SET={pinH:'iidn50',mode:'ujian',bobot:{k3:10,pn:20,el:25,uji:15,obs:15,lis:15}};
 let SET=Object.assign({},DEF_SET,LS.get('set',{}));SET.bobot=Object.assign({},DEF_SET.bobot,SET.bobot||{});
+if(SET.pin){if(SET.pin!=='2026')SET.pinH=hp(SET.pin);delete SET.pin;try{localStorage.setItem(KEY+':set',JSON.stringify(SET));}catch(e){}}
 const saveSet=()=>LS.set('set',SET);
 const ROLE=['Teknisi Pneumatik','Teknisi Listrik','Operator & Pencatat'];
 const STG=[{id:'mulai',t:'Identitas'},{id:'k3',t:'K3',m:3},{id:'pn',t:'Pneumatik',m:4},{id:'el',t:'Listrik',m:8},{id:'uji',t:'Uji Fungsi',m:3},{id:'obs',t:'Pengamatan',m:3},{id:'lis',t:'Lisan'},{id:'rekap',t:'Rekap'}];
 const ASPEK=[['k3','K3 & urutan kerja aman','K'],['pn','Rangkaian pneumatik','K'],['el','Rangkaian kontrol listrik (relai)','K'],['uji','Uji fungsi & prosedur nyala–matikan','K'],['obs','Lembar pengamatan','K']];
-function baru(){return {stage:0,grp:{nama:'',murid:['','',''],rot:0},t0:null,ts:{},res:{},
+function baru(){return {stage:0,jenis:isPh()?'perorangan':'kelompok',ind:{nama:'',absen:'',kelas:'XII TOI'},grp:{nama:'',murid:['','',''],rot:0},t0:null,ts:{},res:{},
   k3:{apd:[],urut:[],triesA:0,triesB:0,doneA:false,doneB:false,badA:[],badB:[]},
   pn:{conns:[],tries:0,done:false,bad:[]},
   el:{p:[[null,null,null],[null,null,null],[null,null,null],[null,null,null]],tries:0,done:false,cek:null},
   uji:{first:null,orderBad:false,shutBad:false,cyc:0,done:false},
   obs:{t:[[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null]],tries:0,done:false,bad:[]},
   lis:{q:null,sk:{}},hid:null};}
-let S=LS.get('cur',null);if(!S||!S.k3)S=baru();
+let S=LS.get('cur',null);if(!S||!S.k3)S=baru();if(!S.ind)S.ind={nama:'',absen:'',kelas:'XII TOI'};if(!S.jenis)S.jenis='kelompok';
 const save=()=>LS.set('cur',S);
 let GURU=false;
 
@@ -139,20 +172,22 @@ const skorTries=n=>Math.max(1,5-Math.max(1,n));
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const latihan=()=>SET.mode==='latihan';
-function murid(){return S.grp.murid.map(n=>n.trim()).filter(Boolean);}
+const PER=()=>S.jenis==='perorangan';
+function murid(){if(PER()){const n=S.ind.nama.trim();return n?[n]:[];}return S.grp.murid.map(n=>n.trim()).filter(Boolean);}
 function peranIdx(){const m=murid(),n=m.length;if(!n)return[];const r=S.grp.rot||0;return ROLE.map((_,i)=>(i+r)%n);}
 function pelaksana(r){const m=murid();const p=peranIdx();return m.length?m[p[r]]:'-';}
-function peranMurid(i){const p=peranIdx();return ROLE.filter((_,r)=>p[r]===i).join(' + ')||'-';}
+function peranMurid(i){if(PER())return 'Perorangan';const p=peranIdx();return ROLE.filter((_,r)=>p[r]===i).join(' + ')||'-';}
 
 /* ====================== skala layar & tombol atas ====================== */
-function fit(){const st=$('#stage');const s=Math.min(innerWidth/1600,innerHeight/900);st.style.transform=`scale(${s})`;st.style.left=(innerWidth-1600*s)/2+'px';st.style.top=(innerHeight-900*s)/2+'px';}
-addEventListener('resize',fit);fit();
+function isPh(){return innerHeight>innerWidth||innerHeight<500||innerWidth<900;}
+function layout(){const ph=isPh();document.body.classList.toggle('ph',ph);const st=$('#stage');if(ph){st.style.transform='';st.style.left='';st.style.top='';return;}const s=Math.min(innerWidth/1600,innerHeight/900);st.style.transform=`scale(${s})`;st.style.left=(innerWidth-1600*s)/2+'px';st.style.top=(innerHeight-900*s)/2+'px';}
+addEventListener('resize',layout);layout();
 $('#bFull').onclick=()=>{const d=document;if(d.fullscreenElement)d.exitFullscreen&&d.exitFullscreen();else{const e=d.documentElement;(e.requestFullscreen||e.webkitRequestFullscreen||(()=>{})).call(e);}};
 let wake=null;async function jagaLayar(){try{if('wakeLock' in navigator&&!wake){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>wake=null);}}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.t0)jagaLayar();});
 addEventListener('beforeunload',e=>{if(S.t0&&S.stage<7){e.preventDefault();e.returnValue='';}});
 
-function topBar(){const st=$('#steps');st.innerHTML=STG.map((g,i)=>`<span class="st ${i===S.stage?'cur':i<S.stage?'done':''}">${i<S.stage?'✓ ':''}${g.t}</span>`).join('');
+function topBar(){const st=$('#steps');st.innerHTML=STG.map((g,i)=>!aktif(i)?'':`<span class="st ${i===S.stage?'cur':i<S.stage?'done':''}">${i<S.stage?'✓ ':''}${g.t}</span>`).join('');
   const mb=$('#modeBadge');mb.textContent=latihan()?'MODE LATIHAN':'MODE UJIAN';mb.className='mode'+(latihan()?' lat':'');
   $('#bGuru').className='ib'+(GURU?' on':'');$('#bGuru').textContent=GURU?'🔓':'⚙';tick();}
 function tick(){const c=$('#clock');if(!S.t0){c.innerHTML='<b>--:--</b><span>belum mulai</span>';return;}
@@ -162,7 +197,8 @@ function tick(){const c=$('#clock');if(!S.t0){c.innerHTML='<b>--:--</b><span>bel
 setInterval(tick,1000);
 
 function go(i){const cur=STG[S.stage].id;if(S.ts[cur]&&!S.ts[cur].b)S.ts[cur].b=now();S.stage=i;const nx=STG[i].id;if(!S.ts[nx])S.ts[nx]={a:now()};else if(S.ts[nx].b&&i<7)delete S.ts[nx].b;save();render();}
-function next(){go(Math.min(STG.length-1,S.stage+1));}
+const aktif=i=>!(PER()&&STG[i].id==='lis');
+function next(){let i=S.stage+1;while(i<STG.length-1&&!aktif(i))i++;go(Math.min(STG.length-1,i));}
 function setRes(id,skor,note){S.res[id]={skor,note:note||''};save();}
 function foot(msg,cls,canNext,label){return `<div class="foot"><div class="msg ${cls||'info'}" id="fmsg">${msg}</div>${canNext?`<button class="btn y" id="bNext">${label||'Lanjut ▶'}</button>`:''}</div>`;}
 function bindNext(){const b=$('#bNext');if(b)b.onclick=next;}
@@ -288,27 +324,36 @@ function bindS1(btn){const on=e=>{e.preventDefault();if(SIM)SIM.S1=true;btn.clas
 
 /* ====================== tahap 0: identitas ====================== */
 const R={};
-R.mulai=()=>{const m=S.grp.murid;
+R.mulai=()=>{const per=PER(),m=S.grp.murid,I=S.ind;
   MAIN.innerHTML=`<div class="row" style="height:100%">
   <div class="panel col" style="flex:1.15">
    <h1>Ujian Praktik SKEH — Tahap Virtual</h1>
    <table class="t"><tr><th style="width:190px">Kode</th><td>JS-ASAS-SKEH-XII</td></tr><tr><th>Mata pelajaran</th><td>Sistem Kontrol Elektro Pneumatik dan Hidrolik</td></tr><tr><th>Kelas</th><td>XII Teknik Otomasi Industri</td></tr><tr><th>Jadwal</th><td>Rabu, 2 Desember 2026 · 07.30–08.30</td></tr><tr><th>Guru</th><td>Lukman Hakim Tejosaputro, S.T., Gr.</td></tr></table>
    <div><h3>A. Tugas</h3><p>Rangkai dan uji sistem elektropneumatik <b>semi-otomatis</b>: tekan <b>S1</b> → silinder <b>maju</b> → sampai <b>a1</b> → <b>mundur otomatis</b> → berhenti di <b>a0</b>. Reed switch a0/a1 bekerja lewat relai <b>K1/K2</b>, dengan <b>interlock NC</b>. Tekanan kerja <b>5 bar</b>.</p>
-   <p class="small muted">Tahap virtual di layar ini dikerjakan sebelum praktik di trainer. Selesaikan dengan benar sebelum membuka udara di trainer nyata.</p></div>
+   <p class="small muted">Tahap virtual ini dikerjakan sebelum praktik di trainer. Selesaikan dengan benar sebelum membuka udara di trainer nyata.</p></div>
    <div><h3>C. Alat & bahan (sesuai trainer lab)</h3><p class="small">Silinder kerja ganda MA25×100 + reed switch a0, a1 · Katup 5/2 double solenoid 4V120-06 24 VDC (Y1 maju 1→4, Y2 mundur 1→2) · F.R.L AC2000-02 · Speed controller JSC6-01 (2) · Silencer BSL-01 (2) · Relai 24 VDC K1, K2 · Tombol S1 (NO) · Power supply 24 VDC · Selang PU · Kabel kontrol biru.</p></div>
   </div>
   <div class="panel col" style="flex:1">
-   <h2>B. Kelompok & pembagian peran</h2>
-   <div><label class="lb2">Nama / nomor kelompok</label><input class="tx" id="iK" maxlength="30" value="${esc(S.grp.nama)}" placeholder="mis. Kelompok 3"></div>
-   ${[0,1,2].map(i=>`<div><label class="lb2">Murid ${i+1}${i===2?' (opsional)':''}</label><input class="tx" id="iM${i}" maxlength="40" value="${esc(m[i])}" placeholder="Nama lengkap"></div>`).join('')}
-   <div id="peran" class="small"></div>
-   <div class="row" style="margin-top:auto"><button class="btn gh" id="bRot">🔄 Tukar peran</button><button class="btn y" id="bGo" style="flex:1">Mulai ujian ▶</button></div>
+   <div class="row keep" style="gap:10px"><button class="btn ${per?'y':'gh'} sm" data-jn="perorangan" style="flex:1">👤 Perorangan (HP)</button><button class="btn ${per?'gh':'y'} sm" data-jn="kelompok" style="flex:1">👥 Kelompok (IFP)</button></div>
+   ${per?`<h2>B. Identitas murid</h2>
+    <div><label class="lb2">Nama lengkap</label><input class="tx" id="iN" maxlength="40" value="${esc(I.nama)}" placeholder="Nama lengkap"></div>
+    <div class="row keep" style="gap:12px"><div style="flex:1"><label class="lb2">No. absen</label><input class="tx" id="iA" inputmode="numeric" maxlength="2" value="${esc(I.absen)}" placeholder="mis. 7"></div><div style="flex:2"><label class="lb2">Kelas</label><input class="tx" id="iC" maxlength="20" value="${esc(I.kelas)}"></div></div>
+    <p class="small muted">Kerjakan sendiri. Di akhir muncul <b>kode hasil</b> yang diperiksa guru. Jangan menutup atau memuat ulang halaman selama ujian.</p>`
+   :`<h2>B. Kelompok & pembagian peran</h2>
+    <div><label class="lb2">Nama / nomor kelompok</label><input class="tx" id="iK" maxlength="30" value="${esc(S.grp.nama)}" placeholder="mis. Kelompok 3"></div>
+    ${[0,1,2].map(i=>`<div><label class="lb2">Murid ${i+1}${i===2?' (opsional)':''}</label><input class="tx" id="iM${i}" maxlength="40" value="${esc(m[i])}" placeholder="Nama lengkap"></div>`).join('')}
+    <div id="peran" class="small"></div>`}
+   <div class="row keep" style="margin-top:auto">${per?'':'<button class="btn gh" id="bRot">🔄 Tukar peran</button>'}<button class="btn y" id="bGo" style="flex:1">Mulai ujian ▶</button></div>
   </div></div>`;
-  const upd=()=>{S.grp.nama=$('#iK').value;for(let i=0;i<3;i++)S.grp.murid[i]=$('#iM'+i).value;save();const ms=murid();
-    $('#peran').innerHTML=ms.length?ms.map((n,i)=>`<div class="chk">👤 <b style="width:auto">${esc(n)}</b> — <span class="pel">${peranMurid(i)}</span></div>`).join(''):'<p class="muted small">Isi nama murid untuk melihat pembagian peran.</p>';};
+  MAIN.querySelectorAll('[data-jn]').forEach(b=>b.onclick=()=>{S.jenis=b.dataset.jn;save();R.mulai();topBar();});
+  const upd=()=>{if(per){I.nama=$('#iN').value;I.absen=$('#iA').value.replace(/\D/g,'').slice(0,2);I.kelas=$('#iC').value;save();return;}
+    S.grp.nama=$('#iK').value;for(let i=0;i<3;i++)S.grp.murid[i]=$('#iM'+i).value;save();const ms=murid();
+    $('#peran').innerHTML=ms.length?ms.map((n,i)=>`<div class="chk">👤 <b>${esc(n)}</b> — <span class="pel">${peranMurid(i)}</span></div>`).join(''):'<p class="muted small">Isi nama murid untuk melihat pembagian peran.</p>';};
   MAIN.querySelectorAll('input').forEach(e=>e.addEventListener('input',upd));upd();
-  $('#bRot').onclick=()=>{S.grp.rot=((S.grp.rot||0)+1)%3;upd();};
-  $('#bGo').onclick=()=>{upd();if(!S.grp.nama.trim())return toast('Isi nama kelompok dulu.');if(murid().length<2)return toast('Isi minimal 2 nama murid (kelompok 2–3 orang).');
+  const br=$('#bRot');if(br)br.onclick=()=>{S.grp.rot=((S.grp.rot||0)+1)%3;upd();};
+  $('#bGo').onclick=()=>{upd();
+    if(per){if(I.nama.trim().length<3)return toast('Isi nama lengkap dulu.');if(!(+I.absen>0))return toast('Isi nomor absen.');}
+    else{if(!S.grp.nama.trim())return toast('Isi nama kelompok dulu.');if(murid().length<2)return toast('Isi minimal 2 nama murid (kelompok 2–3 orang).');}
     if(document.activeElement)document.activeElement.blur();if(!S.t0)S.t0=now();jagaLayar();next();};};
 
 /* ====================== tahap 1: K3 ====================== */
@@ -318,7 +363,7 @@ const URUT=['Pastikan 24 VDC OFF dan keran udara tertutup','Pasang selang pneuma
 let URUT_ACAK=null;
 R.k3=()=>{const k=S.k3;if(!URUT_ACAK)URUT_ACAK=shuffle(URUT.map((_,i)=>i));
   MAIN.innerHTML=`<div class="row" style="height:calc(100% - 86px)">
-  <div class="panel col" style="flex:1"><div><span class="pel">Semua anggota</span></div><h2>D1. Pilih yang DIPAKAI saat praktik elektropneumatik</h2>
+  <div class="panel col" style="flex:1">${PER()?'':'<div><span class="pel">Semua anggota</span></div>'}<h2>D1. Pilih yang DIPAKAI saat praktik elektropneumatik</h2>
    <div class="cards">${APD.map(a=>`<button class="card ${k.apd.includes(a.id)?'sel':''} ${k.badA.includes(a.id)?'bad':''} ${k.doneA&&a.w===1?'ok':''}" data-a="${a.id}" ${k.doneA?'disabled':''}><span class="e">${a.e}</span><span class="n">${a.n}</span></button>`).join('')}</div>
    <div class="row" style="align-items:center;margin-top:auto">${k.doneA?'<p style="color:#7ef0ac;font-weight:800">✅ APD tepat</p>':'<button class="btn" id="cA">Periksa APD</button>'}<span class="muted small">Percobaan: ${k.triesA}</span></div></div>
   <div class="panel col" style="flex:1"><h2>D2. Urutkan langkah kerja aman (sentuh berurutan)</h2>
@@ -343,8 +388,8 @@ R.k3=()=>{const k=S.k3;if(!URUT_ACAK)URUT_ACAK=shuffle(URUT.map((_,i)=>i));
 let SELP=null;
 R.pn=()=>{const p=S.pn;
   MAIN.innerHTML=`<div class="row" style="height:calc(100% - 86px)">
-   <div class="paper" style="flex:none;width:1010px;padding:6px" id="pnBox">${pnSVG('edit')}</div>
-   <div class="panel col" style="flex:1"><div><span class="pel">Pelaksana: ${esc(pelaksana(0))} (Teknisi Pneumatik)</span></div>
+   <div class="paper dgbox" style="flex:none;width:1010px;padding:6px" id="pnBox">${pnSVG('edit')}</div>
+   <div class="panel col" style="flex:1"><div><span class="pel">${PER()?esc(pelaksana(0)):`Pelaksana: ${esc(pelaksana(0))} (Teknisi Pneumatik)`}</span></div>
     <h2>E/F. Pasang selang pneumatik</h2>
     <ol class="small" style="font-size:19px"><li>Sentuh satu <b style="color:#f3b52f">titik kuning</b> (port).</li><li>Sentuh port tujuan → selang terpasang.</li><li>Sentuh selang untuk melepasnya.</li></ol>
     <p class="small muted">Ingat: Y1 = maju (port 1→4), Y2 = mundur (port 1→2). Speed controller sudah terpasang di port silinder; silencer sudah di port 3 dan 5.</p>
@@ -371,8 +416,8 @@ R.pn=()=>{const p=S.pn;
 R.el=()=>{const e=S.el;
   const cekHtml=e.cek?e.cek.map(c=>`<div class="chk"><b class="i">${c.ok?'✅':'❌'}</b>${c.t}${!c.ok&&c.why?`<div class="small" style="color:#ffb4a8;margin-left:30px">${c.why}</div>`:''}</div>`).join(''):'';
   MAIN.innerHTML=`<div class="row" style="height:calc(100% - 86px)">
-   <div class="paper" style="flex:none;width:930px;padding:6px" id="ladBox">${ladSVG(!e.done)}</div>
-   <div class="panel col" style="flex:1;overflow:auto"><div><span class="pel">Pelaksana: ${esc(pelaksana(1))} (Teknisi Listrik)</span></div>
+   <div class="paper dgbox" style="flex:none;width:930px;padding:6px" id="ladBox">${ladSVG(!e.done)}</div>
+   <div class="panel col" style="flex:1;overflow:auto"><div><span class="pel">${PER()?esc(pelaksana(1)):`Pelaksana: ${esc(pelaksana(1))} (Teknisi Listrik)`}</span></div>
     <h2>E/F. Susun rangkaian kontrol 24 VDC</h2>
     <p class="small">Sentuh kotak <b>+</b> lalu pilih komponen. Tiap jalur arus: 2 kontak (atas) dan 1 koil (bawah). Pakai <b>kabel langsung</b> bila jalur cukup 1 kontak.</p>
     <h3>Syarat jobsheet</h3>
@@ -398,9 +443,9 @@ function palet(i,j){const coil=j===2,toks=coil?['K1','K2','Y1','Y2']:['S1','a0',
 /* ====================== tahap 4: uji fungsi ====================== */
 R.uji=()=>{const u=S.uji;SIM=simBaru(false,false);let flag=false;
   MAIN.innerHTML=`<div class="row" style="height:600px">
-   <div class="paper" style="flex:1;padding:6px">${pnSVG('live')}</div><div class="paper" style="flex:1;padding:6px">${ladSVG(false)}</div></div>
-   <div class="panel ctrl" style="margin-top:14px;height:178px">
-    <div><span class="pel">Operator: ${esc(pelaksana(2))}</span><div class="ctrl" style="margin-top:10px"><button class="tg" id="tAir">KERAN UDARA<small id="tAirS">tertutup</small></button><button class="tg" id="tV">MCB 24 VDC<small id="tVS">OFF</small></button></div></div>
+   <div class="paper dgbox" style="flex:1;padding:6px">${pnSVG('live')}</div><div class="paper dgbox" style="flex:1;padding:6px">${ladSVG(false)}</div></div>
+   <div class="panel ctrl uctl" style="margin-top:14px;height:178px">
+    <div><span class="pel">${PER()?'':'Operator: '}${esc(pelaksana(2))}</span><div class="ctrl" style="margin-top:10px"><button class="tg" id="tAir">KERAN UDARA<small id="tAirS">tertutup</small></button><button class="tg" id="tV">MCB 24 VDC<small id="tVS">OFF</small></button></div></div>
     <button class="s1" id="bS1">S1<br><span style="font-size:17px">MAJU</span></button>
     ${LEDS}
     <div style="flex:1"><p style="font-size:21px;margin:0">Siklus: <b id="cyc" style="font-size:30px;color:#f3b52f">${Math.min(3,u.cyc)}</b> / 3</p><p id="ins" class="small" style="margin:4px 0 0"></p></div>
@@ -421,14 +466,14 @@ const OBS_ROW=['Posisi awal: silinder di belakang, S1 belum ditekan','S1 ditekan
 const OBS_COL=['a0','a1','K1','K2','Y1','Y2'];
 R.obs=()=>{const o=S.obs;SIM=SIM&&STG[S.stage].id==='obs'&&SIM.keep?SIM:simBaru(true,true);SIM.keep=1;SIM.slow=SIM.slow||1;
   MAIN.innerHTML=`<div class="row" style="height:calc(100% - 86px)">
-   <div class="col" style="flex:none;width:700px"><div class="paper" style="height:420px;padding:4px">${pnSVG('live')}</div>
+   <div class="col dgbox" style="flex:none;width:700px"><div class="paper dgbox" style="height:420px;padding:4px">${pnSVG('live')}</div>
     <div class="panel col" style="flex:1;gap:10px"><div class="ctrl"><button class="s1" id="bS1" style="width:118px;height:118px;font-size:24px">S1</button>
      <div class="col" style="gap:8px"><button class="tg" id="tAir" style="min-height:58px;min-width:200px">KERAN UDARA <small id="tAirS"></small></button><button class="tg" id="tSl" style="min-height:58px;min-width:200px">GERAK LAMBAT <small id="tSlS"></small></button></div></div>
      ${LEDS}<p class="small muted" style="margin:0">Tips: tutup keran udara lalu tahan S1 untuk melihat keadaan "S1 ditekan, silinder masih di a0".</p></div></div>
-   <div class="panel col" style="flex:1"><div><span class="pel">Pencatat: ${esc(pelaksana(2))}</span></div><h2>G. Lembar pengamatan (sentuh sel: 1 = aktif/menyala, 0 = tidak)</h2>
+   <div class="panel col" style="flex:1"><div><span class="pel">${PER()?'':'Pencatat: '}${esc(pelaksana(2))}</span></div><h2>G. Lembar pengamatan (sentuh sel: 1 = aktif/menyala, 0 = tidak)</h2>
     <table class="ob"><tr><th>Kondisi</th>${OBS_COL.map(c=>`<th>${c}</th>`).join('')}</tr>${OBS_ROW.map((r,i)=>`<tr><td class="k">${i+1}. ${r}</td>${OBS_COL.map((_,j)=>{const v=o.t[i][j];return `<td><button class="cell ${v===1?'v1':''} ${o.bad.includes(i*6+j)?'bad':''}" data-c="${i}-${j}" ${o.done?'disabled':''}>${v==null?'·':v}</button></td>`;}).join('')}</tr>`).join('')}</table>
     <div class="row" style="margin-top:auto;align-items:center">${o.done?'':'<button class="btn" id="bCek">Periksa pengamatan</button>'}<span class="muted small">Percobaan: ${o.tries}</span></div></div>
-  </div>${foot(o.done?'✅ Lembar pengamatan benar. Lanjut ke pertanyaan lisan (dinilai guru).':(o.msg||'Amati simulasi, isi semua sel, lalu tekan Periksa.'),o.done?'ok':o.msgc,o.done)}`;
+  </div>${foot(o.done?(PER()?'✅ Lembar pengamatan benar. Lanjut ke rekap nilai.':'✅ Lembar pengamatan benar. Lanjut ke pertanyaan lisan (dinilai guru).'):(o.msg||'Amati simulasi, isi semua sel, lalu tekan Periksa.'),o.done?'ok':o.msgc,o.done)}`;
   const upd=()=>{$('#tAir').classList.toggle('on',SIM.air);$('#tAirS').textContent=SIM.air?'terbuka':'tertutup';$('#tSl').classList.toggle('on',SIM.slow<1);$('#tSlS').textContent=SIM.slow<1?'aktif':'mati';};
   $('#tAir').onclick=()=>{SIM.air=!SIM.air;upd();};$('#tSl').onclick=()=>{SIM.slow=SIM.slow<1?1:0.2;upd();};
   bindS1($('#bS1'));startLoop(null);upd();draw();
@@ -468,37 +513,64 @@ R.lis=()=>{if(!GURU){MAIN.innerHTML=`<div class="panel" style="max-width:900px;m
   bindNext();};
 
 /* ====================== tahap 7: rekap ====================== */
-function hitung(){const B=SET.bobot,ms=murid();const sk=k=>(S.res[k]&&S.res[k].skor)||1;const kel=ASPEK.reduce((a,[k])=>a+sk(k)*B[k],0);
+const predikat=n=>n>=90?'SB':n>=70?'B':n>=50?'C':'PB';
+function nilaiVirtual(sk){const B=SET.bobot,sb=ASPEK.reduce((a,[k])=>a+B[k],0)||1;return Math.round(ASPEK.reduce((a,[k])=>a+(sk[k]||1)*B[k],0)/(4*sb)*1000)/10;}
+const skorNow=()=>Object.fromEntries(ASPEK.map(([k])=>[k,(S.res[k]&&S.res[k].skor)||1]));
+function hitung(){const B=SET.bobot,ms=murid();const sk=k=>(S.res[k]&&S.res[k].skor)||1;
+  if(PER()){const nilai=nilaiVirtual(skorNow());return ms.map(n=>({nama:n,absen:S.ind.absen,peran:'Perorangan',lis:null,nilai,pred:predikat(nilai),tuntas:nilai>=70}));}
+  const kel=ASPEK.reduce((a,[k])=>a+sk(k)*B[k],0);
   return ms.map((n,i)=>{const l=[S.lis.sk[i+'-0'],S.lis.sk[i+'-1']].filter(Boolean);const lis=l.length?l.reduce((a,b)=>a+b,0)/l.length:1;
-    const nilai=Math.round((kel+lis*B.lis)/4*10)/10;const pred=nilai>=90?'SB':nilai>=70?'B':nilai>=50?'C':'PB';return {nama:n,peran:peranMurid(i),lis,nilai,pred,tuntas:nilai>=70};});}
-function simpanRiwayat(){const H=LS.get('hist',[]);const ms=hitung();const tot=Math.round(((S.ts.rekap&&S.ts.rekap.a)||now())-S.t0)/60000;
-  const e={id:S.hid||('h'+now()),tgl:new Date(S.t0||now()).toLocaleString('id-ID'),kelompok:S.grp.nama,mode:SET.mode,skor:Object.fromEntries(ASPEK.map(([k])=>[k,(S.res[k]&&S.res[k].skor)||1])),menit:Math.round(tot*10)/10,murid:ms};
+    const nilai=Math.round((kel+lis*B.lis)/4*10)/10;return {nama:n,peran:peranMurid(i),lis,nilai,pred:predikat(nilai),tuntas:nilai>=70};});}
+const durasiMenit=()=>Math.round((((S.ts.rekap&&S.ts.rekap.a)||now())-(S.t0||now()))/6000)/10;
+/* kode hasil: absen(2) + skor 5 aspek + menit(2) + tanda(1) + cek(4) */
+const B32='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function cekKode(p){let h=fnv('TOI-SKEH-ASAS-XII|'+p),c='';for(let i=0;i<4;i++){c+=B32[h%32];h=Math.floor(h/32);}return c;}
+function tandaHasil(){let f=0;ASPEK.forEach(([k])=>{const n=(S.res[k]&&S.res[k].note)||'';if(n.includes('kunci'))f|=1;if(n.includes('diubah guru'))f|=2;});return f;}
+function kodeHasil(){const p=String(Math.min(99,+S.ind.absen||0)).padStart(2,'0')+ASPEK.map(([k])=>(S.res[k]&&S.res[k].skor)||1).join('')+String(Math.min(99,Math.round(durasiMenit()))).padStart(2,'0')+tandaHasil();return p+cekKode(p);}
+const fmtKode=k=>`${k.slice(0,2)}-${k.slice(2,7)}-${k.slice(7,10)}-${k.slice(10)}`;
+function bacaKode(t){const k=String(t).toUpperCase().replace(/[^0-9A-Z]/g,'');if(k.length!==14||!/^\d{10}$/.test(k.slice(0,10)))return null;const p=k.slice(0,10);if(cekKode(p)!==k.slice(10))return null;
+  const sk={};ASPEK.forEach(([a],i)=>sk[a]=+p[2+i]);if(Object.values(sk).some(v=>v<1||v>4))return null;return {kode:k,absen:+p.slice(0,2),sk,menit:+p.slice(7,9),tanda:+p[9]};}
+function simpanRiwayat(){const H=LS.get('hist',[]);const ms=hitung();
+  const e={id:S.hid||('h'+now()),tgl:new Date(S.t0||now()).toLocaleString('id-ID'),kelompok:PER()?'Perorangan · '+S.ind.kelas:S.grp.nama,mode:SET.mode,skor:skorNow(),menit:durasiMenit(),murid:ms,kode:PER()?kodeHasil():''};
   S.hid=e.id;const i=H.findIndex(x=>x.id===e.id);if(i>=0)H[i]=e;else H.push(e);LS.set('hist',H);save();}
+function barisAspek(){const B=SET.bobot;return ASPEK.map(([k,n,j])=>{const r=S.res[k]||{skor:1,note:'belum dikerjakan'};return `<tr><td>${n}</td><td>[${j}]</td><td><button class="btn gh sm" data-sk="${k}" ${GURU?'':'disabled style="opacity:1"'}>${r.skor}</button></td><td>${B[k]}</td><td class="small nt">${esc(r.note)}</td></tr>`;}).join('');}
+function ikatSkorGuru(){if(GURU)MAIN.querySelectorAll('[data-sk]').forEach(b=>b.onclick=()=>{const k=b.dataset.sk;const r=S.res[k]||{skor:1,note:''};r.skor=r.skor%4+1;r.note=(r.note.replace(/ ?\(diubah guru\)/,'')+' (diubah guru)').trim();S.res[k]=r;save();R.rekap();});}
+function mulaiBaru(){simpanRiwayat();S=baru();save();GURU=false;URUT_ACAK=null;SELP=null;render();}
 R.rekap=()=>{simpanRiwayat();const B=SET.bobot,ms=hitung();const tot=((S.ts.rekap&&S.ts.rekap.a)||now())-S.t0;
+  if(PER()){const m=ms[0]||{nama:'-',nilai:0,pred:'PB',tuntas:false};const kd=kodeHasil();
+    MAIN.innerHTML=`<div class="row" style="height:calc(100% - 86px)">
+     <div class="panel col" style="flex:1.1"><h2>I. Rekap tahap virtual</h2><p><b>${esc(m.nama)}</b> · absen ${esc(S.ind.absen)} · ${esc(S.ind.kelas)}</p>
+      <table class="t"><tr><th>Aspek</th><th>Jenis</th><th>Skor 1–4</th><th>Bobot</th><th class="nt">Catatan</th></tr>${barisAspek()}</table>
+      <p class="small muted">Nilai virtual = Σ(skor × bobot) ÷ (4 × Σbobot) × 100 · KKTP 70 · Pertanyaan lisan dinilai guru saat praktik di trainer · Waktu ${mmss(tot/1000)} ${GURU?'· <b style="color:#f3b52f">Guru: sentuh skor untuk mengubah</b>':''}</p></div>
+     <div class="panel col" style="flex:1;align-items:center;text-align:center"><h2>Nilai tahap virtual</h2>
+      <div style="font-size:76px;font-weight:900;line-height:1;color:${m.tuntas?'#7ef0ac':'#ff9a8a'}">${String(m.nilai).replace('.',',')}</div><p style="font-size:22px">${m.pred} · ${m.tuntas?'Tuntas':'Belum tuntas'}</p>
+      <h3 style="margin-top:10px">Kode hasil</h3><div class="kode">${fmtKode(kd)}</div>
+      <p class="small">Tunjukkan layar ini ke guru atau kirim tangkapan layarnya. Guru mencocokkan kode ini di Mode guru.</p>
+      <div class="row keep noprint" style="margin-top:auto"><button class="btn gh" id="bNew">Mulai ulang (PIN guru)</button></div></div>
+    </div>${foot('Ujian virtual selesai. Jangan tutup halaman ini sebelum guru mencatat kode hasilmu.','ok',false)}`;
+    ikatSkorGuru();$('#bNew').onclick=()=>pinPad(()=>konfirmasi('Mulai ulang?','Hasil ini tetap tersimpan di Riwayat perangkat ini, lalu layar kembali ke halaman identitas.','Mulai ulang',mulaiBaru));return;}
   MAIN.innerHTML=`<div class="row" style="height:calc(100% - 86px)">
    <div class="panel col" style="flex:1.1"><h2>I. Rekap tahap virtual — ${esc(S.grp.nama)}</h2>
-    <table class="t"><tr><th>Aspek</th><th>Jenis</th><th>Skor 1–4</th><th>Bobot</th><th>Catatan</th></tr>
-    ${ASPEK.map(([k,n,j])=>{const r=S.res[k]||{skor:1,note:'belum dikerjakan'};return `<tr><td>${n}</td><td>[${j}]</td><td><button class="btn ${GURU?'gh':'gh'} sm" data-sk="${k}" ${GURU?'':'disabled style="opacity:1"'}>${r.skor}</button></td><td>${B[k]}</td><td class="small">${esc(r.note)}</td></tr>`;}).join('')}
-    <tr><td>Pertanyaan lisan</td><td>[I]</td><td>per murid</td><td>${B.lis}</td><td class="small">dinilai guru</td></tr></table>
+    <table class="t"><tr><th>Aspek</th><th>Jenis</th><th>Skor 1–4</th><th>Bobot</th><th class="nt">Catatan</th></tr>${barisAspek()}
+    <tr><td>Pertanyaan lisan</td><td>[I]</td><td>per murid</td><td>${B.lis}</td><td class="small nt">dinilai guru</td></tr></table>
     <p class="small muted">Nilai = Σ(skor × bobot) ÷ 4 · KKTP 70 · 90–100 SB · 70–89 B · 50–69 C · &lt;50 PB · Waktu total ${mmss(tot/1000)} ${GURU?'· <b style="color:#f3b52f">Guru: sentuh skor untuk mengubah</b>':''}</p></div>
    <div class="panel col" style="flex:1"><h2>Nilai per murid</h2>
     <table class="t"><tr><th>Nama</th><th>Lisan</th><th>Nilai</th><th>Predikat</th></tr>${ms.map(m=>`<tr><td><b>${esc(m.nama)}</b><div class="small muted">${m.peran}</div></td><td>${m.lis.toFixed(1).replace('.',',')}</td><td style="font-size:30px;font-weight:900;color:${m.tuntas?'#7ef0ac':'#ff9a8a'}">${String(m.nilai).replace('.',',')}</td><td>${m.pred}<div class="small">${m.tuntas?'Tuntas':'Belum tuntas'}</div></td></tr>`).join('')}</table>
     <p class="small muted">Nilai ini untuk tahap virtual di layar. Gabungkan dengan nilai praktik di trainer sesuai Lembar Penilaian jobsheet.</p>
-    <div class="row noprint" style="margin-top:auto;flex-wrap:wrap"><button class="btn gh" id="bPrint">🖨 Cetak</button><button class="btn gh" id="bCsv">⬇ Unduh CSV</button><button class="btn y" id="bNew" style="flex:1">Kelompok berikutnya ▶</button></div></div>
+    <div class="row keep noprint" style="margin-top:auto;flex-wrap:wrap"><button class="btn gh" id="bPrint">🖨 Cetak</button><button class="btn gh" id="bCsv">⬇ Unduh CSV</button><button class="btn y" id="bNew" style="flex:1">Kelompok berikutnya ▶</button></div></div>
   </div>${foot('Hasil sudah tersimpan otomatis di perangkat ini (Mode guru → Riwayat).','ok',false)}`;
-  if(GURU)MAIN.querySelectorAll('[data-sk]').forEach(b=>b.onclick=()=>{const k=b.dataset.sk;const r=S.res[k]||{skor:1,note:''};r.skor=r.skor%4+1;r.note=(r.note.replace(/ ?\(diubah guru\)/,'')+' (diubah guru)').trim();S.res[k]=r;save();R.rekap();});
-  $('#bPrint').onclick=()=>window.print();$('#bCsv').onclick=unduhCSV;
-  $('#bNew').onclick=()=>konfirmasi('Mulai kelompok berikutnya?','Hasil kelompok ini sudah tersimpan di Riwayat. Layar akan kembali ke halaman identitas.','Ya, kelompok berikutnya',()=>{simpanRiwayat();S=baru();save();GURU=false;URUT_ACAK=null;SELP=null;render();});};
+  ikatSkorGuru();$('#bPrint').onclick=()=>window.print();$('#bCsv').onclick=unduhCSV;
+  $('#bNew').onclick=()=>konfirmasi('Mulai kelompok berikutnya?','Hasil kelompok ini sudah tersimpan di Riwayat. Layar akan kembali ke halaman identitas.','Ya, kelompok berikutnya',mulaiBaru);};
 function unduhCSV(){const H=LS.get('hist',[]);if(!H.length)return toast('Riwayat masih kosong.');const B=SET.bobot;
-  const rows=[['Tanggal','Kelompok','Nama','Peran','K3','Pneumatik','Listrik','Uji fungsi','Pengamatan','Lisan','Nilai','Predikat','Tuntas','Waktu (menit)','Mode','Bobot K3/Pn/El/Uji/Obs/Lis']];
-  H.forEach(h=>h.murid.forEach(m=>rows.push([h.tgl,h.kelompok,m.nama,m.peran,h.skor.k3,h.skor.pn,h.skor.el,h.skor.uji,h.skor.obs,m.lis.toFixed(1),String(m.nilai).replace('.',','),m.pred,m.tuntas?'Ya':'Tidak',String(h.menit).replace('.',','),h.mode,[B.k3,B.pn,B.el,B.uji,B.obs,B.lis].join('/')])));
+  const rows=[['Tanggal','Kelompok / kelas','Nama','Absen','Peran','K3','Pneumatik','Listrik','Uji fungsi','Pengamatan','Lisan','Nilai','Predikat','Tuntas','Waktu (menit)','Mode','Kode hasil','Bobot K3/Pn/El/Uji/Obs/Lis']];
+  H.forEach(h=>h.murid.forEach(m=>rows.push([h.tgl,h.kelompok,m.nama,m.absen||'',m.peran,h.skor.k3,h.skor.pn,h.skor.el,h.skor.uji,h.skor.obs,m.lis==null?'':m.lis.toFixed(1).replace('.',','),String(m.nilai).replace('.',','),m.pred,m.tuntas?'Ya':'Tidak',String(h.menit).replace('.',','),h.mode,h.kode?fmtKode(h.kode):'',[B.k3,B.pn,B.el,B.uji,B.obs,B.lis].join('/')])));
   const csv='﻿'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='Nilai_JS-ASAS-SKEH-XII_virtual.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);}
 
 /* ====================== mode guru ====================== */
 function pinPad(cb){let v='';const b=modal(`<h2 style="text-align:center">PIN guru</h2><div class="pins" id="pv"></div><div class="pad">${[1,2,3,4,5,6,7,8,9,'⌫',0,'OK'].map(k=>`<button data-p="${k}">${k}</button>`).join('')}</div><div style="text-align:center;margin-top:14px"><button class="btn gh sm" id="px">Batal</button></div>`,460);
   const sh=()=>b.querySelector('#pv').textContent='•'.repeat(v.length)||' ';sh();
-  b.querySelectorAll('[data-p]').forEach(x=>x.onclick=()=>{const k=x.dataset.p;if(k==='⌫')v=v.slice(0,-1);else if(k==='OK'){if(v===SET.pin){closeModal();cb();return;}v='';toast('PIN salah');}else if(v.length<8)v+=k;sh();});
+  b.querySelectorAll('[data-p]').forEach(x=>x.onclick=()=>{const k=x.dataset.p;if(k==='⌫')v=v.slice(0,-1);else if(k==='OK'){if(hp(v)===SET.pinH){closeModal();cb();return;}v='';toast('PIN salah');}else if(v.length<8)v+=k;sh();});
   b.querySelector('#px').onclick=closeModal;}
 $('#bGuru').onclick=()=>GURU?panelGuru():pinPad(()=>{GURU=true;topBar();panelGuru();});
 function isiKunci(id){const sk=(k,n)=>setRes(k,1,n||'diisi kunci oleh guru');
@@ -508,7 +580,7 @@ function isiKunci(id){const sk=(k,n)=>setRes(k,1,n||'diisi kunci oleh guru');
   else if(id==='uji'){Object.assign(S.uji,{cyc:3,done:true});sk('uji');}
   else if(id==='obs'){Object.assign(S.obs,{t:obsKunci(S.el.p),done:true,bad:[]});sk('obs');}
   save();}
-function panelGuru(){const H=LS.get('hist',[]),B=SET.bobot,sum=Object.values(B).reduce((a,b)=>a+(+b||0),0),cur=STG[S.stage].id;
+function panelGuru(info){const H=LS.get('hist',[]),B=SET.bobot,sum=Object.values(B).reduce((a,b)=>a+(+b||0),0),cur=STG[S.stage].id;
   const b=modal(`<div class="row" style="justify-content:space-between;align-items:center"><h1>⚙ Mode guru</h1><div class="row"><button class="btn r sm" id="gLock">🔒 Kunci & tutup</button><button class="btn gh sm" id="gX">Tutup</button></div></div>
   <div class="row" style="align-items:flex-start;margin-top:10px">
    <div class="col" style="flex:1">
@@ -521,9 +593,12 @@ function panelGuru(){const H=LS.get('hist',[]),B=SET.bobot,sum=Object.values(B).
      <div class="row" style="flex-wrap:wrap;gap:10px">${[['k3','K3'],['pn','Pneumatik'],['el','Listrik'],['uji','Uji fungsi'],['obs','Pengamatan'],['lis','Lisan']].map(([k,n])=>`<div style="width:150px"><label class="lb2">${n}</label><div class="row" style="gap:6px;align-items:center"><button class="btn gh sm" data-bm="${k}">−</button><b style="font-size:24px;width:40px;text-align:center">${B[k]}</b><button class="btn gh sm" data-bp="${k}">+</button></div></div>`).join('')}</div></div>
     <div class="panel"><h3>Ganti PIN guru</h3><div class="row"><input class="tx" id="gPin" inputmode="numeric" maxlength="8" placeholder="PIN baru (4–8 angka)" style="flex:1"><button class="btn gh sm" id="gPinS">Simpan</button></div></div>
    </div>
-   <div class="panel col" style="flex:1"><h3>Riwayat di perangkat ini (${H.length} kelompok)</h3>
+   <div class="col" style="flex:1"><div class="panel"><h3>Cek kode hasil murid (perorangan)</h3>
+     <div class="row" style="gap:8px"><input class="tx" id="cN" maxlength="40" placeholder="Nama murid" style="flex:1.3"><input class="tx" id="cK" maxlength="20" placeholder="Kode hasil" style="flex:1;text-transform:uppercase"></div>
+     <div class="row" style="margin-top:8px;align-items:center"><button class="btn y sm" id="cCek">Cek & simpan</button><span id="cOut" class="small">${info||'Ketik nama + kode dari layar/tangkapan layar murid.'}</span></div></div>
+   <div class="panel col"><h3>Riwayat di perangkat ini (${H.length} entri)</h3>
     <div style="max-height:470px;overflow:auto"><table class="t">${H.length?`<tr><th>Kelompok</th><th>Murid · nilai</th></tr>`+H.slice().reverse().map(h=>`<tr><td><b>${esc(h.kelompok)}</b><div class="small muted">${esc(h.tgl)} · ${h.mode}</div></td><td class="small">${h.murid.map(m=>`${esc(m.nama)}: <b>${String(m.nilai).replace('.',',')}</b> (${m.pred})`).join('<br>')}</td></tr>`).join(''):'<tr><td class="muted">Belum ada data.</td></tr>'}</table></div>
-    <div class="row" style="margin-top:12px"><button class="btn y sm" id="gCsv">⬇ Unduh CSV</button><button class="btn r sm" id="gDel">Hapus riwayat</button></div></div>
+    <div class="row" style="margin-top:12px"><button class="btn y sm" id="gCsv">⬇ Unduh CSV</button><button class="btn r sm" id="gDel">Hapus riwayat</button></div></div></div>
   </div>`,1240);
   b.querySelector('#gX').onclick=closeModal;b.querySelector('#gLock').onclick=()=>{GURU=false;closeModal();render();};
   b.querySelectorAll('[data-m]').forEach(x=>x.onclick=()=>{SET.mode=x.dataset.m;saveSet();topBar();panelGuru();});
@@ -531,8 +606,16 @@ function panelGuru(){const H=LS.get('hist',[]),B=SET.bobot,sum=Object.values(B).
   b.querySelectorAll('[data-bm],[data-bp]').forEach(x=>x.onclick=()=>{const k=x.dataset.bm||x.dataset.bp;B[k]=Math.max(0,Math.min(100,B[k]+(x.dataset.bm?-5:5)));saveSet();panelGuru();});
   const gk=b.querySelector('#gKunci');if(gk)gk.onclick=()=>konfirmasi('Isi kunci?',`Tahap ${STG[S.stage].t} akan diisi jawaban benar dan skornya menjadi 1.`,'Isi kunci',()=>{isiKunci(cur);render();});
   b.querySelector('#gReset').onclick=()=>konfirmasi('Ulang kelompok ini?','Semua pekerjaan kelompok yang sedang berjalan dihapus (riwayat yang sudah tersimpan tetap ada).','Ulang',()=>{S=baru();save();URUT_ACAK=null;SELP=null;render();});
-  b.querySelector('#gPinS').onclick=()=>{const v=b.querySelector('#gPin').value.trim();if(!/^\d{4,8}$/.test(v))return toast('PIN harus 4–8 angka.');SET.pin=v;saveSet();toast('PIN baru tersimpan.');};
+  b.querySelector('#gPinS').onclick=()=>{const v=b.querySelector('#gPin').value.trim();if(!/^\d{4,8}$/.test(v))return toast('PIN harus 4–8 angka.');SET.pinH=hp(v);saveSet();toast('PIN baru tersimpan di perangkat ini.');};
   b.querySelector('#gCsv').onclick=unduhCSV;
+  b.querySelector('#cCek').onclick=()=>{const nama=b.querySelector('#cN').value.trim(),d=bacaKode(b.querySelector('#cK').value),out=b.querySelector('#cOut');
+    if(!nama){out.innerHTML='<b style="color:#ff9a8a">Isi nama murid.</b>';return;}
+    if(!d){out.innerHTML='<b style="color:#ff9a8a">❌ Kode tidak valid.</b> Periksa lagi huruf/angkanya.';return;}
+    const H2=LS.get('hist',[]);const nilai=nilaiVirtual(d.sk),pr=predikat(nilai);
+    const tanda=(d.tanda&1?' · ⚠ dibantu kunci guru':'')+(d.tanda&2?' · skor diubah guru':'');
+    if(H2.some(h=>h.kode===d.kode)){out.innerHTML=`<b style="color:#f3b52f">Kode ini sudah tercatat.</b>`;return;}
+    H2.push({id:'k'+now(),tgl:new Date().toLocaleString('id-ID'),kelompok:'Perorangan (kode)',mode:'kode',skor:d.sk,menit:d.menit,kode:d.kode,murid:[{nama,absen:d.absen,peran:'Perorangan',lis:null,nilai,pred:pr,tuntas:nilai>=70}]});LS.set('hist',H2);
+    panelGuru(`<b style="color:#7ef0ac">✅ ${esc(nama)} (absen ${d.absen}) · skor ${ASPEK.map(([k])=>d.sk[k]).join('/')} · ${d.menit} mnt · nilai ${String(nilai).replace('.',',')} (${pr})</b>${tanda} — tersimpan.`);};
   b.querySelector('#gDel').onclick=()=>konfirmasi('Hapus semua riwayat?','Unduh CSV dulu bila datanya masih diperlukan. Tindakan ini tidak bisa dibatalkan.','Hapus',()=>{LS.set('hist',[]);toast('Riwayat dihapus.');});}
 
 /* ====================== render ====================== */
